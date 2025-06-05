@@ -1,0 +1,56 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Flask debug/instance files
+instance/
+*.db
+*.sqlite
+*.log
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Editor/IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# OS system files
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Node.js (如果前端用過 npm)
+node_modules/
+
+# Personal cache files
+cache/
+scan_path.txt
+
+# Compiled static assets (if applicable)
+*.min.js
+*.min.css
+
+# Test coverage reports
+htmlcov/
+coverage.*
+.tox/
+.pytest_cache/
+
+# Environment variable files
+.env
+.env.*
+
+# Package distribution
+build/
+dist/
+*.egg-info/
