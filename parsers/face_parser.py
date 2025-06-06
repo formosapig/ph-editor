@@ -55,20 +55,24 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         contour_name = get_face_by_id('contour', contour_id)
         muscle_id = _read_int32(stream)
         muscle_name = get_face_by_id('muscle', muscle_id)
+        wrinkle_id = _read_int32(stream)
+        wrinkle_name = get_face_by_id('wrinkle', wrinkle_id)
         temp_overall = {
             'contour_id': contour_id, # 輪廓 ID
             '#contour_name': contour_name,
             'muscle_id': muscle_id,  # 肌肉 ID
             '#muscle_name': muscle_name,
-            'wrinkle_id': _read_uint32(stream), # 皺紋 ID (陰影)
+            'wrinkle_id': wrinkle_id, # 皺紋 ID (陰影)
+            '#wrinkle_name': wrinkle_name,
             'wrinkle_depth': _format_float_to_percentage(_read_float(stream)), # 皺紋深度 (シワの深さ)
         }
 
         # -- Eyebrows 眉毛 2--
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyebrows' data.")
+        eyebrows_id = (_read_int32(stream), _read_int32(stream))
         temp_eyebrows = {
-            'eyebrow_id': _read_uint32(stream), # 眉毛形狀 ID
-            '!extra_value' : _read_uint32(stream), # extra value 看起來是 2
+            'eyebrow_id': f'({eyebrows_id[0]}, {eyebrows_id[1]})', # 眉毛形狀 ID
+            '#eyebrows_name': get_face_by_id('eyebrows', eyebrows_id),
             'eyebrow_color': format_color_for_json(_read_color(stream)), # 眉毛顏色 (RGBA)
             '!shine_color' : format_color_for_json(_read_color(stream)), # 可能有一個光澤顏色 (RGBA) 但不能改 似乎是 (205,205,205,255)
             'shine_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
