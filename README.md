@@ -35,6 +35,7 @@ app.py — Flask 主要入口
 本專案使用 MIT 授權，歡迎自由使用與修改。
 
 ## 免責聲明 (Disclaimer)
+
 ### 版權與責任
 - 本工具與遊戲開發商 **Illusion** 無關，所有遊戲資產版權歸原公司所有。  
 - 使用者應合法取得遊戲副本，禁止用於盜版或商業用途。  
@@ -47,7 +48,9 @@ app.py — Flask 主要入口
 - 僅限於個人研究與模組開發，禁止用於製作/傳播成人內容。
 
 ## Disclaimer (English Version)
+
 ###　Copyright Notice
+
 —　This is an unofficial tool for PlayHome character data modification.
 
 —　All game assets, trademarks, and copyrights belong to ILLUSION and/or its respective owners.
@@ -64,17 +67,19 @@ app.py — Flask 主要入口
 - The software is offered "as-is," and the author disclaims all responsibility for direct/indirect damages.
 
 ### Usage Restrictions
+
 - Permitted: Personal research, non-commercial modding, and interoperability studies.
 
 - Prohibited:
 
 -- Reverse engineering for piracy or cheating.
 
-Distribution of modified game assets violating ILLUSION's terms.
+-- Distribution of modified game assets violating ILLUSION's terms.
 
-Creation/distribution of adult content using this tool.
+-- Creation/distribution of adult content using this tool.
 
 ### Project Status
+
 - This is a community-driven project unaffiliated with ILLUSION.
 
 - Features marked experimental (e.g., save serialization) may be unstable.
