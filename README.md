@@ -3,8 +3,8 @@
 
 ## 功能 (Current Features)
 - ✅ **解析**：將遊戲二進制角色數據轉換為可讀的 JSON 結構
-- ✏️ **編輯**：修改髮型、臉部、身體參數（支援實時預覽）
-- ⚠️ **實驗性**：序列化回遊戲格式（穩定性待測試）
+- ✏️ **編輯**：修改髮型、臉部、身體參數（todo）
+- ⚠️ **實驗性**：序列化回遊戲格式（todo）
 - 🌐 **Web 介面**：基於 Flask 的輕量級操作界面
 
 ## 安裝及執行 Installation and Usage
@@ -49,37 +49,24 @@ app.py — Flask 主要入口
 
 ## Disclaimer (English Version)
 
-###　Copyright Notice
-
-—　This is an unofficial tool for PlayHome character data modification.
-
-—　All game assets, trademarks, and copyrights belong to ILLUSION and/or its respective owners.
-
-—　Users must legally own a copy of PlayHome to use this software.
+### Copyright Notice
+- This is an unofficial tool for PlayHome character data modification.
+- All game assets, trademarks, and copyrights belong to ILLUSION and/or its respective owners.
+- Users must legally own a copy of PlayHome to use this software.
 
 ### Limitation of Liability
 ⚠️ Use at your own risk.
-
 - This tool may corrupt save files. Always back up original files before editing.
-
 - The author provides no warranty for data loss, game compatibility, or unintended effects.
-
 - The software is offered "as-is," and the author disclaims all responsibility for direct/indirect damages.
 
 ### Usage Restrictions
-
 - Permitted: Personal research, non-commercial modding, and interoperability studies.
-
 - Prohibited:
-
--- Reverse engineering for piracy or cheating.
-
--- Distribution of modified game assets violating ILLUSION's terms.
-
--- Creation/distribution of adult content using this tool.
+  - Reverse engineering for piracy or cheating.
+  - Distribution of modified game assets violating ILLUSION's terms.
+  -Creation/distribution of adult content using this tool.
 
 ### Project Status
-
 - This is a community-driven project unaffiliated with ILLUSION.
-
 - Features marked experimental (e.g., save serialization) may be unstable.
