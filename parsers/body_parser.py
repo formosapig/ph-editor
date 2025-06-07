@@ -2,9 +2,10 @@
 
 from io import BytesIO
 from common_types import (
-    _read_uint32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
+    _read_uint32, _read_int32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
 )
 import json
+from game_data.body_data import get_body_by_id
 
 # UI 界面整理的格式，可以根據需要定義，這裡只是一個示例
 ui_body_category = [
@@ -12,7 +13,6 @@ ui_body_category = [
     'arms', 'legs', 'nails', 'pubic_hair',
     'tan_lines', 'tattoo'
 ]
-
 
 def _format_float_to_percentage(value: float, scale: float = 100, debug_mode: bool = False) -> int:
     """
@@ -64,24 +64,28 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Overall Skin 全體 肌 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Overall Skin' data.")
+        skin_id = (_read_int32(stream), _read_int32(stream))
         temp_overall = {
-            'skin_id': _read_uint32(stream), # 對照肌表
-            '!extra_value': _read_uint32(stream), # extra value 5 ?!
+            'skin_id': f"({skin_id[0]}, {skin_id[1]})", # 對照肌表
+            '#skin_name': get_body_by_id('skin', skin_id),
+            'flesh_strength': None,
             'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
             'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
             'lightness': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
             '!alpha': _format_float_to_percentage(_read_float(stream)), # 透明度 (無法設定)
             'gloss_strength': _format_float_to_scaled_percentage(_read_float(stream), scale=250, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤強度
             'gloss_texture': _format_float_to_scaled_percentage(_read_float(stream), scale=125, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤質感
-            '!extra_value2': _read_uint32(stream), #extra value 2 = 0 ? 
-            'flesh_strength': _format_float_to_percentage(_read_float(stream)), # 肉感強度
+            '!extra_value2': _read_bytes_as_hex(stream, 4), #extra value 2 = 0 ? 
+            #'flesh_strength': _format_float_to_percentage(_read_float(stream)), # 肉感強度
         }
+        temp_overall['flesh_strength'] = _format_float_to_percentage(_read_float(stream)) # 肉感強度
 
         # -- Pubic Hair 陰毛 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Pubic Hair' data.")
+        pubic_hair_id = (_read_int32(stream), _read_int32(stream))
         body_data['pubic_hair'] = {
-            'id': _read_uint32(stream), # 對照陰毛表
-            '!extra': _read_uint32(stream), # 4
+            'id': f"({pubic_hair_id[0]}, {pubic_hair_id[1]})", # 對照陰毛表
+            '#name': get_body_by_id('pubic_hair', pubic_hair_id),
             'color': format_color_for_json(_read_color(stream)), # 陰毛顏色 (Alpha 可設定) - 這裡原註解寫睫毛顏色，應為陰毛顏色
             '!strength': _format_float_to_percentage(_read_float(stream)),
             '!texture': _format_float_to_percentage(_read_float(stream)),
@@ -89,8 +93,10 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Tattoo 刺青 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Tattoo' data.")
+        tattoo_id = _read_int32(stream)
         body_data['tattoo'] = {
-            'id': _read_uint32(stream), # 對照刺青表
+            'id': tattoo_id, # 對照刺青表
+            '#name': get_body_by_id('tattoo', tattoo_id),
             'color': format_color_for_json(_read_color(stream)), # 刺青顏色
             # 0x43 0x00 0x00 0x00 感覺是跟著 Tattoo 的
             '!padding1': _read_bytes_as_hex(stream, 4) # 從 0x018E 到 0x0192，中間有 4 個 bytes 的空位        
@@ -171,9 +177,10 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Nipples 胸 乳首 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Nipples' data.")
+        nipples_id = (_read_int32(stream), _read_int32(stream))
         nipples = {
-            'nipple_id': _read_uint32(stream), # 對照乳頭表
-            '!extra': _read_uint32(stream), # 5
+            'id': f"({nipples_id[0]}, {nipples_id[1]})", # 對照乳頭表
+            '#name': get_body_by_id('nipples', nipples_id),
             'areola_size': None, # 佔位
             'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
             'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
@@ -185,11 +192,13 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Tan Lines 曬痕 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Tan Lines' data.")
+        tan_lines_id = _read_int32(stream)
         body_data['tan_lines'] = {
-            'tan_id': _read_uint32(stream), # 對照曬痕表
+            'id': tan_lines_id, # 對照曬痕表
+            '#name': get_body_by_id('tan_lines', tan_lines_id),
             'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
             'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'lightness': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
+            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
             'intensity': _format_float_to_percentage(_read_float(stream)), # 濃度
             # 0x43 0x00 0x00 0x00 感覺是跟著 Tan Lines 的
             '!padding1': _read_bytes_as_hex(stream, 4)
@@ -204,7 +213,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             'alpha': _format_float_to_percentage(_read_float(stream)), # 透明度 (不可修改)
             'gloss_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
             'gloss_texture': _format_float_to_percentage(_read_float(stream)), # 光澤質感
-            # 0x43 0x00 0x00 0x00 感覺是跟著 nails 的
+            # 0x02 0x00 0x00 0x00 感覺是跟著 nails 的
             '!padding1': _read_bytes_as_hex(stream, 4)
         }
 

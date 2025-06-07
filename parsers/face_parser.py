@@ -71,7 +71,7 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyebrows' data.")
         eyebrows_id = (_read_int32(stream), _read_int32(stream))
         temp_eyebrows = {
-            'eyebrow_id': f'({eyebrows_id[0]}, {eyebrows_id[1]})', # 眉毛形狀 ID
+            'eyebrows_id': f'({eyebrows_id[0]}, {eyebrows_id[1]})', # 眉毛形狀 ID
             '#eyebrows_name': get_face_by_id('eyebrows', eyebrows_id),
             'eyebrow_color': format_color_for_json(_read_color(stream)), # 眉毛顏色 (RGBA)
             '!shine_color' : format_color_for_json(_read_color(stream)), # 可能有一個光澤顏色 (RGBA) 但不能改 似乎是 (205,205,205,255)
@@ -81,31 +81,37 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Eyeballs (Left Eye) 眼球 (左眼) --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyeballs (Left Eye)' data.")
-        temp_left_eye = {
-            'left_pupil_id': _read_uint32(stream),       # 左瞳 ID
-            'left_sclera_color': format_color_for_json(_read_color(stream)), # 左眼白顏色 (RGBA, alpha 無效)
-            'left_pupil_color': format_color_for_json(_read_color(stream)),  # 左瞳孔顏色 (RGBA, alpha 無效)
-            'left_pupil_size': _format_float_to_percentage(_read_float(stream)),     # 左瞳孔大小
-            'left_pupil_brightness': _format_float_to_percentage(_read_float(stream)), # 左瞳孔亮度
+        pupil_id = _read_int32(stream)
+        temp_left_eyeball = {
+            'pupil_id': pupil_id,       # 左瞳 ID
+            'sclera_color': format_color_for_json(_read_color(stream)), # 左眼白顏色 (RGBA, alpha 無效)
+            '#name': get_face_by_id('eyeball', pupil_id),
+            'pupil_color': format_color_for_json(_read_color(stream)),  # 左瞳孔顏色 (RGBA, alpha 無效)
+            'pupil_size': _format_float_to_percentage(_read_float(stream)),     # 左瞳孔大小
+            'pupil_brightness': _format_float_to_percentage(_read_float(stream)), # 左瞳孔亮度
         }
 
         # -- Eyeballs (Right Eye) 眼球 (右眼) --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyeballs (Right Eye)' data.")
-        temp_right_eye = {
-            'right_pupil_id': _read_uint32(stream),       # 右瞳 ID
-            'right_sclera_color': format_color_for_json(_read_color(stream)), # 右眼白顏色 (RGBA, alpha 無效)
-            'right_pupil_color': format_color_for_json(_read_color(stream)),  # 右瞳孔顏色 (RGBA, alpha 無效)
-            'right_pupil_size': _format_float_to_percentage(_read_float(stream)),     # 右瞳孔大小
-            'right_pupil_brightness': _format_float_to_percentage(_read_float(stream)), # 右瞳孔亮度
+        pupil_id = _read_int32(stream)
+        temp_right_eyeball = {
+            'pupil_id': pupil_id,       # 右瞳 ID
+            'sclera_color': format_color_for_json(_read_color(stream)), # 右眼白顏色 (RGBA, alpha 無效)
+            '#name': get_face_by_id('eyeball', pupil_id),
+            'pupil_color': format_color_for_json(_read_color(stream)),  # 右瞳孔顏色 (RGBA, alpha 無效)
+            'pupil_size': _format_float_to_percentage(_read_float(stream)),     # 右瞳孔大小
+            'pupil_brightness': _format_float_to_percentage(_read_float(stream)), # 右瞳孔亮度
         }
 
         # -- Tattoo 刺青 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Tattoo' data.")
+        tattoo_id = _read_int32(stream)
         face_data['tattoo'] = {
-            'tattoo_id': _read_uint32(stream),      # 刺青 ID
-            'tattoo_color': format_color_for_json(_read_color(stream)), # 刺青顏色 (RGBA, alpha 無效)
+            'id': tattoo_id,      # 刺青 ID
+            '#name': get_face_by_id('tattoo', tattoo_id),
+            'color': format_color_for_json(_read_color(stream)), # 刺青顏色 (RGBA, alpha 無效)
             # 0x43 0x00 0x00 0x00 感覺是跟著 Tattoo 的
-            '!padding1': _read_bytes_as_hex(stream, 4) # 從 0x018E 到 0x0192，中間有 4 個 bytes 的空位
+            '!padding': _read_bytes_as_hex(stream, 4) # 從 0x018E 到 0x0192，中間有 4 個 bytes 的空位
         }
 
         # -- Overall Face 全體 1 --
@@ -177,7 +183,10 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             'pupil_v_adjustment': _format_float_to_percentage(_read_float(stream)), # 瞳的上下調整
             'pupil_width': _format_float_to_percentage(_read_float(stream)),    # 瞳的橫幅
             'pupil_vertical_width': _format_float_to_percentage(_read_float(stream)), # 瞳的縱幅
-        } | temp_left_eye | temp_right_eye
+        }
+        # add left eyeball and right eyeball| temp_left_eye | temp_right_eye
+        face_data['eyeballs']['left_eyeball'] = temp_left_eyeball
+        face_data['eyeballs']['right_eyeball'] = temp_right_eyeball
 
         # -- Nose 鼻 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Nose' data.")
@@ -223,9 +232,10 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Eyelashes 睫毛 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyelashes' data.")
+        eyelashes_id = (_read_int32(stream), _read_int32(stream))
         face_data['eyelashes'] = {
-            'eyelash_id': _read_uint32(stream),     # 睫毛 ID
-            '!extra_value': _read_uint32(stream),   # 2
+            'eyelash_id': f"({eyelashes_id[0]}, {eyelashes_id[1]})", # 睫毛 ID
+            '#eyelash_name': get_face_by_id('eyelashes', eyelashes_id),
             'eyelash_color': format_color_for_json(_read_color(stream)), # 睫毛顏色 (RGBA)
             '!shine_color': format_color_for_json(_read_color(stream)), # 睫毛光澤顏色 (RGBA) (185, 188, 177, 255) ??? 這個值會一直跳來跳去..
             'shine_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
@@ -234,54 +244,56 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Eyeshadow 眼影 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyeshadow' data.")
+        eyeshadow_id = _read_int32(stream)
         face_data['makeup']['eyeshadow'] = {
-            'eyeshadow_id': _read_uint32(stream),   # 眼影 ID
+            'id': eyeshadow_id,   # 眼影 ID
+            '#name': get_face_by_id('eyeshadow', eyeshadow_id),
             'color': format_color_for_json(_read_color(stream)), # 眼影顏色 (RGBA, alpha 無效)
         }
         
 
         # -- Blush 腮紅 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Blush' data.")
+        blush_id = _read_int32(stream)
         face_data['makeup']['blush'] = {
-            'blush_id': _read_uint32(stream),       # 腮紅 ID
+            'id': blush_id,       # 腮紅 ID
+            '#name': get_face_by_id('blush', blush_id),
             'color': format_color_for_json(_read_color(stream)), # 腮紅顏色 (RGBA, alpha 無效)
         }
 
         # -- Lipstick 唇膏 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Lipstick' data.")
+        lipstick_id = _read_int32(stream)
         face_data['makeup']['lipstick'] = {
-            'lipstick_id': _read_uint32(stream),    # 唇膏 ID
+            'id': lipstick_id,    # 唇膏 ID
+            '#name': get_face_by_id('lipstick', lipstick_id),
             'color': format_color_for_json(_read_color(stream)), # 唇膏顏色 (RGBA, alpha 無效)
         }
 
         # -- Mole 痣 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Mole' data.")
+        mole_id = _read_int32(stream)
         face_data['mole'] = {
-            'mole_id': _read_uint32(stream),        # 痣 ID
+            'id': mole_id,        # 痣 ID
+            '#name': get_face_by_id('mole', mole_id),
             'color': format_color_for_json(_read_color(stream)), # 痣顏色 (RGBA, alpha 無效)
         }
 
         # -- Eyeballs (Highlight) 眼球 (高光) --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyeballs (Highlight)' data.")
+        highlight_id = (_read_int32(stream), _read_int32(stream))
         face_data['eyeballs'].update(
             {
-                'highlight_id': _read_uint32(stream), # 高光 ID
-                '!extra_value': _read_uint32(stream), # extra value 7 ?
+                'highlight_id': f"({highlight_id[0]}, {highlight_id[1]})", # 高光 ID
+                '#name': get_face_by_id('highlight', highlight_id),
             
                 'highlight_color': format_color_for_json(_read_color(stream)), # 高光顏色 (RGBA)
-                '!highlight_shine': format_color_for_json(_read_color(stream)) # 高光光澤?!
+                '!highlight_shine': format_color_for_json(_read_color(stream)), # 高光光澤?!
+                '!highlight_strength': _format_float_to_percentage(_read_float(stream)),
+                '!highlight_texture': _format_float_to_percentage(_read_float(stream)),
+                
             }
         )
-        
-        face_data['!strength?'] = _format_float_to_percentage(_read_float(stream))
-        face_data['!texture?'] = _format_float_to_percentage(_read_float(stream))
-        
-        
-        # 接下來是 6 bytes ?
-        # 0x00 0x00 0x80 0x3F 0x00 0x00 似乎是 1.0 ...
-        #face_data['!float1'] = _read_float(stream)
-        #face_data['!padding2'] = _read_bytes_as_hex(stream, 2)
-        
 
     except EOFError as e:
         if debug_mode:
