@@ -71,7 +71,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             'flesh_strength': None,
             'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
             'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'lightness': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
+            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
             '!alpha': _format_float_to_percentage(_read_float(stream)), # 透明度 (無法設定)
             'gloss_strength': _format_float_to_scaled_percentage(_read_float(stream), scale=250, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤強度
             'gloss_texture': _format_float_to_scaled_percentage(_read_float(stream), scale=125, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤質感
@@ -184,7 +184,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             'areola_size': None, # 佔位
             'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
             'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'lightness': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
+            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
             'alpha': _format_float_to_percentage(_read_float(stream)), # 透明
             'gloss_strength': _format_float_to_scaled_percentage(_read_float(stream), scale=250, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤強度
             'gloss_texture': _format_float_to_scaled_percentage(_read_float(stream), scale=125, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤質感
@@ -209,7 +209,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         body_data['nails'] = {
             'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
             'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'lightness': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
+            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
             'alpha': _format_float_to_percentage(_read_float(stream)), # 透明度 (不可修改)
             'gloss_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
             'gloss_texture': _format_float_to_percentage(_read_float(stream)), # 光澤質感

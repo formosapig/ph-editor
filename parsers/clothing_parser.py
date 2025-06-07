@@ -3,10 +3,14 @@
 from io import BytesIO
 import json
 from common_types import (
-    _read_uint32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
+    _read_uint32, _read_int32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
 )
 # clothing data
-from game_data.clothing_data import get_clothing_by_id, is_colorful
+from game_data.clothing_data import get_clothing_by_id, is_colorful, is_disabled
+
+
+# 全域部位禁用 dict
+disable_dict = {}
 
 # 從 body_parser.py 借用過來的浮點數轉換函式
 def _format_float_to_percentage(value: float, scale: float = 100, debug_mode: bool = False) -> int:
@@ -34,13 +38,29 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
 
     # 讀取 ID 跟 extra, 並且取得名稱
     slotIdx = _read_bytes_as_hex(stream, 4)
-    item_id = (_read_uint32(stream), _read_uint32(stream))
+    item_id = (_read_int32(stream), _read_int32(stream))
+    
+    global disable_dict
     
     part = {
         'slot': slotIdx,
         'id': f"({item_id[0]}, {item_id[1]})",
-        '#name': get_clothing_by_id(slot, item_id), 
+        '#name': get_clothing_by_id(slot, item_id),
     }
+            
+    # 檢查禁用設定
+    if slotIdx == '00 00 00 00': # top
+        # 讀 option 確定 bottom, bra, panty 禁用
+        disable_dict = {
+            '01 00 00 00': is_disabled('top', item_id, 'bottom'),
+            '02 00 00 00': is_disabled('top', item_id, 'bra'),
+            '03 00 00 00': is_disabled('top', item_id, 'panty'),
+        }
+        print(f"do slotIdx 0")
+    else:
+        if disable_dict.get(slotIdx, False):
+            part['!disable_by'] = 'top'
+            
 
     # 可換色時...
     if is_colorful(slot, item_id) > 0:
