@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>編輯檔案 - {{ file }}</title>
+  <title>編輯檔案</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='edit.css') }}" />
 </head>
 <body>
@@ -51,7 +51,9 @@
             </div>
         </div>
     </div>
-    
+    <script>
+		const characterData = {{ data | safe }};
+	</script>
     <script src="{{ url_for('static', filename='edit.js') }}"></script>
 </body>
 </html>

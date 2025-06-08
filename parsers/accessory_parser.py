@@ -80,20 +80,22 @@ def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = Fa
    
     # 讀取顏色和光澤屬性 (如果可換色)
     if is_colorful(accessory_id_tuple) > 0: 
-            part.update(
-                {
-                    'main_color': format_color_for_json(_read_color(stream)),
-                    'main_shine': format_color_for_json(_read_color(stream)),
-                    # 關鍵修改：使用 `or 0.0` 提供預設值
-                    'main_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_strength') or 0.0), 
-                    'main_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_texture') or 0.0), 
+        part.update(
+            {
+                'main_color': format_color_for_json(_read_color(stream)),
+                'main_shine': format_color_for_json(_read_color(stream)),
+                # 關鍵修改：使用 `or 0.0` 提供預設值
+                'main_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_strength') or 0.0), 
+                'main_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_texture') or 0.0), 
 
-                    'sub_color': format_color_for_json(_read_color(stream)),
-                    'sub_shine_color': format_color_for_json(_read_color(stream)),
-                    'sub_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_strength') or 0.0),
-                    'sub_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_texture') or 0.0),
-                }
-            )
+                'sub_color': format_color_for_json(_read_color(stream)),
+                'sub_shine_color': format_color_for_json(_read_color(stream)),
+                'sub_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_strength') or 0.0),
+                'sub_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_texture') or 0.0),
+            }
+        )
+    
+            
     
     #part['align'] = _read_bytes_as_hex(stream, 5)
     
@@ -124,9 +126,6 @@ def parse_accessories_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         # stream.seek(0x08AE) # 如果檔案開頭不是從這裡開始讀取，則需要seek
         #accessories_data['start'] = _read_bytes_as_hex(stream, 16) # 0x08AE padding
         if debug_mode: print(f"    [Offset: {stream.tell()}] Read 4 bytes padding after clothing data.")
-
-        # 意義不明...
-        accessories_data['total_head'] = _read_bytes_as_hex(stream, 3)
 
         # 解析 10 個配飾槽位
         for i in range(10): # 10 個槽位，從 0 到 9

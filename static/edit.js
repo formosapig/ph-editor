@@ -18,7 +18,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // 頁面載入時立即調用 reloadFile 來載入數據
-    refresh();
+    //refresh();
+	// 一開頁面直接用後端資料初始化頁面
+    if (typeof characterData !== 'undefined') {
+        updateTabs(characterData);
+		document.getElementById('hex-display').textContent = '角色資料預戴完成。';
+    } else {
+        document.getElementById('hex-display').textContent = '無角色數據';
+    }
 });
 
 /**
@@ -75,8 +82,8 @@ function refresh() {
  * 從後端獲取最新資料（純資料刷新），並更新到各個 tab。
  */
 function reloadFile() {
-  const miscPre = document.querySelector('#misc pre');
-  miscPre.textContent = '正在重新載入檔案數據...';
+  const hexDisplay = document.getElementById('hex-display');
+  hexDisplay.textContent = '正在重新載入檔案數據...';
 
   fetch('/edit/reload_file')
     .then(response => {
@@ -91,14 +98,15 @@ function reloadFile() {
     })
     .then(data => {
       if (data.error) {
-        miscPre.textContent = '錯誤：' + data.error;
+        hexDisplay.textContent = '錯誤：' + data.error;
         return;
       }
 
       updateTabs(data);
+	  hexDisplay.textContent = '重新載入檔案數據成功。';
     })
     .catch(err => {
-      miscPre.textContent = '載入失敗：' + err.message;
+      hexDisplay.textContent = '載入失敗：' + err.message;
     });
 }
 

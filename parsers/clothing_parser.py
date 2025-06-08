@@ -3,10 +3,17 @@
 from io import BytesIO
 import json
 from common_types import (
-    _read_uint32, _read_int32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
+    _read_uint32, _read_int32, _read_uint8, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
 )
 # clothing data
-from game_data.clothing_data import get_clothing_by_id, is_colorful, is_disabled
+from game_data.clothing_data import (
+    get_clothing_by_id,
+    is_colorful,
+    is_disabled,
+    is_cut_clothing,
+    has_option,
+    get_option_flags
+)
 
 
 # 全域部位禁用 dict
@@ -48,6 +55,9 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
         '#name': get_clothing_by_id(slot, item_id),
     }
             
+    if slot in ('top', 'bottom') and is_cut_clothing(slot, item_id):
+        part['#name'] += '[會穿模]'
+    
     # 檢查禁用設定
     if slotIdx == '00 00 00 00': # top
         # 讀 option 確定 bottom, bra, panty 禁用
@@ -81,8 +91,9 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
                 'sub_shine_texture': _format_float_to_percentage(_read_float(stream)),
             }
         )
-    # 最後分隔符?
-    #part['end_mark'] = _read_bytes_as_hex(stream, 4)
+  
+    if slot == 'swimsuit':
+        part.update(get_option_flags(slot, item_id)) 
   
     return part
 
@@ -95,7 +106,9 @@ def parse_clothing_data(stream: BytesIO, debug_mode: bool = False) -> dict:
     Returns:
         一個字典，包含解析後的服裝數據。
     """
-    clothing_data = {}
+    clothing_data = {
+        'clothing_set': None
+    }
 
     if debug_mode:
         current_pos = stream.tell()
@@ -103,81 +116,65 @@ def parse_clothing_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
     try:
         # 上衣 (top)
-        # 定位到 0x04BE
-        #stream.seek(0x04BE)
         clothing_data['top'] = parse_clothing_item(stream, "top", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Top data. Expected padding at 0x0516.")
-        #_ = _read_uint32(stream) # 0x0516 padding
 
         # 下著 (bottom)
-        # 定位到 0x051A
-        #stream.seek(0x051A)
         clothing_data['bottom'] = parse_clothing_item(stream, "bottom", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Bottom data. Expected padding at 0x0572.")
-        #_ = _read_uint32(stream) # 0x0572 padding
 
         # 胸罩 (bra)
-        # 定位到 0x0576
-        #stream.seek(0x0576)
         clothing_data['bra'] = parse_clothing_item(stream, "bra", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Bra data. Expected padding at 0x05CE.")
-        #_ = _read_uint32(stream) # 0x05CE padding
 
         # 內褲 (panty)
-        # 定位到 0x05D2
-        #stream.seek(0x05D2)
         clothing_data['panty'] = parse_clothing_item(stream, "panty", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Panty data. Expected padding at 0x062A.")
-        #_ = _read_uint32(stream) # 0x062A padding
 
-        # 泳裝 (swimsuit - full)
-        # 定位到 0x062E
-        #stream.seek(0x062E)
+        # 泳裝 (swimsuit)
         clothing_data['swimsuit'] = parse_clothing_item(stream, "swimsuit", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Swimsuit (Full) data. Expected padding at 0x0686.")
-        #_ = _read_uint32(stream) # 0x0686 padding
 
-        # 泳裝 - 上衣 (swimsuit - top 1)
-        # 定位到 0x068A
-        #stream.seek(0x068A)
+        # 泳裝 - 上衣 (swimsuit_top)
         clothing_data['swimsuit_top'] = parse_clothing_item(stream, "swimsuit_top", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Swimsuit Top 1 data. Expected padding at 0x06E2.")
-        #_ = _read_uint32(stream) # 0x06E2 padding
 
-        # 泳裝 - 上衣 (swimsuit - top 2)
-        # 定位到 0x06E6
-        #stream.seek(0x06E6)
+        # 泳裝 - 上衣 (swimsuit_bottom)
         clothing_data['swimsuit_bottom'] = parse_clothing_item(stream, "swimsuit_bottom", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Swimsuit Top 2 data. Expected padding at 0x073E.")
-        #_ = _read_uint32(stream) # 0x073E padding
 
         # 手套 (gloves)
-        # 定位到 0x0742
-        #stream.seek(0x0742)
         clothing_data['gloves'] = parse_clothing_item(stream, "gloves", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Gloves data. Expected padding at 0x079A.")
-        #_ = _read_uint32(stream) # 0x079A padding
 
         # 褲襪 (pantyhose)
-        # 定位到 0x079E
-        #stream.seek(0x079E)
         clothing_data['pantyhose'] = parse_clothing_item(stream, "pantyhose", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Pantyhose data. Expected padding at 0x07F6.")
-        #_ = _read_uint32(stream) # 0x07F6 padding
 
         # 襪子 (socks)
-        # 定位到 0x07FA
-        #stream.seek(0x07FA)
         clothing_data['socks'] = parse_clothing_item(stream, "socks", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Socks data. Expected padding at 0x0852.")
-        #_ = _read_uint32(stream) # 0x0852 padding
 
         # 鞋子 (shoes)
-        # 定位到 0x0856
-        #stream.seek(0x0856)
         clothing_data['shoes'] = parse_clothing_item(stream, "shoes", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Shoes data.")
-        # 最後的 padding 0x08AE 沒有明確說明，這裡不讀取
+
+        # 1 bytes
+        # 0 = 通常衣服
+        # 1 = 水著衣服
+        clothing_data['clothing_set'] = '通常' if _read_uint8(stream) == 0 else '水著'
+        
+        # 1 bytes 水著 Option 上
+        # 0 = off
+        # 1 = on
+        if 'option_up' in clothing_data['swimsuit']:
+            clothing_data['swimsuit']['option_up'] = 'on' if _read_uint8(stream) == 1 else 'off'
+        
+        # 1 bytes 水著 option 下
+        # 0 = off
+        # 1 = on 
+        if 'option_down' in clothing_data['swimsuit']:
+            clothing_data['swimsuit']['option_down'] = 'on' if _read_uint8(stream) == 1 else 'off'
 
     except EOFError as e:
         if debug_mode:
