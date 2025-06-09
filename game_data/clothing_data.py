@@ -1025,8 +1025,8 @@ def get_option_flags(slot: str, item_id: tuple[int, int]) -> dict:
             flag = item.get('flag', 0)
             result = {}
             if flag & Ou:
-                result['option_up'] = None
+                result['option_top'] = None
             if flag & Od:
-                result['option_down'] = None
+                result['option_bottom'] = None
             return result
     return {}

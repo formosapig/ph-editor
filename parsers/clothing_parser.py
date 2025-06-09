@@ -159,22 +159,28 @@ def parse_clothing_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         clothing_data['shoes'] = parse_clothing_item(stream, "shoes", debug_mode)
         if debug_mode: print(f"    [Offset: {stream.tell()}] End of Shoes data.")
 
+        # 3 bytes always read...
+        clothing_type = _read_uint8(stream)
+        option_top = _read_uint8(stream)
+        option_bottom = _read_uint8(stream)
+
+
         # 1 bytes
         # 0 = 通常衣服
         # 1 = 水著衣服
-        clothing_data['clothing_set'] = '通常' if _read_uint8(stream) == 0 else '水著'
+        clothing_data['clothing_set'] = '通常' if clothing_type == 0 else '水著'
         
         # 1 bytes 水著 Option 上
         # 0 = off
         # 1 = on
-        if 'option_up' in clothing_data['swimsuit']:
-            clothing_data['swimsuit']['option_up'] = 'on' if _read_uint8(stream) == 1 else 'off'
+        if 'option_top' in clothing_data['swimsuit']:
+            clothing_data['swimsuit']['option_top'] = 'on' if option_top == 1 else 'off'
         
         # 1 bytes 水著 option 下
         # 0 = off
         # 1 = on 
-        if 'option_down' in clothing_data['swimsuit']:
-            clothing_data['swimsuit']['option_down'] = 'on' if _read_uint8(stream) == 1 else 'off'
+        if 'option_bottom' in clothing_data['swimsuit']:
+            clothing_data['swimsuit']['option_bottom'] = 'on' if option_bottom == 1 else 'off'
 
     except EOFError as e:
         if debug_mode:
