@@ -50,14 +50,14 @@ def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = Fa
         
     # 讀取基本屬性
     #accessory_type = _read_uint32(stream)
-    accessory_id_tuple = (_read_int32(stream), _read_int32(stream))    
+    accessory_id = (_read_int32(stream), _read_int32(stream))    
     #head = _read_bytes_as_hex(stream, 8)
     equip_position = _read_int32(stream)
 
     part = {
         'type': "???",
-        'id': f"({accessory_id_tuple[0]}, {accessory_id_tuple[1]})",
-        '#name': get_accessory_by_id(accessory_id_tuple), # 使用 item_id_tuple 傳遞
+        'id': f"({accessory_id[0]}, {accessory_id[1]})",
+        '#name': get_accessory_by_id(accessory_id), # 使用 item_id 傳遞
         'equip_position': equip_position,
         'position_adjust': {
                 'x': _read_and_handle_float(stream, 'position_adjust_x'),
@@ -79,7 +79,7 @@ def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = Fa
     part['gap'] = _read_bytes_as_hex(stream, 4)
    
     # 讀取顏色和光澤屬性 (如果可換色)
-    if is_colorful(accessory_id_tuple) > 0: 
+    if is_colorful(accessory_id) > 0: 
         part.update(
             {
                 'main_color': format_color_for_json(_read_color(stream)),

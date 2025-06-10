@@ -6,6 +6,13 @@
 # 2 副色只能改光澤質感 (?, ?, ?, ?) (?, ?, ?, ?) Fix, ??
 # 3 主副色都能隨意調整
 
+# ===== FLAG 定義區 =====
+COLOR_MASK = 0b11        # 取 color 值
+C0 = 0b00                # 無彩色
+C1 = 0b01                # 僅主色可以
+C2 = 0b10                # 主,副色可改, 但副色光澤強度鎖定
+C3 = 0b11                # 主,副色可全部修改
+
 # 配飾槽位的中文名稱陣列
 ACCESSORY_SLOT_NAMES = [
     "頭",     # Accessory Slot 1
@@ -26,18 +33,31 @@ ACCESSORY_SLOT_NAMES = [
 
 ACCESSORY_ITEMS = [
     # 沒有
-    {'id': ( -1,  -1), 'colorful': 0, 'name': {'ja': 'なし', 'zh': '無'}},
     
+    {'id': ( -1,  -1), 'flag': C3,             'name': {'ja': 'なし', 'zh': '無'}},
+        
     # 頭
-    {'id': (  0, 500), 'colorful': 3, 'name': {'ja': 'CAキャップ(色)', 'zh': 'CA帽子(色)'}},
-    {'id': (1, 2), 'colorful': 3, 'name': {'ja': '髪留め(色)', 'zh': '髮夾(色)'}},
-    {'id': (1, 3), 'colorful': 3, 'name': {'ja': 'ヘアピン(色)', 'zh': '髮夾(色)'}},
-    {'id': (1, 4), 'colorful': 3, 'name': {'ja': 'リボン(色)', 'zh': '絲帶(色)'}},
-    {'id': (1, 5), 'colorful': 3, 'name': {'ja': 'カチューシャ(色)', 'zh': '髮箍(色)'}},
-    {'id': (1, 6), 'colorful': 3, 'name': {'ja': 'アホ毛(色)', 'zh': '呆毛(色)'}},
-    {'id': (1, 7), 'colorful': 3, 'name': {'ja': '觸覚毛(色)', 'zh': '觸角髮(色)'}},
-    {'id': (1, 8), 'colorful': 3, 'name': {'ja': '付け三つ編み(色)', 'zh': '假三股辮(色)'}},
-    {'id': (1, 9), 'colorful': 0, 'name': {'ja': 'ヘッドホン(黒)', 'zh': '耳機(黑)'}},
+    {'id': (  0, 500), 'flag': C2,             'name': {'ja': 'CAキャップ(色)', 'zh': 'CA帽(顏色)'}},
+    {'id': (  0,  55), 'flag': C1,             'name': {'ja': '髪留め(色)', 'zh': '髮圈(顏色)'}},
+    {'id': (  0,  56), 'flag': C1,             'name': {'ja': 'ヘアピン(色)', 'zh': '髮夾(顏色)'}},
+    {'id': (  0,  50), 'flag': C1,             'name': {'ja': 'リボン(色)', 'zh': '髮帶(顏色)'}},
+    {'id': (  0,  51), 'flag': C1,             'name': {'ja': 'カチューシャ(色)', 'zh': '髮箍(顏色)'}},
+    {'id': (  0,  52), 'flag': C1,             'name': {'ja': 'アホ毛(色)', 'zh': '呆毛(顏色)'}},
+    {'id': (  0,  53), 'flag': C1,             'name': {'ja': '触覚毛(色)', 'zh': '觸角髮(顏色)'}},
+    {'id': (  0,  42), 'flag': C3,             'name': {'ja': '付け三つ編み(色)', 'zh': '附加三股辮(顏色)'}},
+    {'id': (  0,   0),                         'name': {'ja': 'ヘッドホン(黒)', 'zh': '耳機(黑)'}},
+    {'id': (  0,  22),                         'name': {'ja': 'ヘッドホン(白)', 'zh': '耳機(白)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'ヘッドホン(赤)', 'zh': '耳機(紅)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': '麦わら帽子(青)', 'zh': '草帽(藍)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': '麦わら帽子(赤)', 'zh': '草帽(紅)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'サンバイザーA(赤)', 'zh': '遮陽帽A(紅)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'サンバイザーA(白)', 'zh': '遮陽帽A(白)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'バニーカチューシャ(黒)', 'zh': '兔耳髮箍(黑)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'バニーカチューシャ(赤)', 'zh': '兔耳髮箍(紅)'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'メイドカチューシャ', 'zh': '女僕髮箍'}},
+    {'id': (0, 0), 'flag': 'C0', 'name': {'ja': 'ナース帽子(白)', 'zh': '護士帽(白)'}},
+
+
     
     {'id': (0, 0), 'colorful': 3, 'name': {'ja': 'なし', 'zh': '無'}}, # 預設無配飾
     {'id': (1, 0), 'colorful': 1, 'name': {'ja': 'メガネ', 'zh': '眼鏡'}},
@@ -72,7 +92,7 @@ def get_accessory_by_id(item_id_tuple: tuple[int, int], lang: str = 'ja') -> str
     }
     return not_found_messages.get(lang, f'Accessory ID {item_id_tuple} not found')
 
-def is_colorful(item_id_tuple: tuple[int, int]) -> int:
+def is_colorful(item_id: tuple[int, int]) -> int:
     """
     檢查指定配飾物品是否為可調顏色的。
     Args:
@@ -84,6 +104,7 @@ def is_colorful(item_id_tuple: tuple[int, int]) -> int:
         3 主副色都能隨意調整
     """
     for item in ACCESSORY_ITEMS:
-        if item['id'] == item_id_tuple:
-            return item.get('colorful', 0) # 預設為 0
+        if item['id'] == item_id:
+            flag = item.get('flag', 0)
+            return flag & COLOR_MASK
     return 0 # 如果找不到對應的物品，返回 0
