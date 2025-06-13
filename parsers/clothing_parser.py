@@ -44,14 +44,16 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
         print(f"    [Offset: {stream.tell()}] Parsing '{item_name}' data.")
 
     # 讀取 ID 跟 extra, 並且取得名稱
-    slotIdx = _read_bytes_as_hex(stream, 4)
-    item_id = (_read_int32(stream), _read_int32(stream))
+    slotIdx = _read_int32(stream)
+    item_id = _read_int32(stream)
+    color_flag = _read_int32(stream)
     
     global disable_dict
     
     part = {
         'slot': slotIdx,
-        'id': f"({item_id[0]}, {item_id[1]})",
+        'id': item_id,
+        'color': color_flag,
         '#name': get_clothing_by_id(slot, item_id),
     }
             
@@ -59,12 +61,12 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
         part['#name'] += '[會穿模]'
     
     # 檢查禁用設定
-    if slotIdx == '00 00 00 00': # top
+    if slotIdx == 0: # top
         # 讀 option 確定 bottom, bra, panty 禁用
         disable_dict = {
-            '01 00 00 00': is_disabled('top', item_id, 'bottom'),
-            '02 00 00 00': is_disabled('top', item_id, 'bra'),
-            '03 00 00 00': is_disabled('top', item_id, 'panty'),
+            1: is_disabled('top', item_id, 'bottom'),
+            2: is_disabled('top', item_id, 'bra'),
+            3: is_disabled('top', item_id, 'panty'),
         }
         print(f"do slotIdx 0")
     else:
@@ -73,7 +75,8 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
             
 
     # 可換色時...
-    if is_colorful(slot, item_id) > 0:
+    # if is_colorful(slot, item_id) > 0:
+    if color_flag == 3:
         part.update(
             {
                 # 主色

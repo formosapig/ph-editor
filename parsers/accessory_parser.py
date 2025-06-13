@@ -83,7 +83,9 @@ def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = Fa
     print(f"SlotIndex: {slot_index}, id: ({accessory_id[0]}, {accessory_id[1]}), gap: {part['gap']}")
    
     # 讀取顏色和光澤屬性 (如果可換色), 跟 配飾的顏色無關, 根據 gap 來決定是不是要讀額外顏色資料...
-    if is_colorful(accessory_id) > 0 and part['gap'] == '03 00 00 00':
+    #if is_colorful(accessory_id) > 0 and part['gap'] == '03 00 00 00':
+    # 看起來是只用 gap 去決定
+    if part['gap'] == '03 00 00 00':
         part.update(
             {
                 'main_color': format_color_for_json(_read_color(stream)),

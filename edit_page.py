@@ -2,7 +2,6 @@ from flask import Blueprint, request, render_template, jsonify, current_app, ses
 import os
 import json
 import base64
-import logging
 import traceback
 
 # 從 shared_data 模組引入 get_character_data 和 PLAYHOME_MARKER
