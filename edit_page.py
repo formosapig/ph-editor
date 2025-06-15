@@ -176,7 +176,53 @@ def save_edit():
         print(f"保存檔案時發生錯誤: {e}")
         return jsonify({'error': f"保存失敗: {str(e)}"}), 500
 
+@edit_bp.route('/edit/save_bak', methods=['POST'])
+def save_bak():
+    """
+    保存角色數據至備份檔案（xxx_bak.png），
+    不依賴前端傳來的 JSON，直接操作記憶體中的 character_data_obj。
+    """
+    character_id = session.get('current_edit_character_id')
+    if not character_id:
+        return jsonify({'error': '會話資訊丟失，請先載入角色。'}), 400
 
+    # 從記憶體中獲取資料物件
+    character_data_obj = get_character_data(character_id)
+    if not character_data_obj:
+        return jsonify({'error': f"找不到要保存的角色數據: {character_id}。請重新載入檔案。"}), 404
+
+    try:
+        # 產生新的 PlayHome 自定義資料（包含 marker）
+        playhome_data = character_data_obj.to_raw_data()
+
+        # 原始 PNG 檔案路徑
+        original_file_path = os.path.join(current_app.config.get('SCAN_PATH'), character_id + '.png')
+
+        # 讀取原始 PNG，並找出 marker 以擷取 PNG 部分
+        with open(original_file_path, 'rb') as f:
+            full_png_data = f.read()
+
+        marker_start_pos = full_png_data.find(PLAYHOME_MARKER)
+        if marker_start_pos == -1:
+            return jsonify({'error': f"檔案中未找到 '{PLAYHOME_MARKER.decode()}' 標記，無法保存備份。"}), 400
+
+        png_part = full_png_data[:marker_start_pos]
+
+        # 合併 PNG 前段與新 PlayHome 部分
+        combined_data = png_part + playhome_data
+
+        # 備份檔案路徑
+        backup_file_name = character_id + '_bak.png'
+        backup_file_path = os.path.join(current_app.config.get('SCAN_PATH'), backup_file_name)
+
+        with open(backup_file_path, 'wb') as f:
+            f.write(combined_data)
+
+        return jsonify({'success': True, 'message': f'備份成功：{backup_file_name}'})
+    except Exception as e:
+        print(f"保存備份檔案時發生錯誤: {e}")
+        return jsonify({'error': f"備份失敗: {str(e)}"}), 500
+        
 @edit_bp.route('/edit/read_hex', methods=['GET'])
 def read_hex():
     """

@@ -130,6 +130,9 @@ HAIR_STYLES = {
     ]
 }
 
+ACCESSORY_MARK = "02 00 00 00"
+END_MARK = "00 00 00 00"
+
 def get_localized_name(name_dict, lang):
     '''日文優先（預設為 ja），找不到才退回中文（zh）'''
     return name_dict.get(lang) or name_dict.get('ja') or name_dict.get('zh') or '???'

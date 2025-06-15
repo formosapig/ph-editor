@@ -81,7 +81,6 @@ def _read_double(stream: BytesIO) -> float:
     return struct.unpack('<d', _read_bytes(stream, 8))[0]
 
 # --- 新增的顏色讀取與格式化函式 ---
-
 def _read_color(stream: BytesIO) -> dict:
     """
     從串流中讀取一個顏色數據，包含 RGBA 四個浮點數 (4 * 4 = 16 位元組)。
@@ -154,3 +153,24 @@ def _pack_float(value: float) -> bytes:
 def _pack_double(value: float) -> bytes:
     """將一個浮點數打包成雙精度浮點數 (8 位元組)。"""
     return struct.pack('<d', value)
+    
+def _pack_color(color_str: str) -> bytes:
+    """
+    將字串形式的顏色資料 (例如 "(255, 128, 64, 255)") 轉換為 4 個 float32 組成的 bytes。
+    如果輸入為 "NaN"，將全部分量設為 0.0。
+    """
+    if color_str == "NaN":
+        return b''.join([_pack_float(0.0)] * 4)
+
+    try:
+        # 去掉括號並分割
+        parts = color_str.strip("()").split(",")
+        rgba = [int(part.strip()) for part in parts]
+        if len(rgba) != 4:
+            raise ValueError("Color string must have 4 components.")
+
+        # 將 0-255 的整數轉為 0.0-1.0 的 float 並打包為 bytes
+        return b''.join([_pack_float(channel / 255.0) for channel in rgba])
+
+    except Exception as e:
+        raise ValueError(f"Invalid color string format: '{color_str}'. Error: {e}")

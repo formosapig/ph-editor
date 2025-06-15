@@ -1,27 +1,39 @@
 # your_character_project/serializers/fixed_header_serializer.py
 
 from io import BytesIO
-from common_types import _pack_bytes # 引入 pack_bytes 函式
+from common_types import _pack_bytes, _pack_uint32  # 確保引入必要的打包函式
 
-# 假設固定頭部是 30 位元組
+# 固定頭部長度
 FIXED_HEADER_LENGTH = 30
 
 def serialize_fixed_header(header_data: dict, stream: BytesIO):
     """
-    序列化固定頭部數據。此為空殼實作。
+    序列化固定頭部數據。
+    
     Args:
-        header_data: 包含固定頭部數據的字典。
+        header_data: 包含固定頭部數據的字典，應包含 'mark', 'strange', 'version'。
         stream: BytesIO 串流物件，用於寫入位元組。
     """
     current_pos = stream.tell()
-    print(f"    [偏移: {current_pos}] 開始序列化固定頭部 (空殼實作)。")
+    print(f"    [偏移: {current_pos}] 開始序列化固定頭部。")
 
-    # 實際實作時，你會使用 header_data 中的值來打包
-    # stream.write(_pack_bytes(header_data.get('signature', b'CHAR')))
-    # stream.write(_pack_uint8(header_data.get('major_version', 1)))
-    # ...
+    # 處理 mark（15 bytes, ASCII）
+    mark = header_data.get('mark', '')
+    mark_bytes = mark.encode('ascii')
+    mark_bytes = mark_bytes.ljust(15, b'\x00')[:15]
+    stream.write(_pack_bytes(mark_bytes))
 
-    # 空殼實作：填充固定長度的 0x00
-    stream.write(_pack_bytes(b'\x00' * FIXED_HEADER_LENGTH))
+    # 處理 strange（4 bytes, UTF-8）
+    strange = header_data.get('strange', '')
+    strange_bytes = strange.encode('utf-8')
+    strange_bytes = strange_bytes.ljust(4, b'\x00')[:4]
+    stream.write(_pack_bytes(strange_bytes))
 
-    print(f"    固定頭部序列化完成 (空殼實作)。下一個寫入位置: {stream.tell()}")
+    # Padding（7 bytes）
+    stream.write(_pack_bytes(b'\x00' * 7))
+
+    # 版本號（4 bytes, uint32）
+    version = header_data.get('version', 0)
+    stream.write(_pack_uint32(version))
+
+    print(f"    固定頭部序列化完成。下一個寫入位置: {stream.tell()}")

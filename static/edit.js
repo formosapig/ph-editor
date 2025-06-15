@@ -123,7 +123,33 @@ function updateTabs(parsedData) {
   document.querySelector('#misc pre').textContent = parsedData.misc ? JSON.stringify(parsedData.misc, null, 2) : '無數據';
 }
 
+function saveFile() {
+  const hexDisplay = document.getElementById('hex-display');
+  hexDisplay.textContent = '正在儲存資料...';
+
+  fetch('/edit/save_bak', {
+    method: 'POST'
+  })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => {
+          throw new Error(err.error || '儲存失敗');
+        }).catch(() => {
+          throw new Error('無法解析伺服器回應');
+        });
+      }
+      return response.json();
+    })
+    .then(result => {
+      hexDisplay.textContent = result.message || '儲存成功！';
+    })
+    .catch(error => {
+      hexDisplay.textContent = '儲存失敗：' + error.message;
+    });
+}
 
 // 為了讓 HTML 中的 onclick 可以直接呼叫這個函式
 // 這裡將 reloadFile 函式暴露到全域作用域
 window.reloadFile = reloadFile;
+// 暴露給 HTML
+window.saveFile = saveFile;

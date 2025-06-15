@@ -14,8 +14,10 @@ instance/
 # Virtual environments
 venv/
 env/
+venv_ph/
 .venv/
 .env/
+.vent_ph/
 
 # Editor/IDE settings
 .vscode/
@@ -54,3 +56,6 @@ coverage.*
 build/
 dist/
 *.egg-info/
+
+# personal bat
+launch_ph.bat

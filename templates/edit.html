@@ -6,9 +6,11 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='edit.css') }}" />
 </head>
 <body>
-    <div class="top-right-button-container">
-        <button type="button" onclick="reloadFile()">重讀</button> <button type="button" onclick="window.close()">結束</button>
-    </div>
+  <div class="top-right-button-container">
+    <button type="button" onclick="reloadFile()">重讀</button>
+    <button type="button" onclick="saveFile()">儲存</button>
+    <button type="button" onclick="window.close()">結束</button>
+  </div>
 
     <h1>編輯檔案：{{ file }}</h1>
 

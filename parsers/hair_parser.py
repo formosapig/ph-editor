@@ -20,7 +20,7 @@ def _parse_single_hair_part(stream: BytesIO, part_name: str, debug_mode: bool = 
     try:
         # 髮型的編碼...
         hair_id = (_read_int32(stream), _read_int32(stream))
-        part_data['id'] = f"({hair_id[0]},{hair_id[1]})"
+        part_data['id'] = f"({hair_id[0]}, {hair_id[1]})"
         
         # 是整套的髮型?
         if is_set(part_name, hair_id):
@@ -41,7 +41,7 @@ def _parse_single_hair_part(stream: BytesIO, part_name: str, debug_mode: bool = 
         # 取得髮型是否有配飾的資料...
         if has_accessory(part_name, hair_id):
         
-            # 4 個 bytes 應該是配飾專屬標記 b'\x02\x00\x00\x00'
+            # 4 個 bytes 應該是配飾專屬標記 b'\x02\x00\x00\x00' = ACCESSORY_MARK
             part_data['accessory_mark'] = _read_bytes_as_hex(stream, 4)
         
             accessory_data = {
@@ -55,7 +55,7 @@ def _parse_single_hair_part(stream: BytesIO, part_name: str, debug_mode: bool = 
             part_data['accessory'] = accessory_data         
         
         else:
-            # 沒有配飾時, 最後 4 個 bytes 應該是本髮型結尾 b'\x00\x00\x00\x00'
+            # 沒有配飾時, 最後 4 個 bytes 應該是本髮型結尾 b'\x00\x00\x00\x00' = END_MARK
             part_data['end_mark'] = _read_bytes_as_hex(stream, 4)
 
         
