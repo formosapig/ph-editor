@@ -3,7 +3,7 @@
 from io import BytesIO
 from common_types import (
     _read_uint32, _read_uint8, _read_float, _read_bytes,
-    _read_color, format_color_for_json, _read_uint16,
+    _read_color, _format_color_for_json, _read_uint16,
     _read_bytes_as_hex, _read_int32
 )
 import json
@@ -29,12 +29,12 @@ def _parse_single_hair_part(stream: BytesIO, part_name: str, debug_mode: bool = 
         # 這邊不讀檔, 讀取 hair 的名稱
         part_data['#name'] = get_hair_by_id(part_name, hair_id)        
 
-        part_data['color'] = format_color_for_json(_read_color(stream))
-        part_data['shine1_color'] = format_color_for_json(_read_color(stream))
+        part_data['color'] = _format_color_for_json(_read_color(stream))
+        part_data['shine1_color'] = _format_color_for_json(_read_color(stream))
         # 「ツヤ絞り」＝「光澤絞紋值」 或 「光澤皺紋程度」
         part_data['shine1_effect'] = max(0, min(100, round(_read_float(stream) * 5))) 
  
-        part_data['shine2_color'] = format_color_for_json(_read_color(stream))
+        part_data['shine2_color'] = _format_color_for_json(_read_color(stream))
         # 「ツヤ絞り」＝「光澤絞紋值」 或 「光澤皺紋程度」
         part_data['shine2_effect'] = max(0, min(100, round(_read_float(stream) * 12.5))) 
             
@@ -45,8 +45,8 @@ def _parse_single_hair_part(stream: BytesIO, part_name: str, debug_mode: bool = 
             part_data['accessory_mark'] = _read_bytes_as_hex(stream, 4)
         
             accessory_data = {
-                'color': format_color_for_json(_read_color(stream)),
-                'shine_color': format_color_for_json(_read_color(stream)),
+                'color': _format_color_for_json(_read_color(stream)),
+                'shine_color': _format_color_for_json(_read_color(stream)),
                 'shine_strength': max(0, min(100, round(_read_float(stream) * 100))),
                 'shine_texture': max(0, min(100, round(_read_float(stream) * 100))),
             }            

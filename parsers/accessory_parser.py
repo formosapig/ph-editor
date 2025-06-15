@@ -3,7 +3,7 @@
 from io import BytesIO
 import json
 from common_types import (
-    _read_uint8, _read_uint32, _read_int32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
+    _read_uint8, _read_uint32, _read_int32, _read_float, _read_color, _format_color_for_json, _read_bytes_as_hex
 )
 # accessory data
 from game_data.accessory_data import get_accessory_by_id, is_colorful, ACCESSORY_SLOT_NAMES
@@ -88,14 +88,14 @@ def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = Fa
     if part['gap'] == '03 00 00 00':
         part.update(
             {
-                'main_color': format_color_for_json(_read_color(stream)),
-                'main_shine': format_color_for_json(_read_color(stream)),
+                'main_color': _format_color_for_json(_read_color(stream)),
+                'main_shine': _format_color_for_json(_read_color(stream)),
                 # 關鍵修改：使用 `or 0.0` 提供預設值
                 'main_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_strength') or 0.0), 
                 'main_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_texture') or 0.0), 
 
-                'sub_color': format_color_for_json(_read_color(stream)),
-                'sub_shine_color': format_color_for_json(_read_color(stream)),
+                'sub_color': _format_color_for_json(_read_color(stream)),
+                'sub_shine_color': _format_color_for_json(_read_color(stream)),
                 'sub_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_strength') or 0.0),
                 'sub_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_texture') or 0.0),
             }

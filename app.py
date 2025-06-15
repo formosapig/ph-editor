@@ -7,6 +7,9 @@ from edit_page import edit_bp
 
 # 從 shared_data 模組引入相關函式
 from shared_data import characters_db, add_or_update_character, clear_characters_db, get_all_character_ids
+# 你的 'PlayHome' 標記 (在 app.py 中也定義，因為這裡會尋找它)
+from file_constants import PLAYHOME_MARKER
+
 
 app = Flask(__name__)
 app.register_blueprint(edit_bp)
@@ -15,9 +18,6 @@ CACHE_DIR = 'cache'
 # 定義儲存掃描路徑的檔案
 SCAN_PATH_FILE = 'scan_path.txt'
 app.config['SECRET_KEY'] = 'sadflkfsdflksdf' # 替換這裡
-# 你的 'PlayHome' 標記 (在 app.py 中也定義，因為這裡會尋找它)
-PLAYHOME_MARKER = b'PlayHome'
-
 
 # 輔助函式：從檔案中讀取掃描路徑
 def _load_scan_path():

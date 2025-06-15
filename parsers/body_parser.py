@@ -2,7 +2,7 @@
 
 from io import BytesIO
 from common_types import (
-    _read_uint32, _read_int32, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
+    _read_uint32, _read_int32, _read_float, _read_color, _format_color_for_json, _read_bytes_as_hex
 )
 import json
 from game_data.body_data import get_body_by_id
@@ -86,7 +86,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         body_data['pubic_hair'] = {
             'id': f"({pubic_hair_id[0]}, {pubic_hair_id[1]})", # 對照陰毛表
             '#name': get_body_by_id('pubic_hair', pubic_hair_id),
-            'color': format_color_for_json(_read_color(stream)), # 陰毛顏色 (Alpha 可設定) - 這裡原註解寫睫毛顏色，應為陰毛顏色
+            'color': _format_color_for_json(_read_color(stream)), # 陰毛顏色 (Alpha 可設定) - 這裡原註解寫睫毛顏色，應為陰毛顏色
             '!strength': _format_float_to_percentage(_read_float(stream)),
             '!texture': _format_float_to_percentage(_read_float(stream)),
         }
@@ -97,7 +97,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         body_data['tattoo'] = {
             'id': tattoo_id, # 對照刺青表
             '#name': get_body_by_id('tattoo', tattoo_id),
-            'color': format_color_for_json(_read_color(stream)), # 刺青顏色
+            'color': _format_color_for_json(_read_color(stream)), # 刺青顏色
             # 0x43 0x00 0x00 0x00 感覺是跟著 Tattoo 的
             '!padding1': _read_bytes_as_hex(stream, 4) # 從 0x018E 到 0x0192，中間有 4 個 bytes 的空位        
         }
@@ -220,8 +220,8 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         # -- Nail Polish 爪 指甲油 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Nail Polish' data.")
         body_data['nails']['polish'] = {
-            'color': format_color_for_json(_read_color(stream)), # 指甲油顏色 (Alpha 可設定)
-            '!shine': format_color_for_json(_read_color(stream)), # 指甲油顏色 (Alpha 可設定)
+            'color': _format_color_for_json(_read_color(stream)), # 指甲油顏色 (Alpha 可設定)
+            '!shine': _format_color_for_json(_read_color(stream)), # 指甲油顏色 (Alpha 可設定)
             'shine_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
             'shine_texture': _format_float_to_percentage(_read_float(stream)), # 光澤質感
         }

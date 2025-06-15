@@ -65,7 +65,7 @@ def _read_color(stream: BytesIO) -> dict:
     }
     return color_data
 
-def format_color_for_json(color_data: dict) -> str:
+def _format_color_for_json(color_data: dict) -> str:
     """
     將顏色字典轉換為 (R, G, B, A) 字串格式，其中 R, G, B, A 範圍為 0-255。
     """

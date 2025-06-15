@@ -1,14 +1,14 @@
 # your_flask_app/shared_data.py
 
 from character_data import CharacterData # 引入 CharacterData 類別
+# 你的 'PlayHome' 標記
+from file_constants import PLAYHOME_MARKER
 
 # 這個字典將用於儲存所有掃描到的角色數據。
 # 鍵 (key) 將是檔案名 (不含 .png)。
 # 值 (value) 將是 CharacterData 物件實例。
 characters_db = {}
 
-# 你的 'PlayHome' 標記
-PLAYHOME_MARKER = b'PlayHome'
 
 def add_or_update_character(character_id: str, raw_data_with_marker: bytes):
     """

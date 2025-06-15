@@ -3,7 +3,7 @@
 from io import BytesIO
 import json
 from common_types import (
-    _read_uint32, _read_int32, _read_uint8, _read_float, _read_color, format_color_for_json, _read_bytes_as_hex
+    _read_uint32, _read_int32, _read_uint8, _read_float, _read_color, _format_color_for_json, _read_bytes_as_hex
 )
 # clothing data
 from game_data.clothing_data import (
@@ -80,16 +80,16 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
         part.update(
             {
                 # 主色
-                'main_color': format_color_for_json(_read_color(stream)),
+                'main_color': _format_color_for_json(_read_color(stream)),
                 # 主色光澤
-                'main_shine': format_color_for_json(_read_color(stream)),
+                'main_shine': _format_color_for_json(_read_color(stream)),
                 'main_shine_strength': _format_float_to_percentage(_read_float(stream)),
                 'main_shine_texture': _format_float_to_percentage(_read_float(stream)),
 
                 # 輔色
-                'sub_color': format_color_for_json(_read_color(stream)),
+                'sub_color': _format_color_for_json(_read_color(stream)),
                 # 輔色光澤
-                'sub_shine_color': format_color_for_json(_read_color(stream)),
+                'sub_shine_color': _format_color_for_json(_read_color(stream)),
                 'sub_shine_strength': _format_float_to_percentage(_read_float(stream)),
                 'sub_shine_texture': _format_float_to_percentage(_read_float(stream)),
             }

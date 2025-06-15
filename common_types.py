@@ -1,176 +1,163 @@
-# your_character_project/core/common_types.py
+# ph-editor/core/common_types.py
+# 以後整理時, 再搬到 core 去.
 
 import struct
 from io import BytesIO
 
-# --- 讀取 (Parsing) 相關函式 ---
+# --- Bytes 相關函式 ---
 
 def _read_bytes(stream: BytesIO, length: int) -> bytes:
-    """
-    從 BytesIO 串流中讀取指定長度的位元組。
-    如果串流中的位元組不足，會拋出 EOFError。
-
-    Args:
-        stream: BytesIO 串流物件。
-        length: 要讀取的位元組長度。
-
-    Returns:
-        讀取到的位元組資料。
-
-    Raises:
-        EOFError: 如果串流結束且無法讀取足夠的位元組。
-    """
     data = stream.read(length)
     if len(data) < length:
         raise EOFError(f"資料流結束，無法讀取 {length} 位元組。已讀取 {len(data)} 位元組。")
     return data
 
+def _pack_bytes(data: bytes) -> bytes:
+    return data
+
 def _read_bytes_as_hex(stream: BytesIO, length: int) -> str:
-    """
-    從 BytesIO 串流讀取指定長度的位元組，並回傳 JSON 可接受的十六進位字串（帶 "0x" 前綴）。
-
-    Args:
-        stream: BytesIO 串流物件。
-        length: 要讀取的位元組長度。
-
-    Returns:
-        十六進位字串，格式例如 "AA BB CC DD"。
-    """
     data = _read_bytes(stream, length)
-    hex_str = ' '.join(f'{b:02X}' for b in data)
-    return hex_str
-    
+    return ' '.join(f'{b:02X}' for b in data)
+
+
+# --- 無符號整數相關函式 ---
+
 def _read_uint8(stream: BytesIO) -> int:
-    """從 BytesIO 串流中讀取一個無符號 8 位元整數 (1 位元組)。"""
     return struct.unpack('<B', _read_bytes(stream, 1))[0]
 
+def _pack_uint8(value: int) -> bytes:
+    return struct.pack('<B', value)
+
 def _read_uint16(stream: BytesIO) -> int:
-    """從 BytesIO 串流中讀取一個無符號 16 位元整數 (2 位元組)。"""
     return struct.unpack('<H', _read_bytes(stream, 2))[0]
 
+def _pack_uint16(value: int) -> bytes:
+    return struct.pack('<H', value)
+
 def _read_uint32(stream: BytesIO) -> int:
-    """從 BytesIO 串流中讀取一個無符號 32 位元整數 (4 位元組)。"""
     return struct.unpack('<I', _read_bytes(stream, 4))[0]
 
+def _pack_uint32(value: int) -> bytes:
+    return struct.pack('<I', value)
+
+
+# --- 有符號整數相關函式 ---
+
 def _read_int32(stream: BytesIO) -> int:
-    """從 BytesIO 串流中讀取一個有符號 32 位元整數 (4 位元組)。"""
     return struct.unpack('<i', _read_bytes(stream, 4))[0]
 
-def _read_float(stream: BytesIO) -> float | None: # 修改返回類型提示
-    """
-    從 BytesIO 串流中讀取一個 32 位元浮點數。
-    如果讀取到的值是 NaN，則返回 None。
-    """
+def _pack_int32(value: int) -> bytes:
+    return struct.pack('<i', value)
+
+
+# --- 浮點數相關函式 ---
+
+def _read_float(stream: BytesIO) -> float | None:
     bytes_data = stream.read(4)
     if len(bytes_data) < 4:
         raise EOFError("Attempted to read 4 bytes for float but stream ended.")
-    
     value = struct.unpack('<f', bytes_data)[0]
-    
-    # 檢查是否為 NaN
-    if value != value: # NaN 的一個特性是它不等於自身
+    if value != value:  # NaN check
         return None
-    # 你也可以檢查正負無限大，如果需要的話
-    # if value == float('inf') or value == float('-inf'):
-    #     return None
-        
     return value
 
+def _pack_float(value: float) -> bytes:
+    return struct.pack('<f', value)
+
 def _read_double(stream: BytesIO) -> float:
-    """從 BytesIO 串流中讀取一個雙精度浮點數 (8 位元組)。"""
     return struct.unpack('<d', _read_bytes(stream, 8))[0]
 
-# --- 新增的顏色讀取與格式化函式 ---
+def _pack_double(value: float) -> bytes:
+    return struct.pack('<d', value)
+
+
+# --- 顏色相關函式 ---
+
 def _read_color(stream: BytesIO) -> dict:
-    """
-    從串流中讀取一個顏色數據，包含 RGBA 四個浮點數 (4 * 4 = 16 位元組)。
-    R, G, B, A 的值範圍通常為 0.0 到 1.0。
-    """
-    color_data = {
+    return {
         'r': _read_float(stream),
         'g': _read_float(stream),
         'b': _read_float(stream),
-        'a': _read_float(stream)
+        'a': _read_float(stream),
     }
-    return color_data
 
-def format_color_for_json(color_data: dict) -> str:
-    """
-    將解析後的顏色數據（包含 R, G, B, A 鍵的字典，值為 float 0.0-1.0）
-    轉換為 (R, G, B, A) 格式的字串，其中 R, G, B, A 為 0-255 的整數。
-    如果任何顏色分量是 None 或 NaN，則整個顏色字串表示為 "NaN"。
-    """
-    # 檢查任何一個顏色分量是否為 None 或 NaN
-    # NaN 的特性是它不等於自身 (x != x)
-    if (color_data['r'] is None or color_data['r'] != color_data['r'] or
-        color_data['g'] is None or color_data['g'] != color_data['g'] or
-        color_data['b'] is None or color_data['b'] != color_data['b'] or
-        color_data['a'] is None or color_data['a'] != color_data['a']):
-        return "NaN" # 如果任何分量是 None 或 NaN，則返回 "NaN" 字串
+def _format_color_for_json(color_data: dict) -> str:
+    if any(c is None or c != c for c in (color_data['r'], color_data['g'], color_data['b'], color_data['a'])):
+        return "NaN"
+    r = max(0, min(255, round(color_data['r'] * 255)))
+    g = max(0, min(255, round(color_data['g'] * 255)))
+    b = max(0, min(255, round(color_data['b'] * 255)))
+    a = max(0, min(255, round(color_data['a'] * 255)))
+    return f"({r}, {g}, {b}, {a})"
 
-    # 進行轉換，確保值在 0-255 範圍內
-    r_255 = max(0, min(255, round(color_data['r'] * 255)))
-    g_255 = max(0, min(255, round(color_data['g'] * 255)))
-    b_255 = max(0, min(255, round(color_data['b'] * 255)))
-    a_255 = max(0, min(255, round(color_data['a'] * 255))) 
-
-    # 返回 (R, G, B, A) 格式的字串
-    return f"({r_255}, {g_255}, {b_255}, {a_255})"
-    
-
-# --- 寫入 (Serialization) 相關函式 ---
-
-def _pack_bytes(data: bytes) -> bytes:
-    """
-    直接回傳位元組資料 (用於寫入)。
-    Args:
-        data: 要寫入的位元組資料。
-    Returns:
-        位元組資料。
-    """
-    return data
-
-def _pack_uint8(value: int) -> bytes:
-    """將一個整數打包成無符號 8 位元整數 (1 位元組)。"""
-    return struct.pack('<B', value)
-
-def _pack_uint16(value: int) -> bytes:
-    """將一個整數打包成無符號 16 位元整數 (2 位元組)。"""
-    return struct.pack('<H', value)
-
-def _pack_uint32(value: int) -> bytes:
-    """將一個整數打包成無符號 32 位元整數 (4 位元組)。"""
-    return struct.pack('<I', value)
-
-def _pack_int32(value: int) -> bytes:
-    """將一個整數打包成有符號 32 位元整數 (4 位元組)。"""
-    return struct.pack('<i', value)
-
-def _pack_float(value: float) -> bytes:
-    """將一個浮點數打包成單精度浮點數 (4 位元組)。"""
-    return struct.pack('<f', value)
-
-def _pack_double(value: float) -> bytes:
-    """將一個浮點數打包成雙精度浮點數 (8 位元組)。"""
-    return struct.pack('<d', value)
-    
 def _pack_color(color_str: str) -> bytes:
-    """
-    將字串形式的顏色資料 (例如 "(255, 128, 64, 255)") 轉換為 4 個 float32 組成的 bytes。
-    如果輸入為 "NaN"，將全部分量設為 0.0。
-    """
     if color_str == "NaN":
         return b''.join([_pack_float(0.0)] * 4)
-
     try:
-        # 去掉括號並分割
         parts = color_str.strip("()").split(",")
-        rgba = [int(part.strip()) for part in parts]
+        rgba = [int(p.strip()) for p in parts]
         if len(rgba) != 4:
             raise ValueError("Color string must have 4 components.")
-
-        # 將 0-255 的整數轉為 0.0-1.0 的 float 並打包為 bytes
-        return b''.join([_pack_float(channel / 255.0) for channel in rgba])
-
+        return b''.join([_pack_float(c / 255.0) for c in rgba])
     except Exception as e:
         raise ValueError(f"Invalid color string format: '{color_str}'. Error: {e}")
+
+# 組合函式, 讀取並格式化一步到位
+def _read_and_format_color(stream: BytesIO) -> str:
+    return _format_color_for_json(_read_color(stream))
+
+
+# --- 數值設定相關函式 ---
+# 預設是 0.0 - 1.0 <==> 0 - 100 部份值比較奇怪需注意, 色相的話是 -50 ~ 50 
+
+def _format_float_to_value(source: float, scale: float = 100, min_val: int = 0, max_val: int = 100) -> int:
+    """
+    將浮點數轉換為指定範圍內的整數百分比值。
+
+    Args:
+        source: 輸入的浮點數。
+        scale: 乘數，預設為100，表示將小數轉成百分比。
+        min_val: 輸出最小值，預設0。
+        max_val: 輸出最大值，預設100。
+
+    Returns:
+        整數百分比，限制在 [min_val, max_val] 範圍內。
+    """
+    value = round(source * scale)
+    if value < min_val or value > max_val:
+        print(f"[WARN] Source {source} resulted in {value}%, clamped to [{min_val}, {max_val}].")
+    return max(min_val, min(max_val, value))
+
+def _parse_value_to_float(value: int, scale: float = 100, min_val: int = 0, max_val: int = 100) -> float:
+    """
+    將整數百分比轉回浮點數，並檢查範圍。
+
+    Args:
+        value: 整數。
+        scale: 除數，預設為100。
+        min_val: 百分比最小值。
+        max_val: 百分比最大值。
+
+    Returns:
+        浮點數，對應百分比的比例值。
+
+    Raises:
+        ValueError: 若百分比不在 [min_val, max_val] 範圍內，會印出警告但仍回傳值。
+    """
+    if value < min_val or value > max_val:
+        print(f"[WARN] Value {value}% out of range [{min_val}, {max_val}].")
+    return value / scale
+
+# 組合函式, 方便一次處理完...
+def _read_and_format_to_value(stream: BytesIO, scale: float = 100, min_val: int = 0, max_val: int = 100) -> int:
+    source = _read_float(stream)
+    return _format_float_to_value(source, scale, min_val, max_val    )
+
+# 組合函式, 方便一次處理完....
+def _parse_and_pack_float(value: int, scale: float = 100, min_val: int = 0, max_val: int = 100) -> bytes:
+    """
+    將整數值 (通常是百分比 0-100) 轉為浮點數，並打包為 float32 bytes。
+    """
+    clamped_value = max(min_val, min(max_val, value))  # 確保值在合法範圍內
+    float_value = clamped_value / scale
+    return _pack_float(float_value)
