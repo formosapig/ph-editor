@@ -68,8 +68,8 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         pupil_id = _read_int32(stream)
         temp_left_eyeball = {
             'pupil_id': pupil_id,       # 左瞳 ID
-            'sclera_color': _read_and_format_color(stream), # 左眼白顏色 (RGBA, alpha 無效)
             '#name': get_face_by_id('eyeball', pupil_id),
+            'sclera_color': _read_and_format_color(stream), # 左眼白顏色 (RGBA, alpha 無效)
             'pupil_color': _read_and_format_color(stream),  # 左瞳孔顏色 (RGBA, alpha 無效)
             'pupil_size': _read_and_format_to_value(stream),     # 左瞳孔大小
             'pupil_brightness': _read_and_format_to_value(stream), # 左瞳孔亮度
@@ -80,8 +80,8 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         pupil_id = _read_int32(stream)
         temp_right_eyeball = {
             'pupil_id': pupil_id,       # 右瞳 ID
-            'sclera_color': _read_and_format_color(stream), # 右眼白顏色 (RGBA, alpha 無效)
             '#name': get_face_by_id('eyeball', pupil_id),
+            'sclera_color': _read_and_format_color(stream), # 右眼白顏色 (RGBA, alpha 無效)
             'pupil_color': _read_and_format_color(stream),  # 右瞳孔顏色 (RGBA, alpha 無效)
             'pupil_size': _read_and_format_to_value(stream),     # 右瞳孔大小
             'pupil_brightness': _read_and_format_to_value(stream), # 右瞳孔亮度

@@ -1,8 +1,8 @@
-# your_character_project/parsers/body_parser.py
+# ph-editor/parsers/body_parser.py
 
 from io import BytesIO
 from common_types import (
-    _read_uint32, _read_int32, _read_float, _read_color, _format_color_for_json, _read_bytes_as_hex
+    _read_int32, _read_bytes_as_hex, _read_and_format_color, _read_and_format_to_value,
 )
 import json
 from game_data.body_data import get_body_by_id
@@ -54,41 +54,35 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         print(f"  [Offset: {current_pos}] Starting to parse body data.")
 
     try:
-        # 請注意：這裡假設 stream 已經在正確的起始位置。
-        # 如果不是，您可能需要 stream.seek(0x034E)
-        # 但在一個連續的解析流程中，通常會依序讀取。
-
-        # 先讀 16 bytes 出來看看...
-        #body_data['test'] = _read_bytes_as_hex(stream, 32)
-
-
         # -- Overall Skin 全體 肌 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Overall Skin' data.")
-        skin_id = (_read_int32(stream), _read_int32(stream))
+        skin_id = _read_int32(stream)
         temp_overall = {
-            'skin_id': f"({skin_id[0]}, {skin_id[1]})", # 對照肌表
+            'skin_id': skin_id, # 對照肌表
+            'skin_extra': _read_int32(stream), # extra value = 5
             '#skin_name': get_body_by_id('skin', skin_id),
             'flesh_strength': None,
-            'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
-            'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
-            '!alpha': _format_float_to_percentage(_read_float(stream)), # 透明度 (無法設定)
-            'gloss_strength': _format_float_to_scaled_percentage(_read_float(stream), scale=250, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤強度
-            'gloss_texture': _format_float_to_scaled_percentage(_read_float(stream), scale=125, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤質感
+            'hue': _read_and_format_to_value(stream, scale=100, min_val=-50, max_val=50), # 色相
+            'saturation': _read_and_format_to_value(stream, scale=50), # 彩度
+            'value': _read_and_format_to_value(stream, scale=50), # 明度
+            '!alpha': _read_and_format_to_value(stream), # 透明度 (無法設定)
+            'gloss_strength': _read_and_format_to_value(stream, scale=250), # 光澤強度
+            'gloss_texture': _read_and_format_to_value(stream, scale=125), # 光澤質感
             '!extra_value2': _read_bytes_as_hex(stream, 4), #extra value 2 = 0 ? 
-            #'flesh_strength': _format_float_to_percentage(_read_float(stream)), # 肉感強度
+            #'flesh_strength': _read_and_format_to_value(stream), # 肉感強度
         }
-        temp_overall['flesh_strength'] = _format_float_to_percentage(_read_float(stream)) # 肉感強度
+        temp_overall['flesh_strength'] = _read_and_format_to_value(stream) # 肉感強度
 
         # -- Pubic Hair 陰毛 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Pubic Hair' data.")
-        pubic_hair_id = (_read_int32(stream), _read_int32(stream))
+        pubic_hair_id = _read_int32(stream)
         body_data['pubic_hair'] = {
-            'id': f"({pubic_hair_id[0]}, {pubic_hair_id[1]})", # 對照陰毛表
+            'id': pubic_hair_id, # 對照陰毛表
+            'extra': _read_int32(stream), # extra value = 4
             '#name': get_body_by_id('pubic_hair', pubic_hair_id),
-            'color': _format_color_for_json(_read_color(stream)), # 陰毛顏色 (Alpha 可設定) - 這裡原註解寫睫毛顏色，應為陰毛顏色
-            '!strength': _format_float_to_percentage(_read_float(stream)),
-            '!texture': _format_float_to_percentage(_read_float(stream)),
+            'color': _read_and_format_color(stream), # 陰毛顏色 (Alpha 可設定)
+            '!strength': _read_and_format_to_value(stream),
+            '!texture': _read_and_format_to_value(stream),
         }
 
         # -- Tattoo 刺青 --
@@ -97,7 +91,7 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         body_data['tattoo'] = {
             'id': tattoo_id, # 對照刺青表
             '#name': get_body_by_id('tattoo', tattoo_id),
-            'color': _format_color_for_json(_read_color(stream)), # 刺青顏色
+            'color': _read_and_format_color(stream), # 刺青顏色
             # 0x43 0x00 0x00 0x00 感覺是跟著 Tattoo 的
             '!padding1': _read_bytes_as_hex(stream, 4) # 從 0x018E 到 0x0192，中間有 4 個 bytes 的空位        
         }
@@ -105,89 +99,90 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         # -- Overall Height 全體 身高 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Overall Height' data.")
         body_data['overall'] = {
-            'height': _format_float_to_percentage(_read_float(stream)), # 身高
+            'height': _read_and_format_to_value(stream), # 身高
         }
 
         # -- Chest 胸 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Chest' data.")
         body_data['breast'] = {
-            'size': _format_float_to_percentage(_read_float(stream)), # 胸部大小
-            'vertical_position': _format_float_to_percentage(_read_float(stream)), # 胸上下位置
-            'horizontal_spread': _format_float_to_percentage(_read_float(stream)), # 胸部左右張開
-            'horizontal_position': _format_float_to_percentage(_read_float(stream)), # 胸部左右位置
-            'angle': _format_float_to_percentage(_read_float(stream)), # 胸部上下角度
-            'firmness': _format_float_to_percentage(_read_float(stream)), # 胸部尖挺
-            'areola_prominence': _format_float_to_percentage(_read_float(stream)), # 乳暈隆起
-            'nipple_thickness': _format_float_to_percentage(_read_float(stream)), # 乳頭粗細
+            'size': _read_and_format_to_value(stream), # 胸部大小
+            'vertical_position': _read_and_format_to_value(stream), # 胸上下位置
+            'horizontal_spread': _read_and_format_to_value(stream), # 胸部左右張開
+            'horizontal_position': _read_and_format_to_value(stream), # 胸部左右位置
+            'angle': _read_and_format_to_value(stream), # 胸部上下角度
+            'firmness': _read_and_format_to_value(stream), # 胸部尖挺
+            'areola_prominence': _read_and_format_to_value(stream), # 乳暈隆起
+            'nipple_thickness': _read_and_format_to_value(stream), # 乳頭粗細
         }
 
         # -- Overall Head Size 全体 頭大小 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Overall Head Size' data.")
         body_data['overall'].update(
             {
-                'head_size': _format_float_to_percentage(_read_float(stream)), # 頭大小
+                'head_size': _read_and_format_to_value(stream), # 頭大小
             } | temp_overall
         )
 
         # -- Upper Body 上半身 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Upper Body' data.")
         body_data['upper_body'] = {
-            'neck_width': _format_float_to_percentage(_read_float(stream)), # 脖子寬度
-            'neck_thickness': _format_float_to_percentage(_read_float(stream)), # 脖子厚度
-            'torso_shoulder_width': _format_float_to_percentage(_read_float(stream)), # 軀幹肩部寬度
-            'torso_shoulder_thickness': _format_float_to_percentage(_read_float(stream)), # 軀幹肩部厚度
-            'torso_upper_width': _format_float_to_percentage(_read_float(stream)), # 軀幹上部寬度
-            'torso_upper_thickness': _format_float_to_percentage(_read_float(stream)), # 軀幹上部厚度
-            'torso_lower_width': _format_float_to_percentage(_read_float(stream)), # 軀幹下部寬度
-            'torso_lower_thickness': _format_float_to_percentage(_read_float(stream)), # 軀幹下部厚度
+            'neck_width': _read_and_format_to_value(stream), # 脖子寬度
+            'neck_thickness': _read_and_format_to_value(stream), # 脖子厚度
+            'torso_shoulder_width': _read_and_format_to_value(stream), # 軀幹肩部寬度
+            'torso_shoulder_thickness': _read_and_format_to_value(stream), # 軀幹肩部厚度
+            'torso_upper_width': _read_and_format_to_value(stream), # 軀幹上部寬度
+            'torso_upper_thickness': _read_and_format_to_value(stream), # 軀幹上部厚度
+            'torso_lower_width': _read_and_format_to_value(stream), # 軀幹下部寬度
+            'torso_lower_thickness': _read_and_format_to_value(stream), # 軀幹下部厚度
         }
 
         # -- Lower Body 下半身 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Lower Body' data.")
         body_data['lower_body'] = {
-            'waist_position': _format_float_to_percentage(_read_float(stream)), # 腰部位置
-            'waist_upper_width': _format_float_to_percentage(_read_float(stream)), # 腰部以上寬度
-            'waist_upper_thickness': _format_float_to_percentage(_read_float(stream)), # 腰部以上厚度
-            'waist_lower_width': _format_float_to_percentage(_read_float(stream)), # 腰部以下寬度
-            'waist_lower_thickness': _format_float_to_percentage(_read_float(stream)), # 腰部以下厚度
-            'hip_size': _format_float_to_percentage(_read_float(stream)), # 臀部大小
-            'hip_angle': _format_float_to_percentage(_read_float(stream)), # 臀部角度
+            'waist_position': _read_and_format_to_value(stream), # 腰部位置
+            'waist_upper_width': _read_and_format_to_value(stream), # 腰部以上寬度
+            'waist_upper_thickness': _read_and_format_to_value(stream), # 腰部以上厚度
+            'waist_lower_width': _read_and_format_to_value(stream), # 腰部以下寬度
+            'waist_lower_thickness': _read_and_format_to_value(stream), # 腰部以下厚度
+            'hip_size': _read_and_format_to_value(stream), # 臀部大小
+            'hip_angle': _read_and_format_to_value(stream), # 臀部角度
         }
 
         # -- Legs 脚 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Legs' data.")
         body_data['legs'] = {
-            'thigh_upper': _format_float_to_percentage(_read_float(stream)), # 大腿上部
-            'thigh_lower': _format_float_to_percentage(_read_float(stream)), # 大腿下部
-            'calf': _format_float_to_percentage(_read_float(stream)), # 小腿肚
-            'ankle': _format_float_to_percentage(_read_float(stream)), # 腳踝
+            'thigh_upper': _read_and_format_to_value(stream), # 大腿上部
+            'thigh_lower': _read_and_format_to_value(stream), # 大腿下部
+            'calf': _read_and_format_to_value(stream), # 小腿肚
+            'ankle': _read_and_format_to_value(stream), # 腳踝
         }
 
         # -- Arms 腕 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Arms' data.")
         body_data['arms'] = {
-            'shoulder': _format_float_to_percentage(_read_float(stream)), # 肩膀
-            'upper_arm': _format_float_to_percentage(_read_float(stream)), # 上臂
-            'forearm': _format_float_to_percentage(_read_float(stream)), # 前臂
+            'shoulder': _read_and_format_to_value(stream), # 肩膀
+            'upper_arm': _read_and_format_to_value(stream), # 上臂
+            'forearm': _read_and_format_to_value(stream), # 前臂
         }
 
         # -- Chest (Nipple Erectness) 胸 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Chest (Nipple Erectness)' data.")
-        body_data['breast']['nipple_erectness'] = _format_float_to_percentage(_read_float(stream)) # 乳頭挺立
+        body_data['breast']['nipple_erectness'] = _read_and_format_to_value(stream) # 乳頭挺立
 
         # -- Nipples 胸 乳首 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Nipples' data.")
-        nipples_id = (_read_int32(stream), _read_int32(stream))
+        nipples_id = _read_int32(stream) 
         nipples = {
-            'id': f"({nipples_id[0]}, {nipples_id[1]})", # 對照乳頭表
+            'id': nipples_id, # 對照乳頭表
+            'extra': _read_int32(stream), # default value = 5
             '#name': get_body_by_id('nipples', nipples_id),
             'areola_size': None, # 佔位
-            'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
-            'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
-            'alpha': _format_float_to_percentage(_read_float(stream)), # 透明
-            'gloss_strength': _format_float_to_scaled_percentage(_read_float(stream), scale=250, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤強度
-            'gloss_texture': _format_float_to_scaled_percentage(_read_float(stream), scale=125, min_val=0, max_val=100, debug_mode=debug_mode), # 光澤質感
+            'hue': _read_and_format_to_value(stream, min_val=-50, max_val=50), # 色相
+            'saturation': _read_and_format_to_value(stream, scale=50), # 彩度
+            'value': _read_and_format_to_value(stream, scale=50), # 明度
+            'alpha': _read_and_format_to_value(stream), # 透明
+            'gloss_strength': _read_and_format_to_value(stream, scale=250), # 光澤強度
+            'gloss_texture': _read_and_format_to_value(stream, scale=125), # 光澤質感
         }
 
         # -- Tan Lines 曬痕 --
@@ -196,10 +191,10 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         body_data['tan_lines'] = {
             'id': tan_lines_id, # 對照曬痕表
             '#name': get_body_by_id('tan_lines', tan_lines_id),
-            'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
-            'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
-            'intensity': _format_float_to_percentage(_read_float(stream)), # 濃度
+            'hue': _read_and_format_to_value(stream, min_val=-50, max_val=50), # 色相
+            'saturation': _read_and_format_to_value(stream, scale=50), # 彩度
+            'value': _read_and_format_to_value(stream, scale=50), # 明度
+            'intensity': _read_and_format_to_value(stream), # 濃度
             # 0x43 0x00 0x00 0x00 感覺是跟著 Tan Lines 的
             '!padding1': _read_bytes_as_hex(stream, 4)
         }
@@ -207,12 +202,12 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         # -- Nails 爪 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Nails' data.")
         body_data['nails'] = {
-            'hue': _format_float_to_scaled_percentage(_read_float(stream), scale=100, min_val=-50, max_val=50, debug_mode=debug_mode), # 色相
-            'saturation': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 彩度
-            'value': _format_float_to_scaled_percentage(_read_float(stream), scale=50, min_val=0, max_val=100, debug_mode=debug_mode), # 明度
-            'alpha': _format_float_to_percentage(_read_float(stream)), # 透明度 (不可修改)
-            'gloss_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
-            'gloss_texture': _format_float_to_percentage(_read_float(stream)), # 光澤質感
+            'hue': _read_and_format_to_value(stream, min_val=-50, max_val=50), # 色相
+            'saturation': _read_and_format_to_value(stream, scale=50), # 彩度
+            'value': _read_and_format_to_value(stream, scale=50), # 明度
+            'alpha': _read_and_format_to_value(stream), # 透明度 (不可修改)
+            'gloss_strength': _read_and_format_to_value(stream), # 光澤強度
+            'gloss_texture': _read_and_format_to_value(stream), # 光澤質感
             # 0x02 0x00 0x00 0x00 感覺是跟著 nails 的
             '!padding1': _read_bytes_as_hex(stream, 4)
         }
@@ -220,21 +215,21 @@ def parse_body_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         # -- Nail Polish 爪 指甲油 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Nail Polish' data.")
         body_data['nails']['polish'] = {
-            'color': _format_color_for_json(_read_color(stream)), # 指甲油顏色 (Alpha 可設定)
-            '!shine': _format_color_for_json(_read_color(stream)), # 指甲油顏色 (Alpha 可設定)
-            'shine_strength': _format_float_to_percentage(_read_float(stream)), # 光澤強度
-            'shine_texture': _format_float_to_percentage(_read_float(stream)), # 光澤質感
+            'color': _read_and_format_color(stream), # 指甲油顏色 (Alpha 可設定)
+            '!shine': _read_and_format_color(stream), # 指甲油顏色 (Alpha 可設定)
+            'shine_strength': _read_and_format_to_value(stream), # 光澤強度
+            'shine_texture': _read_and_format_to_value(stream), # 光澤質感
         }
 
         # -- Chest (Areola Size) 胸 乳首 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Chest (Areola Size)' data.")
         # 這個值其實是屬於 'nipples' 分類下的 'areola_size'
-        nipples['areola_size'] = _format_float_to_percentage(_read_float(stream)) # 乳暈大小
+        nipples['areola_size'] = _read_and_format_to_value(stream) # 乳暈大小
 
         # -- Chest (Softness & Weight) 胸 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Chest (Softness & Weight)' data.")
-        body_data['breast']['softness'] = _format_float_to_percentage(_read_float(stream)) # 胸部柔軟
-        body_data['breast']['weight'] = _format_float_to_percentage(_read_float(stream)) # 胸部重量
+        body_data['breast']['softness'] = _read_and_format_to_value(stream) # 胸部柔軟
+        body_data['breast']['weight'] = _read_and_format_to_value(stream) # 胸部重量
         body_data['breast']['nipples'] = nipples
 
         # padding ?

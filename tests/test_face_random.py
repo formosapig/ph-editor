@@ -1,22 +1,16 @@
-# your_character_project/tests/test_face_random.py
+# ph-editor/tests/test_face_random.py
 
 import random
 from io import BytesIO
 
 import pytest
 
+# test utils
+from tests.utils import compare_dicts, _random_color_str
 # 導入序列化和解析函數
 from serializers.face_serializer import serialize_face_data
-from parsers.face_parser import parse_face_data # 假設您已經有這個解析器
+from parsers.face_parser import parse_face_data
 from game_data.face_data import FACE_DETAILS
-
-def _random_color_str():
-    """生成一個隨機的 RGBA 顏色字串 (R, G, B, A)"""
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
-    a = 255 # 通常 Alpha 值為 255
-    return f"({r}, {g}, {b}, {a})"
 
 def format_for_test(category_name, item):
     """
@@ -291,54 +285,6 @@ def test_random_face_roundtrip(_):
     print(f"  Eyebrows ID: {parsed_face_data['eyebrows']['id']}")
     print(f"  Left Eyeball ID: {parsed_face_data['eyeballs']['left_eyeball']['pupil_id']}")
     print(f"  Tattoo ID: {parsed_face_data['tattoo']['id']}")
-
-
-    # 輔助函數：遞歸比較字典
-    def compare_dicts(d1, d2, path=""):
-        for k in d1:
-            if k not in d2:
-                pytest.fail(f"Key '{path}{k}' missing in parsed data.")
-            
-            val1 = d1[k]
-            val2 = d2[k]
-
-            # 處理特定的 ID 轉換
-            #if k in ["contour_id", "muscle_id", "wrinkle_id", "pupil_id", "id"] and path not in ['makeup.', 'eyebrows.', 'eyelashes.', 'eyeballs.']:
-                # 對於這些單一 ID，確保它們是整數並直接比較
-            #    if not isinstance(val1, int): # val1 應該是 int
-            #        pytest.fail(f"Original value for {path}{k} is not int: {val1!r}")
-            #    if not isinstance(val2, int): # val2 應該是 int
-            #        pytest.fail(f"Parsed value for {path}{k} is not int: {val2!r}")
-            #    assert val1 == val2, f"Mismatch at {path}{k}: Original={val1}, Parsed={val2}"
-            #elif k in ["eyebrows_id", "eyelash_id", "highlight_id"]: # 處理 (int, int) 元組 ID 的字串形式
-            #    assert str_to_id(val1) == str_to_id(val2), f"Mismatch at {path}{k}: Original='{val1}', Parsed='{val2}'"
-            # 處理特定的 ID 轉換
-            if k in ["contour_id", "muscle_id", "wrinkle_id", "pupil_id", "id", "highlight_id"] and path not in ['makeup.']:
-                # 對於這些單一 ID，確保它們是整數並直接比較
-                if not isinstance(val1, int): # val1 應該是 int
-                    pytest.fail(f"Original value for {path}{k} is not int: {val1!r}")
-                if not isinstance(val2, int): # val2 應該是 int
-                    pytest.fail(f"Parsed value for {path}{k} is not int: {val2!r}")
-                assert val1 == val2, f"Mismatch at {path}{k}: Original={val1}, Parsed={val2}"                
-                
-            elif isinstance(val1, dict):
-                compare_dicts(val1, val2, path=f"{path}{k}.")
-            elif isinstance(val1, tuple) and all(isinstance(x, int) for x in val1) and len(val1) == 4:
-                # 假設所有 4 元素元組都是顏色 (RGBA)
-                assert val1 == val2, f"Mismatch at {path}{k} (color): Original={val1}, Parsed={val2}"
-            elif isinstance(val1, (int, float)):
-                # 處理浮點數比較時的精度問題
-                if isinstance(val1, float) and abs(val1 - val2) > 1e-6: # 浮點數精度
-                    pytest.fail(f"Mismatch at {path}{k} (float): Original={val1}, Parsed={val2}")
-                elif val1 != val2: # 其他數字直接比較
-                    pytest.fail(f"Mismatch at {path}{k}: Original={val1}, Parsed={val2}")
-            else:
-                # 其他類型直接比較
-                assert val1 == val2, f"Mismatch at {path}{k}: Original='{val1}', Parsed='{val2}'"
-
-        for k in d2: # 檢查 parsed 是否有多餘的鍵
-            if k not in d1 and not k.startswith('#'):
-                pytest.fail(f"Extra key '{path}{k}' in parsed data.")
 
     # 開始遞歸比較
     compare_dicts(original_face_data, parsed_face_data)

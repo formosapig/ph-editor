@@ -3,33 +3,33 @@
 BODY_DETAILS = {
     # 皮膚
     'skin': [
-        {'id': (   0, 5), 'name': {'ja': 'タイプ01', 'zh': '類型01'}},
-        {'id': (   1, 5), 'name': {'ja': 'タイプ02', 'zh': '類型02'}},
-        {'id': (   2, 5), 'name': {'ja': 'タイプ03', 'zh': '類型03'}},
-        {'id': (   3, 5), 'name': {'ja': 'タイプ04', 'zh': '類型04'}},
-        {'id': (   4, 5), 'name': {'ja': 'タイプ05', 'zh': '類型05'}},
-        {'id': (   5, 5), 'name': {'ja': 'タイプ06', 'zh': '類型06'}},
-        {'id': (   6, 5), 'name': {'ja': 'タイプ07', 'zh': '類型07'}},
+        {'id': 0, 'name': {'ja': 'タイプ01', 'zh': '類型01'}},
+        {'id': 1, 'name': {'ja': 'タイプ02', 'zh': '類型02'}},
+        {'id': 2, 'name': {'ja': 'タイプ03', 'zh': '類型03'}},
+        {'id': 3, 'name': {'ja': 'タイプ04', 'zh': '類型04'}},
+        {'id': 4, 'name': {'ja': 'タイプ05', 'zh': '類型05'}},
+        {'id': 5, 'name': {'ja': 'タイプ06', 'zh': '類型06'}},
+        {'id': 6, 'name': {'ja': 'タイプ07', 'zh': '類型07'}},
     ],
     # 乳首
     'nipples': [
-        {'id': (   0, 5), 'name': {'ja': 'タイプ01', 'zh': '類型01'}},
-        {'id': (   1, 5), 'name': {'ja': 'タイプ02', 'zh': '類型02'}},
-        {'id': (   2, 5), 'name': {'ja': 'タイプ03', 'zh': '類型03'}},
-        {'id': (   3, 5), 'name': {'ja': 'タイプ04', 'zh': '類型04'}},
-        {'id': (   4, 5), 'name': {'ja': 'タイプ05', 'zh': '類型05'}},
-        {'id': (   5, 5), 'name': {'ja': 'タイプ06', 'zh': '類型06'}},
+        {'id': 0, 'name': {'ja': 'タイプ01', 'zh': '類型01'}},
+        {'id': 1, 'name': {'ja': 'タイプ02', 'zh': '類型02'}},
+        {'id': 2, 'name': {'ja': 'タイプ03', 'zh': '類型03'}},
+        {'id': 3, 'name': {'ja': 'タイプ04', 'zh': '類型04'}},
+        {'id': 4, 'name': {'ja': 'タイプ05', 'zh': '類型05'}},
+        {'id': 5, 'name': {'ja': 'タイプ06', 'zh': '類型06'}},
     ],
     # 陰毛
     'pubic_hair': [
-        {'id': (   5, 4), 'name': {'ja': 'なし', 'zh': '無'}},
-        {'id': (   0, 4), 'name': {'ja': 'タイプ01', 'zh': '類型01'}},
-        {'id': (   1, 4), 'name': {'ja': 'タイプ02', 'zh': '類型02'}},
-        {'id': (   2, 4), 'name': {'ja': 'タイプ03', 'zh': '類型03'}},
-        {'id': (   3, 4), 'name': {'ja': 'タイプ04', 'zh': '類型04'}},
-        {'id': (   4, 4), 'name': {'ja': 'タイプ05', 'zh': '類型05'}},
-        {'id': (   6, 4), 'name': {'ja': 'タイプ06', 'zh': '類型06'}},
-        {'id': (   7, 4), 'name': {'ja': 'タイプ07', 'zh': '類型07'}},
+        {'id': 5, 'name': {'ja': 'なし', 'zh': '無'}},
+        {'id': 0, 'name': {'ja': 'タイプ01', 'zh': '類型01'}},
+        {'id': 1, 'name': {'ja': 'タイプ02', 'zh': '類型02'}},
+        {'id': 2, 'name': {'ja': 'タイプ03', 'zh': '類型03'}},
+        {'id': 3, 'name': {'ja': 'タイプ04', 'zh': '類型04'}},
+        {'id': 4, 'name': {'ja': 'タイプ05', 'zh': '類型05'}},
+        {'id': 6, 'name': {'ja': 'タイプ06', 'zh': '類型06'}},
+        {'id': 7, 'name': {'ja': 'タイプ07', 'zh': '類型07'}},
     ],
     # 曬痕
     'tan_lines': [
@@ -90,35 +90,22 @@ def get_localized_name(name_dict, lang):
     # 這裡直接引用 face_data.py 中的相同邏輯，確保一致性
     return name_dict.get(lang) or name_dict.get('ja') or name_dict.get('zh') or '???'
 
-def get_body_by_id(category: str, item_id: int | tuple[int, int], lang: str = 'ja') -> str:
+def get_body_by_id(category: str, item_id: int, lang: str = 'ja') -> str:
     '''
     根據類別和ID獲取身體部位的本地化名稱。
-    支持單一ID (int) 或雙ID (tuple[int, int])。
+    僅支持單一ID (int)。
     '''
-    candidates = BODY_DETAILS.get(category, [])
-
-    # 單一 ID：int
-    if isinstance(item_id, int):
-        for item in candidates:
-            if item.get('id') == item_id:
-                return get_localized_name(item['name'], lang)
-        id_repr = str(item_id)
-
-    # 雙 ID：tuple[int, int]
-    elif (
-        isinstance(item_id, tuple)
-        and len(item_id) == 2
-        and all(isinstance(i, int) for i in item_id)
-    ):
-        for item in candidates:
-            if item.get('id') == item_id:
-                return get_localized_name(item['name'], lang)
-        id_repr = f'({item_id[0]}, {item_id[1]})'
-
-    else:
+    if not isinstance(item_id, int):
         raise TypeError(f'Find {category} with invalid item_id type: {item_id!r}')
 
+    candidates = BODY_DETAILS.get(category, [])
+
+    for item in candidates:
+        if item.get('id') == item_id:
+            return get_localized_name(item['name'], lang)
+
     # 找不到時的訊息
+    id_repr = str(item_id)
     not_found_messages = {
         'ja': f'身体設定ID {id_repr} が見つかりません',
         'zh': f'找不到身體設定 ID {id_repr}',
