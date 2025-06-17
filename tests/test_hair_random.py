@@ -36,7 +36,7 @@ def format_for_test(item):
 # 若資源許可，建議測試：至少 300 次 roundtrip
 # 想高置信度（>99%）→ 接近 400~500 次
 # 若只想快速 smoke test，可做 50～100 次    
-@pytest.mark.parametrize("_", range(50))  # 可依需求調整測試次數
+@pytest.mark.parametrize("_", range(300))  # 可依需求調整測試次數
 def test_random_hair_roundtrip(_):
     original = {}
 

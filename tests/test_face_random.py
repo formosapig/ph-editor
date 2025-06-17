@@ -170,14 +170,13 @@ def format_for_test(category_name, item):
         formatted_data = {
             "id": item['id'],
             "color": _random_color_str(),
-            "!padding": '43 00 00 00', #.join(random.choice('0123456789abcdef') for _ in range(8)) # 8個十六進制字符 = 4 bytes
         }
     elif category_name == 'tattoo':
         # 假設 tattoo 也有 id 和 color，就像 makeup 或 mole
         formatted_data = {
             "id": item['id'],
             "color": _random_color_str(),
-            # 如果 tattoo 還有其他特有的字段，需要在此處添加
+            "!padding": '43 00 00 00', #.join(random.choice('0123456789abcdef') for _ in range(8)) # 8個十六進制字符 = 4 bytes
         }
     else:
         # 如果有其他未處理的類別，可以在這裡添加日誌或錯誤處理
@@ -220,8 +219,9 @@ FACE_CATEGORIES_FOR_TEST = [
     # 高光參數 (id 和 float) - 這些在 serializer 中會被歸到 'eyeballs' 下
 ]
 
+# 每一個類別都測到　95% 以上至少要 300 次
 
-@pytest.mark.parametrize("_", range(1)) # 可依需求調整測試次數，建議 50-100 次進行快速煙霧測試
+@pytest.mark.parametrize("_", range(300)) # 可依需求調整測試次數，建議 50-100 次進行快速煙霧測試
 def test_random_face_roundtrip(_):
     original_face_data = {}
 
@@ -303,15 +303,24 @@ def test_random_face_roundtrip(_):
             val2 = d2[k]
 
             # 處理特定的 ID 轉換
-            if k in ["contour_id", "muscle_id", "wrinkle_id", "pupil_id", "id"] and path not in ['makeup.', 'eyebrows.', 'eyelashes.', 'eyeballs.']:
+            #if k in ["contour_id", "muscle_id", "wrinkle_id", "pupil_id", "id"] and path not in ['makeup.', 'eyebrows.', 'eyelashes.', 'eyeballs.']:
+                # 對於這些單一 ID，確保它們是整數並直接比較
+            #    if not isinstance(val1, int): # val1 應該是 int
+            #        pytest.fail(f"Original value for {path}{k} is not int: {val1!r}")
+            #    if not isinstance(val2, int): # val2 應該是 int
+            #        pytest.fail(f"Parsed value for {path}{k} is not int: {val2!r}")
+            #    assert val1 == val2, f"Mismatch at {path}{k}: Original={val1}, Parsed={val2}"
+            #elif k in ["eyebrows_id", "eyelash_id", "highlight_id"]: # 處理 (int, int) 元組 ID 的字串形式
+            #    assert str_to_id(val1) == str_to_id(val2), f"Mismatch at {path}{k}: Original='{val1}', Parsed='{val2}'"
+            # 處理特定的 ID 轉換
+            if k in ["contour_id", "muscle_id", "wrinkle_id", "pupil_id", "id", "highlight_id"] and path not in ['makeup.']:
                 # 對於這些單一 ID，確保它們是整數並直接比較
                 if not isinstance(val1, int): # val1 應該是 int
                     pytest.fail(f"Original value for {path}{k} is not int: {val1!r}")
                 if not isinstance(val2, int): # val2 應該是 int
                     pytest.fail(f"Parsed value for {path}{k} is not int: {val2!r}")
-                assert val1 == val2, f"Mismatch at {path}{k}: Original={val1}, Parsed={val2}"
-            elif k in ["eyebrows_id", "eyelash_id", "highlight_id"]: # 處理 (int, int) 元組 ID 的字串形式
-                assert str_to_id(val1) == str_to_id(val2), f"Mismatch at {path}{k}: Original='{val1}', Parsed='{val2}'"
+                assert val1 == val2, f"Mismatch at {path}{k}: Original={val1}, Parsed={val2}"                
+                
             elif isinstance(val1, dict):
                 compare_dicts(val1, val2, path=f"{path}{k}.")
             elif isinstance(val1, tuple) and all(isinstance(x, int) for x in val1) and len(val1) == 4:

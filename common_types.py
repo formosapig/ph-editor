@@ -20,6 +20,16 @@ def _read_bytes_as_hex(stream: BytesIO, length: int) -> str:
     return ' '.join(f'{b:02X}' for b in data)
 
 
+def _pack_hex_to_bytes(hex_str: str, length: int) -> bytes:
+    # 移除空格
+    hex_str = hex_str.replace(' ', '')
+    # 轉成 bytes
+    data = bytes.fromhex(hex_str)
+    # 補齊或截斷
+    if len(data) < length:
+        data += b'\x00' * (length - len(data))
+    return data[:length]
+    
 # --- 無符號整數相關函式 ---
 
 def _read_uint8(stream: BytesIO) -> int:

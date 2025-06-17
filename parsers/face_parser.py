@@ -26,6 +26,7 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
     """
     face_data = {key: {} for key in ui_category}
     
+    current_pos = 0
     if debug_mode:
         current_pos = stream.tell()
         print(f"  [Offset: {current_pos}] Starting to parse face data.")
@@ -141,6 +142,7 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             'outer_shape': _read_and_format_to_value(stream), # 外側形狀
         } | temp_eyebrows
         
+        
 
         # -- Eyes 目元 -- (眼周區域，包含眼裂、眼角等)
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyes' data.")
@@ -218,7 +220,7 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         eyelashes_id = _read_int32(stream) #(_read_int32(stream), _read_int32(stream))
         face_data['eyelashes'] = {
             'id': eyelashes_id, # f"({eyelashes_id[0]}, {eyelashes_id[1]})", # 睫毛 ID
-            'extra': _read_int32, # always be 2
+            'extra': _read_int32(stream), # always be 2
             '#name': get_face_by_id('eyelashes', eyelashes_id),
             'color': _read_and_format_color(stream), # 睫毛顏色 (RGBA)
             '!shine': _read_and_format_color(stream), # 睫毛光澤顏色 (RGBA) (185, 188, 177, 255) ??? 這個值會一直跳來跳去..
@@ -235,7 +237,6 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             'color': _read_and_format_color(stream), # 眼影顏色 (RGBA, alpha 無效)
         }
         
-
         # -- Blush 腮紅 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Blush' data.")
         blush_id = _read_int32(stream)

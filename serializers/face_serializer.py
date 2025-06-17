@@ -4,20 +4,10 @@ from io import BytesIO
 import struct
 from common_types import (
     _pack_uint32, _pack_int32, _pack_float, _pack_color,
-    _parse_and_pack_float,    
+    _parse_and_pack_float,
+    _pack_hex_to_bytes,
 )
 
-def _pack_hex_bytes(hex_str: str, length: int) -> bytes:
-    """Pack a hexadecimal string representation of bytes."""
-    # 確保 hex_str 是偶數長度
-    if len(hex_str) % 2 != 0:
-        hex_str = '0' + hex_str
-    # 從十六進制字符串轉換為字節
-    packed_bytes = bytes.fromhex(hex_str)
-    # 確保長度符合預期，如果不足則填充 0x00，如果超出則截斷
-    if len(packed_bytes) < length:
-        packed_bytes += b'\x00' * (length - len(packed_bytes))
-    return packed_bytes[:length]
     
 def serialize_face_data(face_data: dict, stream: BytesIO):
     """
@@ -45,7 +35,7 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
             stream.write(_pack_int32(eyebrows.get('extra', 2))) # always 2
             stream.write(_pack_color(eyebrows.get('color', (0,0,0,255))))
             stream.write(_pack_color(eyebrows.get('!shine', (205,205,205,255)))) # Assuming default for !shine_color
-            stream.write(_parse_and_pack_float(eyebrows.get('trength', 0)))
+            stream.write(_parse_and_pack_float(eyebrows.get('strength', 0)))
             stream.write(_parse_and_pack_float(eyebrows.get('texture', 0)))
 
         # --- Eyeballs (Left Eye) 眼球 (左眼) ---
@@ -71,7 +61,7 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
             tattoo = face_data['tattoo']
             stream.write(_pack_int32(tattoo.get('id', 0)))
             stream.write(_pack_color(tattoo.get('color', (255,255,255,255))))
-            stream.write(_pack_hex_bytes(tattoo.get('!padding', '43000000'), 4)) # Assuming padding is hex string
+            stream.write(_pack_hex_to_bytes(tattoo.get('!padding', '43 00 00 00'), 4)) # Assuming padding is hex string
 
         # --- Overall Face 全體 1 ---
         if 'overall' in face_data:
@@ -114,7 +104,7 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
             stream.write(_parse_and_pack_float(eyebrows.get('angle_z', 0)))
             stream.write(_parse_and_pack_float(eyebrows.get('inner_shape', 0)))
             stream.write(_parse_and_pack_float(eyebrows.get('outer_shape', 0)))
-
+        
         # --- Eyes 目元 ---
         if 'eyes' in face_data:
             eyes = face_data['eyes']
@@ -181,8 +171,8 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
         # --- Eyelashes 睫毛 ---
         if 'eyelashes' in face_data:
             eyelashes = face_data['eyelashes']
-            stream.write(_parse_and_pack_float(eyelashes.get('id', 0)))
-            stream.write(_parse_and_pack_float(eyelashes.get('extra', 2)))
+            stream.write(_pack_int32(eyelashes.get('id', 0)))
+            stream.write(_pack_int32(eyelashes.get('extra', 2)))
             stream.write(_pack_color(eyelashes.get('color', (0,0,0,255))))
             stream.write(_pack_color(eyelashes.get('!shine', (185,188,177,255)))) # Assuming default for !shine_color
             stream.write(_parse_and_pack_float(eyelashes.get('strength', 0)))
@@ -215,8 +205,8 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
         # --- Eyeballs (Highlight) 眼球 (高光) ---
         if 'eyeballs' in face_data:
             eyeballs = face_data['eyeballs']
-            stream.write(_parse_and_pack_float(eyeballs.get('highlight_id', 0)))
-            stream.write(_parse_and_pack_float(eyeballs.get('highlight_extra', 7)))
+            stream.write(_pack_int32(eyeballs.get('highlight_id', 0)))
+            stream.write(_pack_int32(eyeballs.get('highlight_extra', 7)))
             stream.write(_pack_color(eyeballs.get('highlight_color', (255,255,255,255))))
             stream.write(_pack_color(eyeballs.get('!highlight_shine', (255,255,255,255)))) # Assuming default for !highlight_shine
             stream.write(_parse_and_pack_float(eyeballs.get('!highlight_strength', 0)))
