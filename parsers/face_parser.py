@@ -51,14 +51,15 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Eyebrows 眉毛 2--
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyebrows' data.")
-        eyebrows_id = (_read_int32(stream), _read_int32(stream))
+        eyebrows_id = _read_int32(stream)#(_read_int32(stream), _read_int32(stream))
         temp_eyebrows = {
-            'eyebrows_id': f'({eyebrows_id[0]}, {eyebrows_id[1]})', # 眉毛形狀 ID
-            '#eyebrows_name': get_face_by_id('eyebrows', eyebrows_id),
-            'eyebrow_color': _read_and_format_color(stream), # 眉毛顏色 (RGBA)
-            '!shine_color' : _read_and_format_color(stream), # 可能有一個光澤顏色 (RGBA) 但不能改 似乎是 (205,205,205,255)
-            'shine_strength': _read_and_format_to_value(stream), # 光澤強度
-            'shine_texture': _read_and_format_to_value(stream),  # 光澤質感
+            'id': eyebrows_id,#f'({eyebrows_id[0]}, {eyebrows_id[1]})', # 眉毛形狀 ID
+            'extra': _read_int32(stream), # 應該是 2
+            '#name': get_face_by_id('eyebrows', eyebrows_id),
+            'color': _read_and_format_color(stream), # 眉毛顏色 (RGBA)
+            '!shine' : _read_and_format_color(stream), # 可能有一個光澤顏色 (RGBA) 但不能改 似乎是 (205,205,205,255)
+            'strength': _read_and_format_to_value(stream), # 光澤強度
+            'texture': _read_and_format_to_value(stream),  # 光澤質感
         }
 
         # -- Eyeballs (Left Eye) 眼球 (左眼) --
@@ -214,14 +215,15 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Eyelashes 睫毛 --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyelashes' data.")
-        eyelashes_id = (_read_int32(stream), _read_int32(stream))
+        eyelashes_id = _read_int32(stream) #(_read_int32(stream), _read_int32(stream))
         face_data['eyelashes'] = {
-            'eyelash_id': f"({eyelashes_id[0]}, {eyelashes_id[1]})", # 睫毛 ID
-            '#eyelash_name': get_face_by_id('eyelashes', eyelashes_id),
-            'eyelash_color': _read_and_format_color(stream), # 睫毛顏色 (RGBA)
-            '!shine_color': _read_and_format_color(stream), # 睫毛光澤顏色 (RGBA) (185, 188, 177, 255) ??? 這個值會一直跳來跳去..
-            'shine_strength': _read_and_format_to_value(stream), # 光澤強度
-            'shine_texture': _read_and_format_to_value(stream),  # 光澤質感
+            'id': eyelashes_id, # f"({eyelashes_id[0]}, {eyelashes_id[1]})", # 睫毛 ID
+            'extra': _read_int32, # always be 2
+            '#name': get_face_by_id('eyelashes', eyelashes_id),
+            'color': _read_and_format_color(stream), # 睫毛顏色 (RGBA)
+            '!shine': _read_and_format_color(stream), # 睫毛光澤顏色 (RGBA) (185, 188, 177, 255) ??? 這個值會一直跳來跳去..
+            'strength': _read_and_format_to_value(stream), # 光澤強度
+            'texture': _read_and_format_to_value(stream),  # 光澤質感
         }
 
         # -- Eyeshadow 眼影 --
@@ -263,12 +265,12 @@ def parse_face_data(stream: BytesIO, debug_mode: bool = False) -> dict:
 
         # -- Eyeballs (Highlight) 眼球 (高光) --
         if debug_mode: print(f"    [Offset: {stream.tell()}] Parsing 'Eyeballs (Highlight)' data.")
-        highlight_id = (_read_int32(stream), _read_int32(stream))
+        highlight_id = _read_int32(stream) # (_read_int32(stream), _read_int32(stream))
         face_data['eyeballs'].update(
             {
-                'highlight_id': f"({highlight_id[0]}, {highlight_id[1]})", # 高光 ID
+                'highlight_id': highlight_id, # f"({highlight_id[0]}, {highlight_id[1]})", # 高光 ID
+                'highlight_extra': _read_int32(stream), # always be 7
                 '#name': get_face_by_id('highlight', highlight_id),
-            
                 'highlight_color': _read_and_format_color(stream), # 高光顏色 (RGBA)
                 '!highlight_shine': _read_and_format_color(stream), # 高光光澤?!
                 '!highlight_strength': _read_and_format_to_value(stream),

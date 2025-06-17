@@ -6,22 +6,17 @@ from io import BytesIO
 import pytest
 
 # 導入序列化和解析函數
-from serializers.face_serializer import serialize_face_data, FACE_DATA_LENGTH
+from serializers.face_serializer import serialize_face_data
 from parsers.face_parser import parse_face_data # 假設您已經有這個解析器
 from game_data.face_data import FACE_DETAILS
 
-def id_to_str(face_id):
-    """將 int 或 tuple[int, int] 轉換為字串形式，用於字典鍵或比較。"""
-    if isinstance(face_id, tuple):
-        return f"({face_id[0]}, {face_id[1]})"
-    return str(face_id)
-
-def str_to_id(id_str):
-    """將字串形式的 id 轉換回 int 或 tuple[int, int]"""
-    if id_str.startswith('(') and id_str.endswith(')'):
-        return tuple(map(int, id_str.strip("()").split(",")))
-    return int(id_str)
-
+def _random_color_str():
+    """生成一個隨機的 RGBA 顏色字串 (R, G, B, A)"""
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    a = 255 # 通常 Alpha 值為 255
+    return f"({r}, {g}, {b}, {a})"
 
 def format_for_test(category_name, item):
     """
@@ -67,11 +62,12 @@ def format_for_test(category_name, item):
         }
     elif category_name == 'eyebrows':
         formatted_data = {
-            "eyebrows_id": id_to_str(item['id']), # 眉毛的id是 (int, int)
-            "eyebrow_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-            "!shine_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255), # 預設值，或者從實際數據中獲取
-            "shine_strength": random.randint(0, 100),
-            "shine_texture": random.randint(0, 100),
+            "id": item['id'], # eyebrows id
+            "extra": 2, # must be 2
+            "color": _random_color_str(),
+            "!shine": _random_color_str(), # 預設值，或者從實際數據中獲取
+            "strength": random.randint(0, 100),
+            "texture": random.randint(0, 100),
             "height": random.randint(0, 100),
             "horizontal_position": random.randint(0, 100),
             "angle_z": random.randint(0, 100),
@@ -101,21 +97,22 @@ def format_for_test(category_name, item):
             "pupil_vertical_width": random.randint(0, 100),
             "left_eyeball": {
                 "pupil_id": item['id'],
-                "sclera_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-                "pupil_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
+                "sclera_color": _random_color_str(),
+                "pupil_color": _random_color_str(),
                 "pupil_size": random.randint(0, 100),
                 "pupil_brightness": random.randint(0, 100),
             },
             "right_eyeball": {
                 "pupil_id": random.choice(FACE_DETAILS['eyeball'])['id'], # 另一隻眼睛也隨機選一個
-                "sclera_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-                "pupil_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
+                "sclera_color": _random_color_str(),
+                "pupil_color": _random_color_str(),
                 "pupil_size": random.randint(0, 100),
                 "pupil_brightness": random.randint(0, 100),
             },
-            "highlight_id": id_to_str(random.choice(FACE_DETAILS['highlight'])['id']), # 高光 id 是 (int, int)
-            "highlight_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-            "!highlight_shine": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
+            "highlight_id": random.choice(FACE_DETAILS['highlight'])['id'], # 高光 id
+            "highlight_extra": 7, # default is 7
+            "highlight_color": _random_color_str(),
+            "!highlight_shine": _random_color_str(),
             "!highlight_strength": random.randint(0, 100),
             "!highlight_texture": random.randint(0, 100),
         }
@@ -157,22 +154,30 @@ def format_for_test(category_name, item):
         }
     elif category_name == 'eyelashes':
         formatted_data = {
-            "eyelash_id": id_to_str(item['id']), # 睫毛的id是 (int, int)
-            "eyelash_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-            "!shine_color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-            "shine_strength": random.randint(0, 100),
-            "shine_texture": random.randint(0, 100),
+            "id": item['id'], # 睫毛的id
+            "extra": 2, # default is 2
+            "color": _random_color_str(),
+            "!shine": _random_color_str(),
+            "strength": random.randint(0, 100),
+            "texture": random.randint(0, 100),
         }
     elif category_name == 'makeup': # 彩妝類統一處理
         formatted_data = {
             "id": item['id'],
-            "color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
+            "color": _random_color_str(),
         }
     elif category_name == 'mole':
         formatted_data = {
             "id": item['id'],
-            "color": (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255),
-            "!padding": ''.join(random.choice('0123456789abcdef') for _ in range(8)) # 8個十六進制字符 = 4 bytes
+            "color": _random_color_str(),
+            "!padding": '43 00 00 00', #.join(random.choice('0123456789abcdef') for _ in range(8)) # 8個十六進制字符 = 4 bytes
+        }
+    elif category_name == 'tattoo':
+        # 假設 tattoo 也有 id 和 color，就像 makeup 或 mole
+        formatted_data = {
+            "id": item['id'],
+            "color": _random_color_str(),
+            # 如果 tattoo 還有其他特有的字段，需要在此處添加
         }
     else:
         # 如果有其他未處理的類別，可以在這裡添加日誌或錯誤處理
@@ -180,7 +185,7 @@ def format_for_test(category_name, item):
         return {}
 
     # 添加一個名稱，因為解析器可能會讀取它，儘管序列化時可能不會寫入
-    if isinstance(item['id'], tuple):
+    if 'id' in item and isinstance(item['id'], tuple):
         formatted_data["#name"] = item['name']['ja'] # 或 zh
     else:
         # 對於 int ID 的項目，解析器可能只返回 ID，所以 #name 可能不存在
@@ -277,13 +282,13 @@ def test_random_face_roundtrip(_):
     print("Original data structure (simplified for comparison):")
     # 打印一些關鍵數據點以便於除錯
     print(f"  Overall Contour ID: {original_face_data['overall']['contour_id']}")
-    print(f"  Eyebrows ID: {original_face_data['eyebrows']['eyebrows_id']}")
+    print(f"  Eyebrows ID: {original_face_data['eyebrows']['id']}")
     print(f"  Left Eyeball ID: {original_face_data['eyeballs']['left_eyeball']['pupil_id']}")
     print(f"  Tattoo ID: {original_face_data['tattoo']['id']}")
 
     print("\nParsed data structure (simplified for comparison):")
     print(f"  Overall Contour ID: {parsed_face_data['overall']['contour_id']}")
-    print(f"  Eyebrows ID: {parsed_face_data['eyebrows']['eyebrows_id']}")
+    print(f"  Eyebrows ID: {parsed_face_data['eyebrows']['id']}")
     print(f"  Left Eyeball ID: {parsed_face_data['eyeballs']['left_eyeball']['pupil_id']}")
     print(f"  Tattoo ID: {parsed_face_data['tattoo']['id']}")
 
@@ -323,7 +328,7 @@ def test_random_face_roundtrip(_):
                 assert val1 == val2, f"Mismatch at {path}{k}: Original='{val1}', Parsed='{val2}'"
 
         for k in d2: # 檢查 parsed 是否有多餘的鍵
-            if k not in d1:
+            if k not in d1 and not k.startswith('#'):
                 pytest.fail(f"Extra key '{path}{k}' in parsed data.")
 
     # 開始遞歸比較
