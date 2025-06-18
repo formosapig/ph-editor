@@ -71,7 +71,7 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
         print(f"do slotIdx 0")
     else:
         if disable_dict.get(slotIdx, False):
-            part['!disable_by'] = 'top'
+            part['#disable_by'] = 'top'
             
 
     # 可換色時...
