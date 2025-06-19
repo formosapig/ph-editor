@@ -4,7 +4,7 @@ from io import BytesIO
 from common_types import _pack_bytes
 
 # 假設其他零碎數據總共填充 50 位元組
-MISC_DATA_LENGTH = 50
+MISC_DATA_LENGTH = 0
 
 def serialize_misc_data(misc_data: dict, stream: BytesIO):
     """

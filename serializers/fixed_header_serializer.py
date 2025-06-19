@@ -3,9 +3,6 @@
 from io import BytesIO
 from common_types import _pack_bytes, _pack_uint32  # 確保引入必要的打包函式
 
-# 固定頭部長度
-FIXED_HEADER_LENGTH = 30
-
 def serialize_fixed_header(header_data: dict, stream: BytesIO):
     """
     序列化固定頭部數據。

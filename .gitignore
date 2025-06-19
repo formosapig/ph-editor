@@ -59,3 +59,9 @@ dist/
 
 # personal bat
 launch_ph.bat
+
+# 忽略 test_assets 資料夾內的所有檔案
+tests/test_assets/*
+
+# 但保留 .gitkeep 或 .keep 這類空白佔位檔（讓資料夾能存在於 Git 中）
+!tests/test_assets/.gitkeep

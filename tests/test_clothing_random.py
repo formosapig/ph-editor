@@ -145,7 +145,7 @@ def test_random_clothing_roundtrip(_):
 
     # --- 序列化並回讀 ---
     stream = BytesIO()
-    serialize_clothing_data(stream, original_clothing_data, debug_mode=False)
+    serialize_clothing_data(original_clothing_data, stream, debug_mode=False)
     stream.seek(0)
     parsed_clothing_data = parse_clothing_data(stream, debug_mode=False)
 

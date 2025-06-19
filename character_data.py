@@ -204,7 +204,7 @@ class CharacterData:
 
             # 6. 寫入配飾數據
             print(f"  [偏移: {output_stream.tell()}] 序列化配飾數據...")
-            accessory_serializer.serialize_accessory_data(
+            accessory_serializer.serialize_accessories_data(
                 self.parsed_data.get('accessory', {}), output_stream
             )
 

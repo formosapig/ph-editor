@@ -58,7 +58,7 @@ def serialize_clothing_item(stream: BytesIO, item_data: dict, slot: str, debug_m
     
     # 泳裝的 option flags 在 parse 時會加入，序列化時不需要特別處理，因為它們會從後面的 1 byte 讀取
 
-def serialize_clothing_data(stream: BytesIO, clothing_data: dict, debug_mode: bool = False) -> None:
+def serialize_clothing_data(clothing_data: dict, stream: BytesIO, debug_mode: bool = False):
     """
     序列化角色的服裝數據，直接寫入到傳入的 stream 中。
     Args:
