@@ -1,4 +1,4 @@
-# your_character_project/parsers/clothing_parser.py
+# ph-editor/parsers/clothing_parser.py
 
 from io import BytesIO
 import json

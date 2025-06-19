@@ -1,26 +1,13 @@
-# your_character_project/parsers/accessory_parser.py
+# ph-editor/parsers/accessory_parser.py
 
 from io import BytesIO
 import json
 from common_types import (
-    _read_uint8, _read_uint32, _read_int32, _read_float, _read_color, _format_color_for_json, _read_bytes_as_hex
+    _read_int32, _read_float, _read_bytes_as_hex, _read_and_format_color, _read_and_format_to_value,
 )
+
 # accessory data
-from game_data.accessory_data import get_accessory_by_id, is_colorful, ACCESSORY_SLOT_NAMES
-import math
-
-
-def _format_float_to_percentage(value: float | None, scale: float = 100, debug_mode: bool = False) -> int:
-    if value is None or (isinstance(value, float) and math.isnan(value)):
-        value = 0.0
-
-    percentage = round(value * scale)
-    
-    if debug_mode:
-        if percentage < 0 or percentage > 100:
-            print(f"    [WARN] Value {value} resulted in {percentage}%, clamped to [0, 100].")
-    
-    return max(0, min(100, percentage))
+from game_data.accessory_data import get_type_name, get_slot_name, get_accessory_by_id, is_colorful
 
 def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = False) -> dict:
     """
@@ -33,77 +20,58 @@ def parse_accessory_item(stream: BytesIO, slot_index: int, debug_mode: bool = Fa
         一個字典，包含解析後的配飾數據。
     """
     start_offset = stream.tell()
-    # 使用 ACCESSORY_SLOT_NAMES 來取得中文名稱，用於除錯輸出
-    slot_display_name = ACCESSORY_SLOT_NAMES[slot_index] if slot_index < len(ACCESSORY_SLOT_NAMES) else f"未知槽位 {slot_index}"
     
     if debug_mode:
-        print(f"    [Offset: {start_offset}] Parsing accessory item for slot {slot_index} ('{slot_display_name}').")
-
-    # 輔助函式，用於處理可能是 NaN 的浮點數
-    def _read_and_handle_float(s: BytesIO, name: str) -> float | None:
-        val = _read_float(s)
-        if val != val: # Check for NaN
-            if debug_mode:
-                print(f"      [WARN] Read NaN for {name} in slot {slot_index}. Converting to None for JSON.")
-            return None
-        return val
-        
+        print(f"    [Offset: {start_offset}] Parsing accessory item for slot {slot_index}.")
+       
     # 讀取基本屬性
-    #accessory_type = _read_uint32(stream)
-    accessory_id = (_read_int32(stream), _read_int32(stream))    
-    #head = _read_bytes_as_hex(stream, 8)
-    equip_position = _read_int32(stream)
-    
-    
+    accessory_type = _read_int32(stream) # -1 = 無
+    accessory_id = _read_int32(stream)
+    accessory_slot = _read_int32(stream)
     
     part = {
-        'type': "???",
-        'id': f"({accessory_id[0]}, {accessory_id[1]})",
-        '#name': get_accessory_by_id(accessory_id), # 使用 item_id 傳遞
-        'equip_position': equip_position,
-        'position_adjust': {
-                'x': _read_and_handle_float(stream, 'position_adjust_x'),
-                'y': _read_and_handle_float(stream, 'position_adjust_y'),
-                'z': _read_and_handle_float(stream, 'position_adjust_z')
-            },
-            'rotation_adjust': {
-                'x': _read_and_handle_float(stream, 'rotation_adjust_x'),
-                'y': _read_and_handle_float(stream, 'rotation_adjust_y'),
-                'z': _read_and_handle_float(stream, 'rotation_adjust_z')
-            },
-            'scale_adjust': {
-                'x': _read_and_handle_float(stream, 'scale_adjust_x'),
-                'y': _read_and_handle_float(stream, 'scale_adjust_y'),
-                'z': _read_and_handle_float(stream, 'scale_adjust_z')
-            }
+        '#info': f"【{get_type_name(accessory_type)}:{get_accessory_by_id(accessory_type, accessory_id)}】 -> {get_slot_name(accessory_slot)}",
+        'type': accessory_type,
+        'id': accessory_id,
+        'slot': accessory_slot,
+        'position': {
+            'x': _read_float(stream),
+            'y': _read_float(stream),
+            'z': _read_float(stream)
+        },
+        'rotation': {
+            'x': _read_float(stream),
+            'y': _read_float(stream),
+            'z': _read_float(stream)
+        },
+        'scale': {
+            'x': _read_float(stream),
+            'y': _read_float(stream),
+            'z': _read_float(stream)
+        }
     }
 
-    part['gap'] = _read_bytes_as_hex(stream, 4)
+    part['!color_mark'] = _read_bytes_as_hex(stream, 4)
    
-    print(f"SlotIndex: {slot_index}, id: ({accessory_id[0]}, {accessory_id[1]}), gap: {part['gap']}")
+    #print(f"SlotIndex: {slot_index}, id: ({accessory_id[0]}, {accessory_id[1]}), gap: {part['gap']}")
    
     # 讀取顏色和光澤屬性 (如果可換色), 跟 配飾的顏色無關, 根據 gap 來決定是不是要讀額外顏色資料...
     #if is_colorful(accessory_id) > 0 and part['gap'] == '03 00 00 00':
     # 看起來是只用 gap 去決定
-    if part['gap'] == '03 00 00 00':
+    if part['!color_mark'] == '03 00 00 00':
         part.update(
             {
-                'main_color': _format_color_for_json(_read_color(stream)),
-                'main_shine': _format_color_for_json(_read_color(stream)),
-                # 關鍵修改：使用 `or 0.0` 提供預設值
-                'main_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_strength') or 0.0), 
-                'main_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'main_shine_texture') or 0.0), 
+                'main_color': _read_and_format_color(stream),
+                'main_shine': _read_and_format_color(stream),
+                'main_strength': _read_and_format_to_value(stream), 
+                'main_texture': _read_and_format_to_value(stream), 
 
-                'sub_color': _format_color_for_json(_read_color(stream)),
-                'sub_shine_color': _format_color_for_json(_read_color(stream)),
-                'sub_shine_strength': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_strength') or 0.0),
-                'sub_shine_texture': _format_float_to_percentage(_read_and_handle_float(stream, 'sub_shine_texture') or 0.0),
+                'sub_color': _read_and_format_color(stream),
+                'sub_shine': _read_and_format_color(stream),
+                'sub_strength': _read_and_format_to_value(stream),
+                'sub_texture': _read_and_format_to_value(stream),
             }
         )
-    
-            
-    
-    #part['align'] = _read_bytes_as_hex(stream, 5)
     
     if debug_mode:
         print(f"    [Offset: {stream.tell()}] Finished parsing accessory item for slot {slot_index}.")

@@ -13,27 +13,58 @@ C1 = 0b01                # 僅主色可以
 C2 = 0b10                # 主,副色可改, 但副色光澤強度鎖定
 C3 = 0b11                # 主,副色可全部修改
 
-# 配飾槽位的中文名稱陣列
-ACCESSORY_SLOT_NAMES = [
-    "頭",     # Accessory Slot 1
-    "耳",     # Accessory Slot 2
-    "眼鏡",   # Accessory Slot 3
-    "臉",     # Accessory Slot 4
-    "脖子",   # Accessory Slot 5
-    "肩",     # Accessory Slot 6
-    "乳房",   # Accessory Slot 7
-    "腰",     # Accessory Slot 8
-    "背後",   # Accessory Slot 9
-    "腕",     # Accessory Slot 10 (通常可能還會有手、腳等，這裡根據您的10個槽位來列出)
-    # 根據您的需求，如果還有更多配飾類別，可以在這裡繼續添加
-    # 例如：
-    # "手",
-    # "腳",
+# 配飾種類
+ACCESSORY_TYPE = [
+    { 'id': -1, 'name': {'ja': 'なし', 'zh': '無'}},
+    { 'id':  0, 'name': {'ja': '頭', 'zh': '頭'}},
+    { 'id':  1, 'name': {'ja': '耳', 'zh': '耳朵'}},
+    { 'id':  2, 'name': {'ja': '眼鏡', 'zh': '眼鏡'}},
+    { 'id':  3, 'name': {'ja': '顔', 'zh': '臉'}},
+    { 'id':  4, 'name': {'ja': '首', 'zh': '脖子'}},
+    { 'id':  5, 'name': {'ja': '肩', 'zh': '肩膀'}},
+    { 'id':  6, 'name': {'ja': '胸', 'zh': '胸部'}},
+    { 'id':  7, 'name': {'ja': '腰', 'zh': '腰部'}},
+    { 'id':  8, 'name': {'ja': '背中', 'zh': '背部'}},
+    { 'id':  9, 'name': {'ja': '腕', 'zh': '手臂'}},
+    { 'id': 10, 'name': {'ja': '手', 'zh': '手'}},
+    { 'id': 11, 'name': {'ja': '脚', 'zh': '腳'}},
+]
+
+# 配飾位置
+ACCESSORY_SLOT = [
+    { 'id':  0, 'name': {'ja': '頭', 'zh': '頭'}},
+    { 'id':  1, 'name': {'ja': '眼鏡', 'zh': '眼鏡'}},
+    { 'id':  2, 'name': {'ja': '左耳', 'zh': '左耳'}},
+    { 'id':  3, 'name': {'ja': '右耳', 'zh': '右耳'}},
+    { 'id':  4, 'name': {'ja': '口', 'zh': '嘴巴'}},
+    { 'id':  5, 'name': {'ja': '鼻', 'zh': '鼻子'}},
+    { 'id':  6, 'name': {'ja': '首', 'zh': '脖子'}},
+    { 'id':  7, 'name': {'ja': '胸', 'zh': '胸部'}},
+    { 'id':  8, 'name': {'ja': '左手首', 'zh': '左手腕'}},
+    { 'id':  9, 'name': {'ja': '右手首', 'zh': '右手腕'}},
+    { 'id': 10, 'name': {'ja': '左腕', 'zh': '左手臂'}},
+    { 'id': 11, 'name': {'ja': '右腕', 'zh': '右手臂'}},
+    { 'id': 12, 'name': {'ja': '左人差指', 'zh': '左食指'}},
+    { 'id': 13, 'name': {'ja': '右人差指', 'zh': '右食指'}},
+    { 'id': 14, 'name': {'ja': '左中指', 'zh': '左中指'}},
+    { 'id': 15, 'name': {'ja': '右中指', 'zh': '右中指'}},
+    { 'id': 16, 'name': {'ja': '左薬指', 'zh': '左無名指'}},
+    { 'id': 17, 'name': {'ja': '右薬指', 'zh': '右無名指'}},
+    { 'id': 18, 'name': {'ja': '左脚', 'zh': '左腳'}},
+    { 'id': 19, 'name': {'ja': '右脚', 'zh': '右腳'}},
+    { 'id': 20, 'name': {'ja': '左足首', 'zh': '左腳踝'}},
+    { 'id': 21, 'name': {'ja': '右足首', 'zh': '右腳踝'}},
+    { 'id': 22, 'name': {'ja': '左乳首', 'zh': '左乳頭'}},
+    { 'id': 23, 'name': {'ja': '右乳首', 'zh': '右乳頭'}},
+    { 'id': 24, 'name': {'ja': '腰', 'zh': '腰'}},
+    { 'id': 25, 'name': {'ja': '左肩', 'zh': '左肩'}},
+    { 'id': 26, 'name': {'ja': '右肩', 'zh': '右肩'}},
+    { 'id': 27, 'name': {'ja': '左手', 'zh': '左手'}},
+    { 'id': 28, 'name': {'ja': '右手', 'zh': '右手'}},
 ]
 
 ACCESSORY_ITEMS = [
     # 沒有
-    
     {'id': ( -1,  -1), 'flag': C3,             'name': {'ja': 'なし', 'zh': '無'}},
         
     # 頭
@@ -513,38 +544,69 @@ def get_localized_name(name_dict: dict, lang: str = 'ja') -> str:
     '''日文優先（預設為 ja），找不到才退回中文（zh）'''
     return name_dict.get(lang) or name_dict.get('ja') or name_dict.get('zh') or '???'
 
-def get_accessory_by_id(item_id_tuple: tuple[int, int], lang: str = 'ja') -> str:
+def get_type_name(type_id: int, lang: str = 'ja') -> str:
     """
-    根據 ID (種類ID, 特殊值) 獲取特定配飾物品的名稱。
+    根據配飾種類 ID 取得名稱（支援中日語）。
+    """
+    for item in ACCESSORY_TYPE:
+        if item['id'] == type_id:
+            return item['name'].get(lang, item['name'].get('zh', '未知類型'))
+
+    not_found_messages = {
+        'ja': f'種類ID {type_id} が見つかりません',
+        'zh': f'找不到配飾種類 ID {type_id}',
+    }
+    return not_found_messages.get(lang, f'Accessory type ID {type_id} not found')
+
+
+def get_slot_name(slot_id: int, lang: str = 'ja') -> str:
+    """
+    根據配飾位置 ID 取得名稱（支援中日語）。
+    """
+    for item in ACCESSORY_SLOT:
+        if item['id'] == slot_id:
+            return item['name'].get(lang, item['name'].get('zh', '未知位置'))
+
+    not_found_messages = {
+        'ja': f'スロットID {slot_id} が見つかりません',
+        'zh': f'找不到配飾位置 ID {slot_id}',
+    }
+    return not_found_messages.get(lang, f'Accessory slot ID {slot_id} not found')
+    
+def get_accessory_by_id(type: int, id: int, lang: str = 'ja') -> str:
+    """
+    根據 (種類ID, 特殊值) 獲取特定配飾物品的名稱。
     Args:
-        item_id_tuple: 配飾物品的 ID 元組 (種類ID, 特殊值)。
+        type: 配飾種類 ID。
+        id: 配飾項目 ID。
         lang: 語言代碼 ('ja' 或 'zh')。
     Returns:
         配飾物品的本地化名稱。如果找不到則返回錯誤提示。
     """
+    target_id = (type, id)
     for item in ACCESSORY_ITEMS:
-        if item['id'] == item_id_tuple:
+        if item['id'] == target_id:
             return get_localized_name(item['name'], lang)
-            
-    not_found_messages = {
-        'ja': f'配飾ID {item_id_tuple} が見つかりません',
-        'zh': f'找不到配飾 ID {item_id_tuple}',
-    }
-    return not_found_messages.get(lang, f'Accessory ID {item_id_tuple} not found')
 
-def is_colorful(item_id: tuple[int, int]) -> int:
+    not_found_messages = {
+        'ja': f'配飾ID {target_id} が見つかりません',
+        'zh': f'找不到配飾 ID {target_id}',
+    }
+    return not_found_messages.get(lang, f'Accessory ID {target_id} not found')
+
+
+def is_colorful(type: int, id: int) -> int:
     """
     檢查指定配飾物品是否為可調顏色的。
     Args:
-        item_id_tuple: 配飾物品的 ID 元組 (種類ID, 特殊值)。
+        type: 配飾種類 ID。
+        id: 配飾項目 ID。
     Returns:
-        0 不能改顏色, 也不讀顏色資料
-        1 只能改主色, 副色強制 (255,255,255,255) (255,255,255,255) 0, 0
-        2 副色只能改光澤質感 (?, ?, ?, ?) (?, ?, ?, ?) Fix, ??
-        3 主副色都能隨意調整
+        整數標誌，0-3，表示可調色層級。
     """
+    target_id = (type, id)
     for item in ACCESSORY_ITEMS:
-        if item['id'] == item_id:
+        if item['id'] == target_id:
             flag = item.get('flag', 0)
             return flag & COLOR_MASK
-    return 0 # 如果找不到對應的物品，返回 0
+    return 0  # 沒找到物品，視為不可調色

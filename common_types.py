@@ -1,4 +1,4 @@
-# ph-editor/core/common_types.py
+# ph-editor/common_types.py
 # 以後整理時, 再搬到 core 去.
 
 import struct
