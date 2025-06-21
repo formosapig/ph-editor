@@ -12,50 +12,29 @@
     <button type="button" onclick="window.close()">結束</button>
   </div>
 
-    <h1>編輯檔案：{{ file }}</h1>
+  <h1>編輯檔案：{{ file }}</h1>
 
-    <div id="hex-display">
-        載入原始數據十六進位預覽中...
+  <div id="hex-display">
+    載入原始數據十六進位預覽中...
+  </div>
+
+  <div class="tab-container">
+    <div class="tab-buttons">
+      <button class="tab-button active" data-tab="hair">頭髮</button>
+      <button class="tab-button" data-tab="face">臉部</button>
+      <button class="tab-button" data-tab="body">身體</button>
+      <button class="tab-button" data-tab="clothing">服裝</button>
+      <button class="tab-button" data-tab="accessory">配件</button>
+      <button class="tab-button" data-tab="story">故事</button>
     </div>
 
-    <div class="tab-container">
-        <div class="tab-buttons">
-            <button class="tab-button active" data-tab="fixed_header">固定標頭</button>
-            <button class="tab-button" data-tab="hair">頭髮</button>
-            <button class="tab-button" data-tab="face">臉部</button>
-            <button class="tab-button" data-tab="body">身體</button>
-            <button class="tab-button" data-tab="clothing">服裝</button>
-            <button class="tab-button" data-tab="accessory">配件</button>
-            <button class="tab-button" data-tab="misc">其他</button>
-        </div>
-        
-        <div id="parsed-data-display">
-            <div id="fixed_header" class="tab-content active">
-                <pre>載入固定標頭數據中...</pre>
-            </div>
-            <div id="hair" class="tab-content">
-                <pre>載入頭髮數據中...</pre>
-            </div>
-            <div id="face" class="tab-content">
-                <pre>載入臉部數據中...</pre>
-            </div>
-            <div id="body" class="tab-content">
-                <pre>載入身體數據中...</pre>
-            </div>
-            <div id="clothing" class="tab-content">
-                <pre>載入服裝數據中...</pre>
-            </div>
-            <div id="accessory" class="tab-content">
-                <pre>載入配件數據中...</pre>
-            </div>
-            <div id="misc" class="tab-content">
-                <pre>載入其他數據中...</pre>
-            </div>
-        </div>
-    </div>
-    <script>
-		const characterData = {{ data | safe }};
-	</script>
-    <script src="{{ url_for('static', filename='edit.js') }}"></script>
+    <!-- 第二層 tab 按鈕容器 -->
+    <div id="sub-tab-buttons" class="sub-tab-buttons"></div>
+
+	<div id="main-content" contenteditable="true"></div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='edit.js') }}"></script>
 </body>
 </html>

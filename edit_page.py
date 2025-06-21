@@ -262,3 +262,37 @@ def read_hex():
         'raw_data_hex_preview': f"--- 原始數據前 {display_length} 位元組 (包含 '{PLAYHOME_MARKER.decode()}' 標記) ---\n{hex_str}",
         'full_parsed_data': parsed_data_json_str # 直接返回整個解析後的數據的 JSON 字串
     })
+    
+@edit_bp.route('/edit/update', methods=['POST'])
+def update_edit():
+    """
+    接收前端 JSON 資料，包含 mainTabKey、subTabKey 和 data，
+    只更新共享記憶體中當前編輯角色的 parsed_data 指定節點，不寫檔。
+    """
+    data = request.get_json()
+    main_tab = data.get('mainTabKey')
+    sub_tab = data.get('subTabKey')
+    new_data = data.get('data')
+
+    if not main_tab or not sub_tab or new_data is None:
+        return jsonify({'error': '缺少 mainTabKey, subTabKey 或 data。'}), 400
+
+    character_id = session.get('current_edit_character_id')
+    if not character_id:
+        return jsonify({'error': '會話中無角色ID，請先載入角色。'}), 400
+
+    character_data_obj = get_character_data(character_id)
+    if not character_data_obj:
+        return jsonify({'error': f'找不到角色數據: {character_id}。請重新載入檔案。'}), 404
+
+    try:
+        # 如果 main_tab 不存在，先建立空 dict
+        if main_tab not in character_data_obj.parsed_data:
+            character_data_obj.parsed_data[main_tab] = {}
+
+        # 更新指定的子節點
+        character_data_obj.parsed_data[main_tab][sub_tab] = new_data
+
+        return jsonify({'success': True, 'message': f'角色資料節點 [{main_tab}][{sub_tab}] 更新成功（尚未寫入檔案）。'})
+    except Exception as e:
+        return jsonify({'error': f'更新失敗: {str(e)}'}), 500

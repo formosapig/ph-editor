@@ -144,3 +144,85 @@ button {
 button:hover {
   background-color: #45a049;
 }
+
+/* 第二層 tab 開始 */
+#sub-tab-buttons {
+  display: flex;
+  border-bottom: 1px solid #aaccee;
+  background-color: #e6f0fa; /* 淡藍色，和第一層淺色調區分 */
+  padding-left: 10px;
+  min-height: 40px;
+  align-items: center;
+  user-select: none;
+  /* 和第一層 tab-buttons 風格區別開來 */
+  border-radius: 0 0 4px 4px;
+  box-shadow: inset 0 -1px 0 #9cc0e0;
+  margin-top: 5px;
+}
+
+.sub-tab-button {
+  padding: 6px 14px;
+  margin-right: 8px;
+  background: #f0f6fc;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #2a4d7b; /* 深藍色 */
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.sub-tab-button:hover {
+  background-color: #c7dafd;
+  border-color: #3a70db;
+  color: #1f3f6e;
+}
+
+.sub-tab-button.active {
+  background-color: #3a70db;
+  color: white;
+  border-color: #2a56b5;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(58, 112, 219, 0.6);
+}
+
+/* 第二層 tab 內容區 */
+.sub-tab-content {
+  margin-top: 15px;
+  background-color: #f4f8ff;
+  border: 1px solid #a7c1f0;
+  border-radius: 4px;
+  padding: 12px 15px;
+  color: #222e44;
+  font-size: 14px;
+  /* 確保內容區不會跟第一層 tab-content 沒區隔 */
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  max-height: 200px;
+  overflow-y: auto;
+}
+/* 第二層 tab 結束 */
+
+#main-content {
+  flex: 1;
+  white-space: pre-wrap;
+  font-family: monospace, Consolas, 'Courier New', monospace;
+  background-color: #fdfaf3; /* 柔和紙色底 */
+  color: #333; /* 深灰文字 */
+  padding: 12px 15px;
+  margin-top: 12px;
+  border: 1px solid #d8cfc0; /* 暖灰邊框 */
+  border-radius: 4px;
+  overflow: auto;
+  outline: none;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05);
+  line-height: 1.5;
+  font-size: 14px;
+  caret-color: #bb8855; /* 柔和焦點色 */
+  min-height: 0;
+}
+
+#main-content:focus {
+  background-color: #fbf6e9; /* 專注狀態：稍微加亮的紙色 */
+  border-color: #c6b69f;
+  box-shadow: 0 0 0 2px rgba(204, 187, 150, 0.3); /* 柔光陰影 */
+}
