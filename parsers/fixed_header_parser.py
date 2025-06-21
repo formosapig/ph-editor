@@ -1,4 +1,4 @@
-# your_character_project/parsers/fixed_header_parser.py
+# ph-editor/parsers/fixed_header_parser.py
 
 from io import BytesIO
 # 從 core/common_types.py 引入通用的讀取函式
