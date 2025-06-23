@@ -84,12 +84,26 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 頁面載入時立即初始化第二層 tab（預設第一個第一層 tab 為 fixed_header）
-  renderSubTabs('fixed_header');
+  // 頁面載入時立即初始化第二層 tab（預設第一個第一層 tab 為 hair）
+  //renderSubTabs('hair');
 
   // 一開頁面直接用後端資料初始化頁面
   if (typeof characterData !== 'undefined') {
     updateTabs(characterData);
+	console.log(globalParsedData);
+	// 自動選擇第一個可用的 tab 作為預設載入
+    const firstTab = document.querySelector('.tab-button');
+    if (firstTab) {
+      const tabId = firstTab.getAttribute('data-tab');
+      firstTab.classList.add('active');
+      renderSubTabs(tabId);
+
+      const subTabList = subTabs[tabId];
+      if (subTabList && subTabList.length > 0) {
+        renderSubTabContent(tabId, subTabList[0].key);
+      }
+    }
+	
     document.getElementById('hex-display').textContent = '角色資料預載完成。';
   } else {
     document.getElementById('hex-display').textContent = '無角色數據';

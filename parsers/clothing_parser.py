@@ -68,7 +68,6 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
             2: is_disabled('top', item_id, 'bra'),
             3: is_disabled('top', item_id, 'panty'),
         }
-        print(f"do slotIdx 0")
     else:
         if disable_dict.get(slotIdx, False):
             part['#disable_by'] = 'top'

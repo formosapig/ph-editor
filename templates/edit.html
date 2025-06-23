@@ -34,7 +34,10 @@
 	<div id="main-content" contenteditable="true"></div>
 
   </div>
-
+  <!-- 初始化全域變數 characterData，供 edit.js 使用 -->
+  <script>
+    const characterData = {{ data | safe }};
+  </script>
   <script src="{{ url_for('static', filename='edit.js') }}"></script>
 </body>
 </html>

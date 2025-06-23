@@ -84,7 +84,9 @@ def edit():
                 return f"檔案 '{file_name}' 中未找到 PlayHome 標記，無法解析角色數據。", 400
 
             raw_character_data_with_marker = full_png_data[marker_start_pos:]
+            print("🚧 嘗試呼叫 add_or_update_character()")
             add_or_update_character(file_name, raw_character_data_with_marker)  # 儲存到共享資料庫
+            print("✅ 儲存成功，接著讀取 get_character_data()")
 
             # 再次從 DB 取得資料
             character_data_obj = get_character_data(file_name)
@@ -92,6 +94,8 @@ def edit():
                 return f"雖然成功讀取檔案，但解析後仍無法取得角色數據: {file_name}。", 500
 
         except Exception as e:
+            print("❌ 在 /edit 的解析流程中發生錯誤:")
+            print(traceback.format_exc())  # 比起 str(e)，這會顯示完整 call stack
             return f"讀取角色檔案時發生錯誤: {e}", 500
 
     # 將解析後的數據（字典形式）傳給前端

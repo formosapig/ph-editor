@@ -7,7 +7,7 @@ from .user_config_manager import UserConfigManager
 
 # --- 全域 general 資料預設值 ---
 DEFAULT_GENERAL_TEMPLATE = {
-    'version': 1,
+    '!version': 1,
     'color_traits': [
         { 'code': '#FF0000', 'name': { 'en': 'Red', 'zh': '紅' }, 'trait': { 'zh': '熱情' } },
         { 'code': '#0000FF', 'name': { 'en': 'Blue', 'zh': '藍' }, 'trait': { 'zh': '冷靜' } }
