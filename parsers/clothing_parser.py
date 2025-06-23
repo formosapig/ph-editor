@@ -2,7 +2,7 @@
 
 from io import BytesIO
 import json
-from common_types import (
+from utils.common_types import (
     _read_uint32, _read_int32, _read_uint8, _read_float, _read_color, _format_color_for_json, _read_bytes_as_hex
 )
 # clothing data

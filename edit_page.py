@@ -6,8 +6,8 @@ import traceback
 
 # 從 shared_data 模組引入 get_character_data 和 PLAYHOME_MARKER
 # get_character_data 會處理延遲解析邏輯
-from shared_data import get_character_data, add_or_update_character 
-from file_constants import PLAYHOME_MARKER
+from core.shared_data import get_character_data, add_or_update_character 
+from core.file_constants import PLAYHOME_MARKER
 
 edit_bp = Blueprint('edit_bp', __name__)
 

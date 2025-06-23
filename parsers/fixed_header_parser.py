@@ -1,8 +1,7 @@
 # ph-editor/parsers/fixed_header_parser.py
 
 from io import BytesIO
-# 從 core/common_types.py 引入通用的讀取函式
-from common_types import _read_bytes, _read_uint32, _read_uint8 # 注意這裡的 . 是為了相對引入
+from utils.common_types import _read_bytes, _read_uint32, _read_uint8
 
 import json # <-- 新增：引入 json 模組
 

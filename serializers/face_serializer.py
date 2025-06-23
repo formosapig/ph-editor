@@ -2,7 +2,7 @@
 
 from io import BytesIO
 import struct
-from common_types import (
+from utils.common_types import (
     _pack_uint32, _pack_int32, _pack_float, _pack_color,
     _parse_and_pack_float,
     _pack_hex_to_bytes,

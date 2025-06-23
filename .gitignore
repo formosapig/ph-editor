@@ -34,9 +34,8 @@ desktop.ini
 # Node.js (如果前端用過 npm)
 node_modules/
 
-# Personal cache files
-cache/
-scan_path.txt
+# Personal files
+user_config/
 
 # Compiled static assets (if applicable)
 *.min.js

@@ -1,7 +1,7 @@
 # your_flask_app/parsers/hair_parser.py
 
 from io import BytesIO
-from common_types import (
+from utils.common_types import (
     _read_uint32, _read_uint8, _read_float, _read_bytes,
     _read_color, _format_color_for_json, _read_uint16,
     _read_bytes_as_hex, _read_int32

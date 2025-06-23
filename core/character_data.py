@@ -1,12 +1,12 @@
-# your_character_project/core/character_data.py
+# ph-editor/core/character_data.py
 
 import struct
 from io import BytesIO
 
-# 從 core/common_types.py 引入通用的讀寫工具
+# 從 utils/common_types.py 引入通用的讀寫工具
 # 假設 common_types.py 包含 _read_bytes, _read_uint32, _read_float,
 # 以及 _pack_bytes, _pack_uint32, _pack_float 等
-from common_types import _read_bytes, _pack_bytes, _read_uint32, _pack_uint32, _read_float, _pack_float
+from utils.common_types import _read_bytes, _pack_bytes, _read_uint32, _pack_uint32, _read_float, _pack_float
 
 # 引入所有解析器模組
 from parsers import (
@@ -16,7 +16,7 @@ from parsers import (
     body_parser,
     clothing_parser,
     accessory_parser,
-    misc_parser
+    story_parser
 )
 
 # 引入所有序列化器模組
@@ -27,7 +27,7 @@ from serializers import (
     body_serializer,
     clothing_serializer,
     accessory_serializer,
-    misc_serializer
+    story_serializer
 )
 
 class CharacterData:
@@ -85,11 +85,9 @@ class CharacterData:
             #print(f"  [偏移: {self.data_stream.tell()}] 解析配飾數據...")
             self.parsed_data['accessory'] = accessory_parser.parse_accessories_data(self.data_stream, debug_mode)
 
-            # 7. 處理散落的無意義數據或未歸類的零碎數據
-            # 這裡假設 misc_parser 處理的是一系列分散的數據塊
-            # 您需要根據實際結構呼叫多次或在其內部處理
+            # 7. 附加資料-故事設定
             #print(f"  [偏移: {self.data_stream.tell()}] 解析其他零碎數據/跳過無意義數據...")
-            self.parsed_data['misc_data'] = misc_parser.parse_misc_data(self.data_stream, debug_mode)
+            self.parsed_data['story'] = story_parser.parse_story_data(self.data_stream, debug_mode)
 
         except EOFError as e:
             print(f"--- 解析提前結束：資料流末尾意外終止。錯誤: {e} ---")
@@ -208,10 +206,10 @@ class CharacterData:
                 self.parsed_data.get('accessory', {}), output_stream
             )
 
-            # 7. 寫入其他零碎數據/填充無意義數據
+            # 7. 寫入附加資料-故事設定
             print(f"  [偏移: {output_stream.tell()}] 序列化其他零碎數據/填充無意義數據...")
-            misc_serializer.serialize_misc_data(
-                self.parsed_data.get('misc_data', {}), output_stream
+            story_serializer.serialize_story_data(
+                self.parsed_data.get('story', {}), output_stream
             )
 
         except Exception as e:

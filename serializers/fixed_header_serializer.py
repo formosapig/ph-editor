@@ -1,7 +1,7 @@
 # your_character_project/serializers/fixed_header_serializer.py
 
 from io import BytesIO
-from common_types import _pack_bytes, _pack_uint32  # 確保引入必要的打包函式
+from utils.common_types import _pack_bytes, _pack_uint32  # 確保引入必要的打包函式
 
 def serialize_fixed_header(header_data: dict, stream: BytesIO):
     """

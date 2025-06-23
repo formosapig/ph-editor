@@ -1,7 +1,7 @@
 # your_character_project/parsers/face_parser.py
 
 from io import BytesIO
-from common_types import (
+from utils.common_types import (
     _read_uint32, _read_int32, _read_float, _read_bytes_as_hex,
     _read_and_format_to_value,
     _read_and_format_color,

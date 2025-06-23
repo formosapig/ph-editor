@@ -1,7 +1,7 @@
 # ph-editor/parsers/body_parser.py
 
 from io import BytesIO
-from common_types import (
+from utils.common_types import (
     _read_int32, _read_bytes_as_hex, _read_and_format_color, _read_and_format_to_value,
 )
 import json

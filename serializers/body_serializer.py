@@ -2,7 +2,7 @@
 
 from io import BytesIO
 import struct # 引入 struct，儘管直接使用 common_types 中的封裝函式可能不需要直接用到
-from common_types import (
+from utils.common_types import (
     _pack_int32, _pack_float, _pack_color, _pack_hex_to_bytes,
     _parse_and_pack_float # 新增導入這個函式
 )

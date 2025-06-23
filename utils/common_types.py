@@ -1,5 +1,4 @@
-# ph-editor/common_types.py
-# 以後整理時, 再搬到 core 去.
+# ph-editor/utils/common_types.py
 
 import struct
 from io import BytesIO

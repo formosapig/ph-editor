@@ -1,7 +1,7 @@
 # ph-editor/serializers/accessory_serializer.py
 
 from io import BytesIO
-from common_types import (
+from utils.common_types import (
     _pack_int32, _pack_float, _pack_color, _pack_hex_to_bytes,
     _parse_and_pack_float
 )

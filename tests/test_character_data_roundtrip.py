@@ -1,8 +1,8 @@
 import os
 import pytest
 from pathlib import Path
-from character_data import CharacterData
-from file_constants import PLAYHOME_MARKER
+from core.character_data import CharacterData
+from core.file_constants import PLAYHOME_MARKER
 
 # 以 Path 表示 test_assets 目錄
 TEST_DATA_DIR = Path(__file__).resolve().parent / "test_assets"

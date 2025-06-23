@@ -6,33 +6,24 @@ import time
 from edit_page import edit_bp
 
 # 從 shared_data 模組引入相關函式
-from shared_data import characters_db, add_or_update_character, clear_characters_db, get_all_character_ids
+from core.shared_data import characters_db, add_or_update_character, clear_characters_db, get_all_character_ids
 # 你的 'PlayHome' 標記 (在 app.py 中也定義，因為這裡會尋找它)
-from file_constants import PLAYHOME_MARKER
+from core.file_constants import PLAYHOME_MARKER
+from core.user_config_manager import UserConfigManager
 
+# 初始化時確保所有目錄存在
+UserConfigManager.ensure_dir()
 
 app = Flask(__name__)
 app.register_blueprint(edit_bp)
 
-CACHE_DIR = 'cache'
-# 定義儲存掃描路徑的檔案
-SCAN_PATH_FILE = 'scan_path.txt'
+# 設定快取路徑
+CACHE_DIR = UserConfigManager.get_cache_dir()
+# 設定掃描路徑
+scan_path = UserConfigManager.load_scan_path()
+app.config['SCAN_PATH'] = scan_path if scan_path else ""
+# 設定 session key
 app.config['SECRET_KEY'] = 'sadflkfsdflksdf' # 替換這裡
-
-# 輔助函式：從檔案中讀取掃描路徑
-def _load_scan_path():
-    if os.path.exists(SCAN_PATH_FILE):
-        with open(SCAN_PATH_FILE, 'r', encoding='utf-8') as f:
-            return f.read().strip()
-    return '' # 如果檔案不存在，返回空字串
-
-app.config['SCAN_PATH'] = _load_scan_path()
-
-# 輔助函式：將掃描路徑寫入檔案
-def _save_scan_path(path):
-    with open(SCAN_PATH_FILE, 'w', encoding='utf-8') as f:
-        f.write(path)
-    print(f"掃描路徑已儲存: {path}")
 
 def clean_old_thumbnails(cache_dir, max_remove=3):
     if not os.path.exists(cache_dir):
@@ -62,8 +53,8 @@ def serve_cache(filename):
 
 @app.route('/get_scan_path', methods=['GET'])
 def get_scan_path():
-    path = _load_scan_path()
-    return jsonify({'scanPath': path})
+    path = UserConfigManager.load_scan_path()
+    return jsonify({'scanPath': path or ''})
     
 @app.route('/scan', methods=['POST'])
 def scan_folder():
@@ -76,7 +67,7 @@ def scan_folder():
         return jsonify({'error': '無效的資料夾路徑'}), 400
 
     app.config['SCAN_PATH'] = folder_path # 更新應用程式配置中的掃描路徑
-    _save_scan_path(folder_path)
+    UserConfigManager.save_scan_path(folder_path)  # ✅ 改用此處理
 
     # 清空現有的數據庫，以便重新掃描
     clear_characters_db() 
@@ -177,7 +168,7 @@ def delete_files():
     if not filenames_to_delete or not isinstance(filenames_to_delete, list):
         return jsonify({'status': 'error', 'message': '未提供檔案清單或格式錯誤'}), 400
 
-    scan_path = _load_scan_path()
+    scan_path = UserConfigManager.load_scan_path()
     if not scan_path:
         return jsonify({'status': 'error', 'message': '請先掃描一個資料夾'}), 400
 
