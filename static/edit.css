@@ -21,10 +21,11 @@ body {
 
 /* 標題 */
 h1 {
+  font-size: 24px;	
   margin-top: 0;
   margin-right: 120px;
   flex-shrink: 0;
-  color: #333;
+  color: #2c3e50;
 }
 
 /* HEX 顯示區 */
@@ -43,6 +44,7 @@ h1 {
 
 /* Tab 容器 */
 .tab-container {
+  position: relative;  /* 加這行 */
   background-color: #f0fff0;	
   display: flex;
   flex-direction: column;
@@ -226,3 +228,63 @@ button:hover {
   border-color: #c6b69f;
   box-shadow: 0 0 0 2px rgba(204, 187, 150, 0.3); /* 柔光陰影 */
 }
+
+/* START: 修改部分 - 浮動下拉選單及其插槽樣式 */
+.floating-dropdown {
+  position: absolute;
+  /* width: 180px;  移除固定寬度，讓內容決定 */
+  top: 10px;
+  right: 10px;
+  display: flex; /* 將 display 從 none 改為 flex，並預設為隱藏，由 JS 控制顯示/隱藏 */
+  flex-direction: column; /* 讓多個下拉選單垂直排列 */
+  gap: 8px; /* 下拉選單之間間距 */
+  background-color: #fff;
+  border: 1px solid #d8cfc0; /* 跟 main-content 邊框色一致 */
+  border-radius: 4px;
+  padding: 8px 12px; /* 調整 padding 讓內部有更多空間 */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  font-size: 14px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  /* user-select: none;  移除此行，讓內部 label 可以選取 */
+}
+
+/* 確保浮動下拉選單在預設情況下是隱藏的，由 JS 來控制 .show 類別 */
+.floating-dropdown:not(.show) {
+    display: none;
+}
+
+/* 下拉選單插槽 */
+.dropdown-slot {
+    display: flex; /* 讓 label 和 select 在一行 */
+    align-items: center;
+    gap: 8px; /* label 和 select 之間的間距 */
+    /* 預設隱藏，由 JS 動態決定是否顯示 */
+    display: none; 
+}
+
+/* 當 .dropdown-slot 內部有內容時，顯示它 (需要 JS 輔助，但 CSS 可以預留) */
+/* .dropdown-slot:not(:empty) {
+    display: flex; 
+} */
+
+.dropdown-slot label { /* 應用到每個 slot 內的 label */
+  font-weight: 600;
+  color: #bb8855;
+  user-select: text; /* 允許複製文字 */
+  pointer-events: auto; /* 允許滑鼠互動 */
+  flex-shrink: 0; /* 防止 label 被壓縮 */
+}
+
+.dropdown-slot select { /* 應用到每個 slot 內的 select */
+  padding: 6px 8px; /* 稍微調整 padding */
+  border: 1px solid #d8cfc0;
+  border-radius: 3px;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: text;
+  flex-grow: 1; /* 讓 select 盡可能佔據剩餘空間 */
+  min-width: 80px; /* 避免 select 過窄 */
+}
+/* END: 修改部分 */

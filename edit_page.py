@@ -300,3 +300,91 @@ def update_edit():
         return jsonify({'success': True, 'message': f'角色資料節點 [{main_tab}][{sub_tab}] 更新成功（尚未寫入檔案）。'})
     except Exception as e:
         return jsonify({'error': f'更新失敗: {str(e)}'}), 500
+        
+# START: 新增 - 動態載入下拉選單選項的 API 路由
+@edit_bp.route('/api/options/<tab>/<subTab>', methods=['GET'])
+def get_dropdown_options(tab, subTab):
+    """
+    根據主 tab 和子 tab 動態回傳下拉選單的選項資料。
+    """
+    # 模擬的下拉選單測試資料
+    # 結構應符合前端 edit.js 中 `fetchAndRenderDropdowns` 函數的預期
+    # 每個 dropdown 配置包含：displayLabel, dataKey, options, defaultValue (可選)
+    dropdown_test_data = {
+        'hair': {
+            'style': {
+                'dropdowns': [
+                    {
+                        "displayLabel": "髮型類型",
+                        "dataKey": "style_type", # 假設在 parsed_data 中對應的 key
+                        "options": [
+                            {"label": "請選擇", "value": ""}, # 提示選項
+                            {"label": "短髮", "value": "short"},
+                            {"label": "長髮", "value": "long"},
+                            {"label": "波浪", "value": "wavy"}
+                        ],
+                        "defaultValue": "short" # 預設值
+                    },
+                    {
+                        "displayLabel": "髮色",
+                        "dataKey": "color", # 假設在 parsed_data 中對應的 key
+                        "options": [
+                            {"label": "請選擇", "value": ""},
+                            {"label": "黑色", "value": "black"},
+                            {"label": "棕色", "value": "brown"},
+                            {"label": "金色", "value": "blonde"}
+                        ],
+                        "defaultValue": "black"
+                    }
+                ]
+            },
+            'front_hair': { # 另一個 hair 子 tab 的範例
+                'dropdowns': [
+                    {
+                        "displayLabel": "瀏海樣式",
+                        "dataKey": "fringe_style",
+                        "options": [
+                            {"label": "請選擇", "value": ""},
+                            {"label": "齊瀏海", "value": "bangs"},
+                            {"label": "斜瀏海", "value": "side_swept"}
+                        ],
+                        "defaultValue": "bangs"
+                    }
+                ]
+            }
+        },
+        'story': {
+            'author': {
+                'dropdowns': [
+                    {
+                        "displayLabel": "作者",
+                        "dataKey": "author_info", # 假設在 parsed_data 中對應的 key
+                        "options": [
+                            {"label": "請選擇", "value": ""},
+                            {"label": "小明", "value": {"id": "m01", "name": "小明"}},
+                            {"label": "小美", "value": {"id": "m02", "name": "小美"}}
+                        ],
+                        "defaultValue": {"id": "m01", "name": "小明"}
+                    },
+                    {
+                        "displayLabel": "故事類型",
+                        "dataKey": "story_genre",
+                        "options": [
+                            {"label": "請選擇", "value": ""},
+                            {"label": "奇幻", "value": "fantasy"},
+                            {"label": "科幻", "value": "scifi"},
+                            {"label": "愛情", "value": "romance"}
+                        ],
+                        "defaultValue": "fantasy"
+                    }
+                ]
+            }
+        }
+    }
+
+    # 根據 tab 和 subTab 獲取對應的測試資料
+    data = dropdown_test_data.get(tab, {}).get(subTab, {'dropdowns': []})
+    
+    # 返回 JSON 格式的資料
+    return jsonify(data)
+# END: 新增        

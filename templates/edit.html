@@ -12,11 +12,9 @@
     <button type="button" onclick="window.close()">結束</button>
   </div>
 
-  <h1>編輯檔案：{{ file }}</h1>
+  <h1>編輯角色：{{ file }}</h1>
 
-  <div id="hex-display">
-    載入原始數據十六進位預覽中...
-  </div>
+  <div id="hex-display"></div>
 
   <div class="tab-container">
     <div class="tab-buttons">
@@ -28,13 +26,16 @@
       <button class="tab-button" data-tab="story">故事</button>
     </div>
 
-    <!-- 第二層 tab 按鈕容器 -->
     <div id="sub-tab-buttons" class="sub-tab-buttons"></div>
 
-	<div id="main-content" contenteditable="true"></div>
+    <div id="dropdown-container" class="floating-dropdown">
+      <div id="dropdown-1" class="dropdown-slot"></div>
+      <div id="dropdown-2" class="dropdown-slot"></div>
+      <div id="dropdown-3" class="dropdown-slot"></div>
+    </div>
+    <div id="main-content" contenteditable="true"></div>
 
   </div>
-  <!-- 初始化全域變數 characterData，供 edit.js 使用 -->
   <script>
     const characterData = {{ data | safe }};
   </script>
