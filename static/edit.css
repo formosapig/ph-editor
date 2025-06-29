@@ -6,7 +6,7 @@ body {
   overflow: hidden; /* 禁止 body 產生捲動條 */
   font-family: Verdana;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 讓子元素垂直堆疊 */
   box-sizing: border-box;
   background-color: #f5f6f5;
 }
@@ -21,39 +21,61 @@ body {
 
 /* 標題 */
 h1 {
-  font-size: 24px;	
+  font-size: 24px;
   margin-top: 0;
   margin-right: 120px;
-  flex-shrink: 0;
+  flex-shrink: 0; /* 防止標題被壓縮 */
   color: #2c3e50;
 }
 
-/* HEX 顯示區 */
-#hex-display {
+/* result message 顯示區 - 移到下方後，不再需要 margin-bottom，並確保 flex-shrink */
+#result-message {
   white-space: pre-wrap;
   font-family: monospace;
-  background-color: #f0f0f0;
-  padding: 10px;
-  border: 1px solid #ccc;
-  margin-bottom: 20px;
-  max-height: 300px;
-  overflow-y: auto;
-  flex-shrink: 0;
-  border-radius: 4px;
+  padding: 12px 15px;
+  margin-top: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1.5;
+  border-left: 5px solid transparent;
+  background-color: #fefefe;
+  color: #333;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+/* 成功 */
+#result-message.success {
+  background-color: #e6f7ec;
+  border-left-color: #4caf50;
+  color: #2e5939;
+}
+
+/* 錯誤 */
+#result-message.error {
+  background-color: #fdecea;
+  border-left-color: #f44336;
+  color: #812b25;
+}
+
+/* 警告 */
+#result-message.warning {
+  background-color: #fff8e1;
+  border-left-color: #ff9800;
+  color: #7a4f01;
 }
 
 /* Tab 容器 */
 .tab-container {
-  position: relative;  /* 加這行 */
-  background-color: #f0fff0;	
+  position: relative;
   display: flex;
   flex-direction: column;
-  flex: 1; /* 同時設置 flex-grow 和 flex-shrink */
-  min-height: 0; /* 關鍵：允許內容收縮 */
-  background-color: #fff;
+  flex: 1; /* 佔據所有剩餘空間 */
+  min-height: 0; /* 關鍵：允許內容收縮，確保 flex: 1 能正確運作 */
+  background-color: #f7f3ec;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow: hidden; /* 防止內部元素溢出產生捲動條 */
+  overflow: hidden; /* 防止內部元素溢出產生捲動條，但這裡主要是為了讓 main-content 內的捲動條有效 */
 }
 
 /* Tab 內容區域 */
@@ -69,10 +91,11 @@ h1 {
 .tab-buttons {
   display: flex;
   border-bottom: 1px solid #ddd;
-  background-color: #e8f5e9;
+  background-color: #1e8f5e9;
   border-radius: 4px 4px 0 0;
   padding: 0;
   margin: 0;
+  flex-shrink: 0; /* 確保按鈕區不被壓縮 */
 }
 
 .tab-button {
@@ -104,7 +127,7 @@ h1 {
 
 /* Tab 內容 */
 .tab-content {
-  background-color: #e8f5e9;
+  background-color: #1e8f5e9;
   display: none;
   position: absolute;
   top: 0;
@@ -121,7 +144,6 @@ h1 {
 
 /* JSON 預覽 */
 .tab-content pre {
-	
   white-space: pre-wrap;
   word-wrap: break-word;
   background: #e8f5e9;
@@ -156,10 +178,10 @@ button:hover {
   min-height: 40px;
   align-items: center;
   user-select: none;
-  /* 和第一層 tab-buttons 風格區別開來 */
   border-radius: 0 0 4px 4px;
   box-shadow: inset 0 -1px 0 #9cc0e0;
-  margin-top: 5px;
+  margin-top: 4px;
+  flex-shrink: 0; /* 確保子 tab 按鈕不被壓縮 */
 }
 
 .sub-tab-button {
@@ -197,30 +219,30 @@ button:hover {
   padding: 12px 15px;
   color: #222e44;
   font-size: 14px;
-  /* 確保內容區不會跟第一層 tab-content 沒區隔 */
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-  max-height: 200px;
+  max-height: 200px; /* 這裡的 max-height 對於 main-content 的需求可能需要移除或調整，如果它包含在 main-content 裡面 */
   overflow-y: auto;
+  flex-shrink: 0; /* 確保這塊內容不會被 main-content 擠壓 */
 }
 /* 第二層 tab 結束 */
 
 #main-content {
-  flex: 1;
+  flex: 1; /* 這是關鍵：讓它佔據所有剩餘空間 */
   white-space: pre-wrap;
   font-family: monospace, Consolas, 'Courier New', monospace;
   background-color: #fdfaf3; /* 柔和紙色底 */
   color: #333; /* 深灰文字 */
   padding: 12px 15px;
-  margin-top: 12px;
+  margin-top: 8px;
   border: 1px solid #d8cfc0; /* 暖灰邊框 */
   border-radius: 4px;
-  overflow: auto;
+  overflow: auto; /* 這是關鍵：讓它產生自己的捲動條 */
   outline: none;
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05);
   line-height: 1.5;
   font-size: 14px;
   caret-color: #bb8855; /* 柔和焦點色 */
-  min-height: 0;
+  min-height: 0; /* 確保在 flex 容器中能正確縮小 */
 }
 
 #main-content:focus {
@@ -232,59 +254,49 @@ button:hover {
 /* START: 修改部分 - 浮動下拉選單及其插槽樣式 */
 .floating-dropdown {
   position: absolute;
-  /* width: 180px;  移除固定寬度，讓內容決定 */
   top: 10px;
   right: 10px;
-  display: flex; /* 將 display 從 none 改為 flex，並預設為隱藏，由 JS 控制顯示/隱藏 */
-  flex-direction: column; /* 讓多個下拉選單垂直排列 */
-  gap: 8px; /* 下拉選單之間間距 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background-color: #fff;
-  border: 1px solid #d8cfc0; /* 跟 main-content 邊框色一致 */
+  border: 1px solid #d8cfc0;
   border-radius: 4px;
-  padding: 8px 12px; /* 調整 padding 讓內部有更多空間 */
+  padding: 8px 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   z-index: 10;
   font-size: 14px;
   font-family: Arial, sans-serif;
   color: #333;
-  /* user-select: none;  移除此行，讓內部 label 可以選取 */
 }
 
-/* 確保浮動下拉選單在預設情況下是隱藏的，由 JS 來控制 .show 類別 */
 .floating-dropdown:not(.show) {
-    display: none;
+  display: none;
 }
 
-/* 下拉選單插槽 */
 .dropdown-slot {
-    display: flex; /* 讓 label 和 select 在一行 */
-    align-items: center;
-    gap: 8px; /* label 和 select 之間的間距 */
-    /* 預設隱藏，由 JS 動態決定是否顯示 */
-    display: none; 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  display: none;
 }
 
-/* 當 .dropdown-slot 內部有內容時，顯示它 (需要 JS 輔助，但 CSS 可以預留) */
-/* .dropdown-slot:not(:empty) {
-    display: flex; 
-} */
-
-.dropdown-slot label { /* 應用到每個 slot 內的 label */
+.dropdown-slot label {
   font-weight: 600;
   color: #bb8855;
-  user-select: text; /* 允許複製文字 */
-  pointer-events: auto; /* 允許滑鼠互動 */
-  flex-shrink: 0; /* 防止 label 被壓縮 */
+  user-select: none;
+  pointer-events: auto;
+  flex-shrink: 0;
 }
 
-.dropdown-slot select { /* 應用到每個 slot 內的 select */
-  padding: 6px 8px; /* 稍微調整 padding */
+.dropdown-slot select {
+  padding: 6px 8px;
   border: 1px solid #d8cfc0;
   border-radius: 3px;
   font-size: 14px;
   cursor: pointer;
   user-select: text;
-  flex-grow: 1; /* 讓 select 盡可能佔據剩餘空間 */
-  min-width: 80px; /* 避免 select 過窄 */
+  flex-grow: 1;
+  min-width: 80px;
 }
 /* END: 修改部分 */

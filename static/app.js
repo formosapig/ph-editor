@@ -100,8 +100,8 @@ filterBtn.addEventListener('click', () => {
 
 editBtn.addEventListener('click', () => {
   if (selectedSet.size === 1) {
-    const fileName = Array.from(selectedSet)[0];
-    const url = `/edit?file=${encodeURIComponent(fileName)}`;
+    const characterId = Array.from(selectedSet)[0];
+    const url = `/edit?character_id=${encodeURIComponent(characterId)}`;
     window.open(url, 'editWindow');
   }
 });

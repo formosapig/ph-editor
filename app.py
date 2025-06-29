@@ -3,12 +3,17 @@ from PIL import Image
 from flask import current_app
 import os
 import time
-from edit_page import edit_bp
+from web.edit_bp import edit_bp
+from api.character import api_character_bp
 
 # 從 shared_data 模組引入相關函式
-from core.shared_data import characters_db, add_or_update_character, clear_characters_db, get_all_character_ids
-# 你的 'PlayHome' 標記 (在 app.py 中也定義，因為這裡會尋找它)
-from core.file_constants import PLAYHOME_MARKER
+from core.shared_data import (
+    characters_db,
+    add_or_update_character,
+    add_or_update_character_with_path,
+    clear_characters_db,
+    get_all_character_ids
+)
 from core.user_config_manager import UserConfigManager
 
 # 初始化時確保所有目錄存在
@@ -16,6 +21,7 @@ UserConfigManager.ensure_dir()
 
 app = Flask(__name__)
 app.register_blueprint(edit_bp)
+app.register_blueprint(api_character_bp)
 
 # 設定快取路徑
 CACHE_DIR = UserConfigManager.get_cache_dir()
@@ -119,22 +125,8 @@ def scan_folder():
 
                 # --- 角色數據載入邏輯 ---
                 try:
-                    with open(file_path, 'rb') as f:
-                        full_png_data = f.read()
-
-                    marker_start_pos = full_png_data.find(PLAYHOME_MARKER)
-
-                    if marker_start_pos == -1:
-                        print(f"  [警告] 檔案 '{file_name_with_ext}' 中未找到 'PlayHome' 標記，無法解析角色數據，跳過。")
-                        continue # 跳過這個檔案，因為沒有自定義數據
-
-                    # 提取從 'PlayHome' 標記開始到檔案末尾的所有數據
-                    raw_character_data_with_marker = full_png_data[marker_start_pos:]
-                    
-                    # 呼叫 shared_data 模組的函式來處理 CharacterData 的創建和儲存
-                    add_or_update_character(character_id, raw_character_data_with_marker)
+                    add_or_update_character_with_path(character_id, folder_path)
                     loaded_character_count += 1
-
                 except Exception as e:
                     print(f"  [錯誤] 載入或解析檔案 '{file_name_with_ext}' 的角色數據時發生錯誤: {e}")
                     continue # 繼續處理下一個檔案
@@ -188,4 +180,4 @@ def delete_files():
     return jsonify({'results': results})
         
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, threaded=True)

@@ -7,14 +7,13 @@
 </head>
 <body>
   <div class="top-right-button-container">
+    <button type="button" onclick="pingPongSave()">乒乓</button>
     <button type="button" onclick="reloadFile()">重讀</button>
     <button type="button" onclick="saveFile()">儲存</button>
     <button type="button" onclick="window.close()">結束</button>
   </div>
 
-  <h1>編輯角色：{{ file }}</h1>
-
-  <div id="hex-display"></div>
+  <h1>編輯角色：{{ character_id }}</h1>
 
   <div class="tab-container">
     <div class="tab-buttons">
@@ -36,6 +35,9 @@
     <div id="main-content" contenteditable="true"></div>
 
   </div>
+  
+  <div id="result-message"></div>
+  
   <script>
     const characterData = {{ data | safe }};
   </script>

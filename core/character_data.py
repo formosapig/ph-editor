@@ -93,8 +93,8 @@ class CharacterData:
             print(f"--- 解析提前結束：資料流末尾意外終止。錯誤: {e} ---")
         except Exception as e:
             print(f"--- 解析過程中發生未知錯誤：{e} ---")
-        finally:
-            print(f"--- 角色資料解析完成。目前讀取位置: {self.data_stream.tell()} ---")
+        #finally:
+            #print(f"--- 角色資料解析完成。目前讀取位置: {self.data_stream.tell()} ---")
             #print(f"總原始資料長度: {len(self.raw_data)} 位元組。")
             #print(f"未解析的位元組數: {len(self.raw_data) - self.data_stream.tell()}。")
 
@@ -166,57 +166,57 @@ class CharacterData:
         Returns:
             重建後的位元組資料。
         """
-        print("\n--- 開始序列化角色資料 ---")
+        #print("\n--- 開始序列化角色資料 ---")
         output_stream = BytesIO()
 
         try:
             # 1. 寫入固定頭部
-            print(f"  [偏移: {output_stream.tell()}] 序列化固定頭部...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化固定頭部...")
             fixed_header_serializer.serialize_fixed_header(
                 self.parsed_data.get('fixed_header', {}), output_stream
             )
 
             # 2. 寫入髮型數據
-            print(f"  [偏移: {output_stream.tell()}] 序列化髮型數據...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化髮型數據...")
             hair_serializer.serialize_hair_data(
                 self.parsed_data.get('hair', {}), output_stream
             )
 
             # 3. 寫入臉部數據
-            print(f"  [偏移: {output_stream.tell()}] 序列化臉部數據...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化臉部數據...")
             face_serializer.serialize_face_data(
                 self.parsed_data.get('face', {}), output_stream
             )
 
             # 4. 寫入身體數據
-            print(f"  [偏移: {output_stream.tell()}] 序列化身體數據...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化身體數據...")
             body_serializer.serialize_body_data(
                 self.parsed_data.get('body', {}), output_stream
             )
 
             # 5. 寫入衣服數據
-            print(f"  [偏移: {output_stream.tell()}] 序列化衣服數據...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化衣服數據...")
             clothing_serializer.serialize_clothing_data(
                 self.parsed_data.get('clothing', {}), output_stream
             )
 
             # 6. 寫入配飾數據
-            print(f"  [偏移: {output_stream.tell()}] 序列化配飾數據...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化配飾數據...")
             accessory_serializer.serialize_accessories_data(
                 self.parsed_data.get('accessory', {}), output_stream
             )
 
             # 7. 寫入附加資料-故事設定
-            print(f"  [偏移: {output_stream.tell()}] 序列化其他零碎數據/填充無意義數據...")
+            #print(f"  [偏移: {output_stream.tell()}] 序列化其他零碎數據/填充無意義數據...")
             story_serializer.serialize_story_data(
                 self.parsed_data.get('story', {}), output_stream
             )
 
         except Exception as e:
-            print(f"--- 序列化過程中發生錯誤：{e} ---")
+            #print(f"--- 序列化過程中發生錯誤：{e} ---")
             # 根據需求，這裡可以選擇返回部分數據或重新拋出錯誤
             return b'' # 返回空位元組表示失敗
 
         final_bytes = output_stream.getvalue()
-        print(f"--- 角色資料序列化完成。總輸出位元組數: {len(final_bytes)} ---")
+        #print(f"--- 角色資料序列化完成。總輸出位元組數: {len(final_bytes)} ---")
         return final_bytes

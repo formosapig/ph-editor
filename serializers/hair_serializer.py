@@ -6,7 +6,7 @@ from utils.common_types import (
 )
 
 def _serialize_single_hair_part(stream: BytesIO, part_data: dict, part_name: str):
-    print(f"    開始序列化 {part_name} 髮型部件...")
+    #print(f"    開始序列化 {part_name} 髮型部件...")
 
     # 1. 髮型 ID（兩個 int32）
     hair_id = part_data.get('id', '(0,0)').strip('()').split(',')
@@ -31,17 +31,17 @@ def _serialize_single_hair_part(stream: BytesIO, part_data: dict, part_name: str
     else:
         stream.write(bytes.fromhex(part_data.get('end_mark', '00000000')))
 
-    print(f"    完成 {part_name} 髮型部件的序列化。")
+    #print(f"    完成 {part_name} 髮型部件的序列化。")
 
 def serialize_hair_data(hair_data: dict, stream: BytesIO):
     """
     序列化髮型數據，支援 back_hair, front_hair, side_hair。
     """
     current_pos = stream.tell()
-    print(f"    [偏移: {current_pos}] 開始序列化所有髮型數據。")
+    #print(f"    [偏移: {current_pos}] 開始序列化所有髮型數據。")
 
     _serialize_single_hair_part(stream, hair_data['back_hair'], 'back_hair')
     _serialize_single_hair_part(stream, hair_data['front_hair'], 'front_hair')
     _serialize_single_hair_part(stream, hair_data['side_hair'], 'side_hair')
 
-    print(f"    髮型數據序列化完成。下一個寫入位置: {stream.tell()}")
+    #print(f"    髮型數據序列化完成。下一個寫入位置: {stream.tell()}")

@@ -121,10 +121,12 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log('未找到任何主 Tab 按鈕。'); // 新增日誌
     }
     
-    document.getElementById('hex-display').textContent = '角色資料預載完成。';
+	showMessage('角色資料預載完成。');
+    //document.getElementById('result-message').textContent = '角色資料預載完成。';
   } else {
     console.log('characterData 未定義，無法初始化頁面。'); // 新增日誌
-    document.getElementById('hex-display').textContent = '無角色數據';
+	showMessage('無角色數據', 'warning');
+    //document.getElementById('result-message').textContent = '無角色數據';
   }
 
   // 綁定 main-content 的 input 事件，觸發自動儲存
@@ -134,7 +136,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
       autoSaveData();
-    }, 500);
+    }, 5000);
   });
 
   // 離焦事件，立即儲存（取消 debounce）
@@ -261,13 +263,14 @@ function renderSubTabContent(mainTabKey, subTabKey) {
 function autoSaveData() {
   console.log('執行 autoSaveData 函數。'); // 新增日誌
   const mainContent = document.getElementById('main-content');
-  const hexDisplay = document.getElementById('hex-display');
+  //const hexDisplay = document.getElementById('result-message');
 
   const mainTabKey = mainContent.dataset.mainTabKey;
   const subTabKey = mainContent.dataset.subTabKey;
 
   if (!mainTabKey || !subTabKey) {
-    hexDisplay.textContent = '無法儲存：無效的 tab 鍵值';
+    showMessage('無法儲存：無效的 tab 鍵值', 'error');
+	//hexDisplay.textContent = '無法儲存：無效的 tab 鍵值';
     console.error('autoSaveData: 無效的 tab 鍵值。'); // 新增日誌
     return;
   }
@@ -276,44 +279,47 @@ function autoSaveData() {
   try {
     newData = JSON.parse(mainContent.textContent);
   } catch (err) {
-    hexDisplay.textContent = 'JSON 格式錯誤，無法儲存';
+	showMessage('JSON 格式錯誤，無法儲存', 'error');
+    //hexDisplay.textContent = 'JSON 格式錯誤，無法儲存';
     console.error('autoSaveData: JSON 格式錯誤。', err); // 新增日誌
     return;
   }
 
-  hexDisplay.textContent = `正在儲存 ${mainTabKey} / ${subTabKey} ...`;
+  showMessage(`正在儲存 ${mainTabKey} / ${subTabKey} ...`);
+  //hexDisplay.textContent = `正在儲存 ${mainTabKey} / ${subTabKey} ...`;
 
-  fetch('/edit/update', {
-    method: 'POST',
+  fetch(`/api/character/update/${encodeURIComponent(mainTabKey)}/${encodeURIComponent(subTabKey)}`, {
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      mainTabKey,
-      subTabKey,
-      data: newData
-    })
+    body: JSON.stringify({ data: newData })
   })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(err => {
-          throw new Error(err.error || `HTTP 錯誤: ${response.status}`);
-        }).catch(() => {
-          throw new Error(`HTTP 錯誤: ${response.status}`);
-        });
-      }
-      return response.json();
-    })
-    .then(result => {
-      hexDisplay.textContent = result.message || '儲存成功！';
-      console.log('autoSaveData: 儲存成功。', result); // 新增日誌
-      // 更新全域資料狀態，避免下一次讀取舊資料
-      if (globalParsedData && globalParsedData[mainTabKey]) {
-        globalParsedData[mainTabKey][subTabKey] = newData;
-      }
-    })
-    .catch(error => {
-      hexDisplay.textContent = '儲存失敗：' + error.message;
-      console.error('autoSaveData: 儲存失敗。', error); // 新增日誌
-    });
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(err => {
+        throw new Error(err.error || `HTTP 錯誤: ${response.status}`);
+      }).catch(() => {
+        throw new Error(`HTTP 錯誤: ${response.status}`);
+      });
+    }
+    return response.json();
+  })
+  .then(result => {
+    showMessage(result.message || '儲存成功！');
+    console.log('autoSaveData: 儲存成功。', result);
+    // 更新全域資料狀態，避免下一次讀取舊資料
+    if (globalParsedData && globalParsedData[mainTabKey]) {
+      globalParsedData[mainTabKey][subTabKey] = newData;
+    }
+	// 如果有更新全域版本號，呼叫 pingPongSave
+    if (result.global_version_updated) {
+      console.log('偵測到全域版本號更新，觸發 pingPongSave');
+      pingPongSave();
+    }
+  })
+  .catch(error => {
+    showMessage('儲存失敗：' + error.message, 'error');
+    console.error('autoSaveData: 儲存失敗。', error);
+  });
 }
 
 /**
@@ -323,10 +329,11 @@ function autoSaveData() {
 
 function reloadFile() {
   console.log('執行 reloadFile 函數。'); // 新增日誌
-  const hexDisplay = document.getElementById('hex-display');
-  hexDisplay.textContent = '正在重新載入檔案數據...';
+  //const hexDisplay = document.getElementById('result-message');
+  showMessage('正在重新載入檔案數據...');
+  //hexDisplay.textContent = '正在重新載入檔案數據...';
 
-  fetch('/edit/reload_file')
+  fetch('/api/character/reload')
     .then(response => {
       if (!response.ok) {
         return response.json().then(errData => {
@@ -339,13 +346,15 @@ function reloadFile() {
     })
     .then(data => {
       if (data.error) {
-        hexDisplay.textContent = '錯誤：' + data.error;
+        showMessage('錯誤：' + data.error, 'error'); 
+  	    //hexDisplay.textContent = '錯誤：' + data.error;
         console.error('reloadFile: 伺服器回傳錯誤。', data.error); // 新增日誌
         return;
       }
 
       updateTabs(data);
-      hexDisplay.textContent = '重新載入檔案數據成功。';
+      showMessage('重新載入檔案數據成功。');
+	  //hexDisplay.textContent = '重新載入檔案數據成功。';
       console.log('reloadFile: 重新載入成功。'); // 新增日誌
 
       // 重新渲染第二層 tab，保持目前第一層 tab 按鈕 active
@@ -365,15 +374,17 @@ function reloadFile() {
       }
     })
     .catch(err => {
-      hexDisplay.textContent = '載入失敗：' + err.message;
+	  showMessage('載入失敗：' + err.message, 'error');	
+      //hexDisplay.textContent = '載入失敗：' + err.message;
       console.error('reloadFile: 載入失敗。', err); // 新增日誌
     });
 }
 
 function saveFile() {
   console.log('執行 saveFile 函數。'); // 新增日誌
-  const hexDisplay = document.getElementById('hex-display');
-  hexDisplay.textContent = '正在儲存資料...';
+  //const hexDisplay = document.getElementById('result-message');
+  showMessage('正在儲存資料...');
+  //hexDisplay.textContent = '正在儲存資料...';
 
   fetch('/edit/save_bak', {
     method: 'POST'
@@ -389,17 +400,58 @@ function saveFile() {
       return response.json();
     })
     .then(result => {
-      hexDisplay.textContent = result.message || '儲存成功！';
+      showMessage(result.message || '儲存成功！');
+	  //hexDisplay.textContent = result.message || '儲存成功！';
       console.log('saveFile: 儲存成功。', result); // 新增日誌
     })
     .catch(error => {
-      hexDisplay.textContent = '儲存失敗：' + error.message;
+	  showMessage('儲存失敗：' + error.message, 'error');
+      //hexDisplay.textContent = '儲存失敗：' + error.message;
       console.error('saveFile: 儲存失敗。', error); // 新增日誌
     });
 }
 
-window.reloadFile = reloadFile;
-window.saveFile = saveFile;
+/**
+ * 觸發後端儲存待處理角色的函式。
+ * 會持續呼叫後端路由，直到沒有待儲存的檔案為止。
+ */
+async function pingPongSave() {
+    let savedCount = 0;
+
+    async function saveNext() {
+        try {
+            // 呼叫後端儲存待處理檔案的路由
+            const response = await fetch('/api/character/ping_pong_save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`伺服器回應錯誤: ${response.status} ${response.statusText} - ${errorText}`);
+            }
+
+            const data = await response.json();
+
+            if (data.character_id) {
+                savedCount++;
+                showMessage(`成功儲存檔案: ${data.character_id}。正在檢查是否有更多檔案...`);
+                await saveNext(); // 繼續處理下一個
+            } else {
+                // 沒有更多檔案要存了
+                showMessage(`所有待儲存檔案 ${savedCount} 個已處理完畢。`);
+            }
+        } catch (err) {
+            console.error("儲存失敗", err);
+            showMessage(`儲存失敗: ${err.message}`, 'error');
+        }
+    }
+
+    showMessage("正在檢查並儲存待處理檔案...");
+    await saveNext();
+}
+
 
 /**
  * 建立一個 <select> 元素及其選項。
@@ -477,8 +529,9 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
   const dropdownContainer = document.getElementById('dropdown-container');
   dropdownContainer.classList.remove('show'); // 先隱藏整個容器
 
-  const hexDisplay = document.getElementById('hex-display');
-  hexDisplay.textContent = `正在載入 ${mainTab}/${subTab} 的下拉選單選項...`;
+  //const hexDisplay = document.getElementById('result-message');
+  showMessage(`正在載入 ${mainTab}/${subTab} 的下拉選單選項...`);
+  //hexDisplay.textContent = `正在載入 ${mainTab}/${subTab} 的下拉選單選項...`;
 
   try {
     const response = await fetch(`/api/options/${mainTab}/${subTab}`);
@@ -496,13 +549,16 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
     } else {
         // START: 調整錯誤訊息
         if (result.dropdowns === undefined) {
-            hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
+            showMessage(`後端 API /api/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
+			//hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
             console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
         } else if (!Array.isArray(result.dropdowns)) {
-            hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
+            showMessage(`後端 API /api/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
+			//hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
             console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
         } else {
-            hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
+            showMessage(`後端 API /api/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
+			//hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
             console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
         }
         // END: 調整錯誤訊息
@@ -511,7 +567,8 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
 
     // 如果 dropdownsToRender 陣列為空
     if (!dropdownsToRender || dropdownsToRender.length === 0) {
-      hexDisplay.textContent = `無 ${mainTab}/${subTab} 的下拉選單選項。`; // 這就是您看到的訊息
+      showMessage(`無 ${mainTab}/${subTab} 的下拉選單選項。`, 'error');
+	  //hexDisplay.textContent = `無 ${mainTab}/${subTab} 的下拉選單選項。`; // 這就是您看到的訊息
       console.log(`fetchAndRenderDropdowns: 後端回傳的下拉選單配置為空。`); // 新增日誌
       return;
     }
@@ -583,11 +640,13 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
           console.error(`fetchAndRenderDropdowns: 未找到 ID 為 ${slotId} 的下拉選單插槽。`); // 新增日誌
       }
     }
-    hexDisplay.textContent = `已載入 ${slotIndex} 個下拉選單。`;
+    showMessage(`已載入 ${slotIndex} 個下拉選單。`);
+	//hexDisplay.textContent = `已載入 ${slotIndex} 個下拉選單。`;
     console.log(`fetchAndRenderDropdowns: 總共載入 ${slotIndex} 個下拉選單。`); // 新增日誌
 
   } catch (error) {
-    hexDisplay.textContent = `載入下拉選單失敗：${error.message}`;
+    showMessage(`載入下拉選單失敗：${error.message}`, 'error');
+	//hexDisplay.textContent = `載入下拉選單失敗：${error.message}`;
     console.error('載入下拉選單錯誤:', error); // 新增日誌
   } finally {
     // 無論成功或失敗，都嘗試定位下拉選單
@@ -624,3 +683,14 @@ function positionDropdown() {
   // dropdown.style.left = (mainRect.right - containerRect.left - dropdownRect.width - 10) + 'px'; // 舊的 left 計算方式
   console.log(`下拉選單定位完成：Top: ${topOffset}px, Right: ${rightOffset}px`); // 新增日誌
 }
+
+function showMessage(text, type = 'success') {
+  const el = document.getElementById('result-message');
+  el.textContent = text;
+  el.className = '';
+  el.classList.add(type);
+}
+
+window.reloadFile = reloadFile;
+window.saveFile = saveFile;
+window.pingPongSave = pingPoneSave;

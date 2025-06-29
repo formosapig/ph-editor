@@ -18,7 +18,7 @@ def serialize_body_data(body_data: dict, stream: BytesIO):
         debug_mode: 是否開啟除錯模式，印出詳細序列化過程。
     """
     current_pos = stream.tell() # 獲取初始位置
-    print(f"    [偏移: {current_pos}] 開始序列化身體數據。")
+    #print(f"    [偏移: {current_pos}] 開始序列化身體數據。")
 
     try:
         # --- Overall Skin 全體 肌 ---

@@ -12,7 +12,7 @@ def serialize_fixed_header(header_data: dict, stream: BytesIO):
         stream: BytesIO 串流物件，用於寫入位元組。
     """
     current_pos = stream.tell()
-    print(f"    [偏移: {current_pos}] 開始序列化固定頭部。")
+    #print(f"    [偏移: {current_pos}] 開始序列化固定頭部。")
 
     # 處理 mark（15 bytes, ASCII）
     mark = header_data.get('mark', '')
@@ -33,4 +33,4 @@ def serialize_fixed_header(header_data: dict, stream: BytesIO):
     version = header_data.get('version', 0)
     stream.write(_pack_uint32(version))
 
-    print(f"    固定頭部序列化完成。下一個寫入位置: {stream.tell()}")
+    #print(f"    固定頭部序列化完成。下一個寫入位置: {stream.tell()}")

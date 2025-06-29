@@ -25,11 +25,13 @@ def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
     if current_pos >= end_pos:
         if debug_mode:
             print(f"    [偏移: {current_pos}] 已達資料尾端，回傳空白 story 結構。")
-        return {
-            "general": {},
-            "character": {},
-            "scenario": {}
-        }
+        #return {
+        #    "general": {},
+        #    "character": {},
+        #    "scenario": {}
+        #}
+        # ✅ 修改：當讀到資料尾端，回傳一個空的字典，明確表示沒有解析到任何 Story 數據。
+        return {}
 
     compressed_data = stream.read()
     if debug_mode:

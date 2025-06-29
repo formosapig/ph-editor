@@ -14,12 +14,12 @@ def serialize_story_data(story_data: dict, stream: BytesIO, debug_mode: bool = F
         debug_mode: 是否啟用除錯輸出。
     """
     current_pos = stream.tell()
-    print(f"    [偏移: {current_pos}] 開始序列化故事資料。")
+    #print(f"    [偏移: {current_pos}] 開始序列化故事資料。")
 
     # 檢查是否為空內容（全部三個主鍵皆為空）
     if not any(story_data.get(key) for key in ["general", "character", "scenario"]):
-        if debug_mode:
-            print("    所有主鍵皆為空，略過寫入。")
+        #if debug_mode:
+            #print("    所有主鍵皆為空，略過寫入。")
         return  # 不寫入任何資料
 
     try:
@@ -30,5 +30,5 @@ def serialize_story_data(story_data: dict, stream: BytesIO, debug_mode: bool = F
 
     stream.write(compressed_data)
 
-    if debug_mode:
-        print(f"    故事資料序列化完成，寫入 {len(compressed_data)} 位元組。下一個寫入位置: {stream.tell()}")
+    #if debug_mode:
+        #print(f"    故事資料序列化完成，寫入 {len(compressed_data)} 位元組。下一個寫入位置: {stream.tell()}")

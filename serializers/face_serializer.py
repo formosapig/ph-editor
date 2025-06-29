@@ -17,7 +17,7 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
         stream: BytesIO 串流物件，用於寫入位元組。
     """
     current_pos = stream.tell()
-    print(f"    [偏移: {current_pos}] 開始序列化臉部數據。")
+    #print(f"    [偏移: {current_pos}] 開始序列化臉部數據。")
 
     try:
         # --- Overall Face 全體 2 ---
@@ -216,4 +216,4 @@ def serialize_face_data(face_data: dict, stream: BytesIO):
         print(f"    [錯誤] 序列化臉部數據時發生未知錯誤: {e}")
         raise
 
-    print(f"    臉部數據序列化完成。下一個寫入位置: {stream.tell()}")
+    #print(f"    臉部數據序列化完成。下一個寫入位置: {stream.tell()}")
