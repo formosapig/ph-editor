@@ -8,7 +8,6 @@ const subTabs = {
     { key: 'back_hair', label: '後髮' },
     { key: 'front_hair', label: '前髮' },
     { key: 'side_hair', label: '側髮' },
-    { key: 'style', label: '髮型樣式' } // 新增：用於測試下拉選單
   ],
   face: [
     { key: 'overall', label: '全体' },
@@ -64,9 +63,8 @@ const subTabs = {
   ],
   story: [
     { key: 'general', label: '全域' },
-    { key: 'character', label: '角色' },
+    { key: 'profile', label: '簡介' },
     { key: 'scenario', label: '情境' },
-    { key: 'author', label: '作者' } // 新增：用於測試下拉選單
   ]
 };
 
@@ -251,7 +249,7 @@ function renderSubTabContent(mainTabKey, subTabKey) {
   }
 
   // START: 修改 - 在 renderSubTabContent 內部呼叫 fetch 並渲染下拉選單
-  // 這裡假設後端 API 路徑是 /api/options/<tab>/<subTab>
+  // 這裡假設後端 API 路徑是 /api/ui_config/options/<tab>/<subTab>
   console.log(`準備呼叫 fetchAndRenderDropdowns 函數 (${mainTabKey}/${subTabKey}).`); // 新增日誌
   fetchAndRenderDropdowns(mainTabKey, subTabKey);
   // END: 修改
@@ -261,17 +259,14 @@ function renderSubTabContent(mainTabKey, subTabKey) {
  * 自動儲存目前 main-content 的資料，傳回後端更新
  */
 function autoSaveData() {
-  console.log('執行 autoSaveData 函數。'); // 新增日誌
+  console.log('執行 autoSaveData 函數。');
   const mainContent = document.getElementById('main-content');
-  //const hexDisplay = document.getElementById('result-message');
-
   const mainTabKey = mainContent.dataset.mainTabKey;
   const subTabKey = mainContent.dataset.subTabKey;
 
   if (!mainTabKey || !subTabKey) {
     showMessage('無法儲存：無效的 tab 鍵值', 'error');
-	//hexDisplay.textContent = '無法儲存：無效的 tab 鍵值';
-    console.error('autoSaveData: 無效的 tab 鍵值。'); // 新增日誌
+    console.error('autoSaveData: 無效的 tab 鍵值。');
     return;
   }
 
@@ -279,14 +274,22 @@ function autoSaveData() {
   try {
     newData = JSON.parse(mainContent.textContent);
   } catch (err) {
-	showMessage('JSON 格式錯誤，無法儲存', 'error');
-    //hexDisplay.textContent = 'JSON 格式錯誤，無法儲存';
-    console.error('autoSaveData: JSON 格式錯誤。', err); // 新增日誌
+    showMessage('JSON 格式錯誤，無法儲存', 'error');
+    console.error('autoSaveData: JSON 格式錯誤。', err);
     return;
   }
 
+  // ← 【修改點】從 globalParsedData 補回 ! 開頭的 key
+  if (globalParsedData && globalParsedData[mainTabKey] && globalParsedData[mainTabKey][subTabKey]) {
+    const originalData = globalParsedData[mainTabKey][subTabKey];
+    for (const key in originalData) {
+      if (key.startsWith('!')) {
+        newData[key] = originalData[key];
+      }
+    }
+  }
+
   showMessage(`正在儲存 ${mainTabKey} / ${subTabKey} ...`);
-  //hexDisplay.textContent = `正在儲存 ${mainTabKey} / ${subTabKey} ...`;
 
   fetch(`/api/character/update/${encodeURIComponent(mainTabKey)}/${encodeURIComponent(subTabKey)}`, {
     method: 'PUT',
@@ -306,11 +309,9 @@ function autoSaveData() {
   .then(result => {
     showMessage(result.message || '儲存成功！');
     console.log('autoSaveData: 儲存成功。', result);
-    // 更新全域資料狀態，避免下一次讀取舊資料
     if (globalParsedData && globalParsedData[mainTabKey]) {
       globalParsedData[mainTabKey][subTabKey] = newData;
     }
-	// 如果有更新全域版本號，呼叫 pingPongSave
     if (result.global_version_updated) {
       console.log('偵測到全域版本號更新，觸發 pingPongSave');
       pingPongSave();
@@ -496,15 +497,27 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
   });
 
   select.addEventListener('change', e => {
-    console.log(`Select 元素 ${id} 值改變。`); // 新增日誌
-    const selectedValueStr = e.target.value;
-    let selected;
+    const selectEl = e.target;
+    const selectedIndex = selectEl.selectedIndex;
+    const selectedOption = selectEl.options[selectedIndex];
+
+    const selectedValueStr = selectedOption.value;
+    let selectedValue;
     try {
-        selected = selectedValueStr === '' ? null : JSON.parse(selectedValueStr); // 如果選取空選項，則為 null
-    } catch (e) {
-        selected = selectedValueStr; // 如果解析失敗 (例如是簡單字串)，則直接使用字串
+      selectedValue = selectedValueStr === '' ? null : JSON.parse(selectedValueStr);
+    } catch {
+      selectedValue = selectedValueStr;
     }
-    onChangeCallback(selected);
+
+    const selectedLabel = selectedOption.text; // option 顯示的文字就是 label
+
+    // 傳物件給 callback，包含 value 和 label
+    onChangeCallback({
+      value: selectedValue,
+      label: selectedLabel
+    });
+
+    console.log(`Select 元素 ${id} 值改變，value=${selectedValue}, label=${selectedLabel}`);
   });
   return select;
 }
@@ -516,7 +529,15 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
  * @param {string} subTab - 子 tab 的 key。
  */
 async function fetchAndRenderDropdowns(mainTab, subTab) {
-  console.log(`執行 fetchAndRenderDropdowns 函數，請求: /api/options/${mainTab}/${subTab}`); // 新增日誌
+  // 判斷是否為 profile 路由
+  let apiUrl = `/api/ui_config/options/${mainTab}/${subTab}`;
+  const isProfileDropdown = (mainTab === 'story' && subTab === 'profile');
+  if (isProfileDropdown) {
+	  apiUrl = `/api/ui_config/profiles`;
+  }
+  
+  console.log(`執行 fetchAndRenderDropdowns 函數，請求: ${apiUrl}`);
+  
   // 清空並隱藏所有下拉選單插槽
   dropdownSlotIds.forEach(slotId => {
       const slot = document.getElementById(slotId);
@@ -529,41 +550,56 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
   const dropdownContainer = document.getElementById('dropdown-container');
   dropdownContainer.classList.remove('show'); // 先隱藏整個容器
 
-  //const hexDisplay = document.getElementById('result-message');
   showMessage(`正在載入 ${mainTab}/${subTab} 的下拉選單選項...`);
-  //hexDisplay.textContent = `正在載入 ${mainTab}/${subTab} 的下拉選單選項...`;
-
+  
   try {
-    const response = await fetch(`/api/options/${mainTab}/${subTab}`);
+    const response = await fetch(apiUrl);
     if (!response.ok) {
       throw new Error(`HTTP 錯誤: ${response.status}`);
     }
     const result = await response.json();
-    console.log(`收到後端回應 /api/options/${mainTab}/${subTab}:`, result); // <-- 關鍵日誌
+    console.log(`收到後端回應 ${apiUrl}:`, result); // <-- 關鍵日誌
 
     let dropdownsToRender = [];
 
-    if (result.dropdowns && Array.isArray(result.dropdowns)) {
-        dropdownsToRender = result.dropdowns;
-        console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`); // 新增日誌
-    } else {
-        // START: 調整錯誤訊息
-        if (result.dropdowns === undefined) {
-            showMessage(`後端 API /api/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
-			//hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
-            console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
-        } else if (!Array.isArray(result.dropdowns)) {
-            showMessage(`後端 API /api/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
-			//hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
-            console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
-        } else {
-            showMessage(`後端 API /api/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
-			//hexDisplay.textContent = `後端 API /api/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
-            console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
-        }
-        // END: 調整錯誤訊息
-        return; 
-    }
+	if (isProfileDropdown) {
+      if (result.options && Array.isArray(result.options)) {
+        dropdownsToRender = [{
+          displayLabel: '使用者角色',
+          dataKey: '!id',
+          labelKey: 'name',
+          options: result.options,
+          defaultValue: ""
+        }];
+      } else {
+        showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "options" 陣列)。`, 'warning');
+        console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "options" 鍵。`, result);
+        return;
+      }
+	} else {
+
+      if (result.dropdowns && Array.isArray(result.dropdowns)) {
+          dropdownsToRender = result.dropdowns;
+          console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`); // 新增日誌
+      } else {
+          // START: 調整錯誤訊息
+          if (result.dropdowns === undefined) {
+              showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
+	  		//hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
+              console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
+          } else if (!Array.isArray(result.dropdowns)) {
+              showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
+	  		//hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
+              console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
+          } else {
+              showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
+	  		//hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
+              console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
+          }
+          // END: 調整錯誤訊息
+          return; 
+      }
+	}
 
     // 如果 dropdownsToRender 陣列為空
     if (!dropdownsToRender || dropdownsToRender.length === 0) {
@@ -587,31 +623,37 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
       const slotId = dropdownSlotIds[slotIndex];
       const slot = document.getElementById(slotId);
 
-      if (slot) {
-        slot.innerHTML = ''; // 清空舊內容
+      if (!slot) {
+	    console.error(`fetchAndRenderDropdowns: 未找到 ID 為 ${slotId} 的下拉選單插槽。`);
+        continue;
+	  }
+
+      slot.innerHTML = ''; // 清空舊內容
         
-        const label = document.createElement('label');
-        label.textContent = dropdownConfig.displayLabel; // 後端提供顯示名稱
+      const label = document.createElement('label');
+      label.textContent = dropdownConfig.displayLabel; // 後端提供顯示名稱
 
-        // 從 globalParsedData 中獲取當前選中的值
-        // 假設 `dropdownConfig.dataKey` 對應到 `globalParsedData[mainTab][subTab][dataKey]`
-        let currentDataForDropdown = null;
-        if (globalParsedData && globalParsedData[mainTab] && globalParsedData[mainTab][subTab]) {
-            currentDataForDropdown = globalParsedData[mainTab][subTab][dropdownConfig.dataKey];
-            console.log(`fetchAndRenderDropdowns: 取得當前資料 for ${dropdownConfig.dataKey}:`, currentDataForDropdown); // 新增日誌
-        } else {
-            console.log(`fetchAndRenderDropdowns: globalParsedData 中無對應 ${mainTab}/${subTab}/${dropdownConfig.dataKey} 的資料。`); // 新增日誌
-        }
+      // 從 globalParsedData 中獲取當前選中的值
+      // 假設 `dropdownConfig.dataKey` 對應到 `globalParsedData[mainTab][subTab][dataKey]`
+      let currentDataForDropdown = null;
+      if (globalParsedData && globalParsedData[mainTab] && globalParsedData[mainTab][subTab]) {
+          currentDataForDropdown = globalParsedData[mainTab][subTab][dropdownConfig.dataKey];
+          console.log(`fetchAndRenderDropdowns: 取得當前資料 for ${dropdownConfig.dataKey}:`, currentDataForDropdown); // 新增日誌
+      } else {
+          console.log(`fetchAndRenderDropdowns: globalParsedData 中無對應 ${mainTab}/${subTab}/${dropdownConfig.dataKey} 的資料。`); // 新增日誌
+      }
 
-
-        const select = createSelect(
-          `${slotId}-${dropdownConfig.dataKey}`, // 每個 select 都有唯一 ID
-          dropdownConfig.options,
-          currentDataForDropdown || dropdownConfig.defaultValue, // 優先使用當前資料，否則使用後端提供的預設值
-          selected => {
+      const select = createSelect(
+        `${slotId}-${dropdownConfig.dataKey}`, // 每個 select 都有唯一 ID
+        dropdownConfig.options,
+        currentDataForDropdown || dropdownConfig.defaultValue, // 優先使用當前資料，否則使用後端提供的預設值
+        selected => {
+          if (!isProfileDropdown) { 
             // 更新 globalParsedData 中對應的值
             if (globalParsedData && globalParsedData[mainTab] && globalParsedData[mainTab][subTab]) {
-                globalParsedData[mainTab][subTab][dropdownConfig.dataKey] = selected;
+                globalParsedData[mainTab][subTab][dropdownConfig.dataKey] = selected.value;
+				globalParsedData[mainTab][subTab][dropdownConfig.labelKey] = selected.label;
+				
                 // 同步更新 main-content 顯示的 JSON
                 const mainContent = document.getElementById('main-content');
                 mainContent.textContent = JSON.stringify(
@@ -628,18 +670,49 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
             } else {
                 console.warn('無法更新 globalParsedData，因為路徑不存在。'); // 新增日誌
             }
-          }
-        );
+		  } else {
+            if (selected.value === "") return; // 使用者還沒有選到真實的東西.
+            // profile 路由：呼叫後端拉詳細資料更新整個 JSON
+			fetch(`/api/profile/detail/${selected.value}`)
+              .then(res => {
+                if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
+                return res.json();
+              })
+			  .then(profileData => {
+                if (globalParsedData && globalParsedData[mainTab]) {
+                  globalParsedData[mainTab][subTab] = profileData;
 
-        slot.appendChild(label);
-        slot.appendChild(select);
-        slot.style.display = 'flex'; // 顯示此插槽
-        console.log(`已渲染下拉選單到 ${slotId}，標籤: ${dropdownConfig.displayLabel}`); // 新增日誌
-        slotIndex++;
-      } else {
-          console.error(`fetchAndRenderDropdowns: 未找到 ID 為 ${slotId} 的下拉選單插槽。`); // 新增日誌
-      }
+                  const mainContent = document.getElementById('main-content');
+                  mainContent.textContent = JSON.stringify(
+                    profileData,
+                    (key, value) => key.startsWith('!') ? undefined : value,
+                    2
+                  );
+
+                  // 可以加自動儲存等其他行為
+                  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+                  autoSaveTimer = setTimeout(() => {
+                    autoSaveData();
+                  }, 500);
+
+                  console.log('Profile 詳細資料已更新到 globalParsedData:', profileData);
+                }
+              })
+			  .catch(err => {
+                showMessage(`載入 Profile 詳細資料失敗：${err.message}`, 'error');
+                console.error('載入 Profile 詳細資料失敗', err);
+              });
+          }
+        }
+      );
+
+      slot.appendChild(label);
+      slot.appendChild(select);
+      slot.style.display = 'flex'; // 顯示此插槽
+      console.log(`已渲染下拉選單到 ${slotId}，標籤: ${dropdownConfig.displayLabel}`); // 新增日誌
+      slotIndex++;
     }
+	
     showMessage(`已載入 ${slotIndex} 個下拉選單。`);
 	//hexDisplay.textContent = `已載入 ${slotIndex} 個下拉選單。`;
     console.log(`fetchAndRenderDropdowns: 總共載入 ${slotIndex} 個下拉選單。`); // 新增日誌

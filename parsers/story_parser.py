@@ -15,7 +15,7 @@ def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         debug_mode: 是否啟用除錯輸出。
     
     Returns:
-        一個字典，包含 general、character、scenario 三個主鍵。
+        一個字典，包含 general、profile、scenario 三個主鍵。
     """
     current_pos = stream.tell()
     stream.seek(0, 2)  # 移到尾端以取得長度
@@ -27,7 +27,7 @@ def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
             print(f"    [偏移: {current_pos}] 已達資料尾端，回傳空白 story 結構。")
         #return {
         #    "general": {},
-        #    "character": {},
+        #    "profile": {},
         #    "scenario": {}
         #}
         # ✅ 修改：當讀到資料尾端，回傳一個空的字典，明確表示沒有解析到任何 Story 數據。
@@ -44,7 +44,7 @@ def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         raise ValueError(f"    解壓縮或 JSON 解析失敗: {e}")
 
     # 確保三個主要 key 存在
-    for key in ["general", "character", "scenario"]:
+    for key in ["general", "profile", "scenario"]:
         if key not in story_data:
             story_data[key] = {}
 

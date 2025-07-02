@@ -3,8 +3,11 @@ from PIL import Image
 from flask import current_app
 import os
 import time
+import logging
 from web.edit_bp import edit_bp
 from api.character import api_character_bp
+from api.profile import api_profile_bp
+from api.ui_config import api_ui_config_bp
 
 # 從 shared_data 模組引入相關函式
 from core.shared_data import (
@@ -22,6 +25,8 @@ UserConfigManager.ensure_dir()
 app = Flask(__name__)
 app.register_blueprint(edit_bp)
 app.register_blueprint(api_character_bp)
+app.register_blueprint(api_profile_bp)
+app.register_blueprint(api_ui_config_bp)
 
 # 設定快取路徑
 CACHE_DIR = UserConfigManager.get_cache_dir()
@@ -30,6 +35,13 @@ scan_path = UserConfigManager.load_scan_path()
 app.config['SCAN_PATH'] = scan_path if scan_path else ""
 # 設定 session key
 app.config['SECRET_KEY'] = 'sadflkfsdflksdf' # 替換這裡
+
+# 獲取 Werkzeug 的日誌器
+log = logging.getLogger('werkzeug')
+# 將 Werkzeug 的日誌級別設定為 WARNING 或 ERROR
+# WARNING 會顯示警告和錯誤，ERROR 只顯示錯誤
+# 304 訊息屬於 INFO 級別，所以設定為 WARNING 或 ERROR 就不會顯示了
+log.setLevel(logging.WARNING) # 或者 logging.ERROR
 
 def clean_old_thumbnails(cache_dir, max_remove=3):
     if not os.path.exists(cache_dir):

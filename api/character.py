@@ -163,6 +163,10 @@ def update_data(main_tab, sub_tab):
     if new_data is None:
         return jsonify({'error': '缺少 data 欄位。'}), 400
 
+    # 新增：印出前端傳來的資料 json 字串到後端日誌
+    print(f'[DEBUG] 更新資料 {main_tab}/{sub_tab} 內容：')
+    print(json.dumps(new_data, ensure_ascii=False, indent=2))
+
     character_id = session.get('current_edit_character_id')
     if not character_id:
         return jsonify({'error': '會話中無角色ID，請先載入角色。'}), 400

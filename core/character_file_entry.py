@@ -10,6 +10,14 @@ class CharacterFileEntry:
     """
 
     def __init__(self, character_id: str, scan_path: str, character_data: CharacterData):
+        # 取得 int 小函式
+        def _get_int(data, *keys):
+            for key in keys:
+                if not isinstance(data, dict):
+                    return None
+                data = data.get(key)
+            return data if isinstance(data, int) else None
+        
         if not isinstance(character_data, CharacterData):
             raise TypeError("character_data 必須是 CharacterData 類型的實例。")
 
@@ -18,16 +26,15 @@ class CharacterFileEntry:
         self.character_data: CharacterData = character_data
         self.save_flag: bool = False  # 預設不需儲存
 
-        # 快取元數據
-        self.general_version: Optional[str] = None
-        if hasattr(character_data, 'global_data') and isinstance(character_data.global_data, dict):
-            self.general_version = character_data.global_data.get('general_version')
-
-        self.display_name: Optional[str] = None
-        if hasattr(character_data, 'metadata') and isinstance(character_data.metadata, dict):
-            self.display_name = character_data.metadata.get('display_name')
-        #print(self)
-
+        if isinstance(character_data.parsed_data, dict):
+            story = character_data.parsed_data.get("story", {})
+            self.general_version = _get_int(story, "general", "!version")
+            self.profile_version = _get_int(story, "profile", "!version")
+            self.profile_id = _get_int(story, "profile", "!id")
+                
+        self.display_name = "測試中"          
+        print(self)
+        
     def set_save_flag(self, value: bool = True):
         self.save_flag = value
 
@@ -42,11 +49,12 @@ class CharacterFileEntry:
 
     def __repr__(self):
         lines = [
-            f"{'Character ID':>15}: {self.character_id}",
-            f"{'Filename':>15}: {self.filename}",
-            f"{'Save Flag':>15}: {self.save_flag}",
-            f"{'Version':>15}: {self.general_version}",
-            f"{'Display Name':>15}: {self.display_name or 'N/A'}",
+            f"{'Character ID':>16}: {self.character_id}",
+            f"{'Filename':>16}: {self.filename}",
+            f"{'Save Flag':>16}: {self.save_flag}",
+            f"{'General Version':>16}: {self.general_version}",
+            f"{'Profile Version':>16}: {self.profile_version}",
+            f"{'Profile ID':>16}: {self.profile_id}",
         ]
         return "\n".join(lines)
 
