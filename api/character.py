@@ -12,6 +12,8 @@ from core.shared_data import (
     characters_db,
     characters_db_lock,
     update_global_general_data,
+    add_profile,
+    update_profile,
 )
 from core.character_file_entry import CharacterFileEntry
 
@@ -180,6 +182,14 @@ def update_data(main_tab, sub_tab):
         if main_tab not in character_data_obj.parsed_data:
             character_data_obj.parsed_data[main_tab] = {}
 
+        # 簡介資料檢查....
+        if main_tab == 'story' and sub_tab == 'profile':
+            profile_id = new_data.get('!id')
+            if profile_id == 0:
+                add_profile(new_data)
+            else:    
+                update_profile_data(profile_id, new_data)
+
         # 更新子節點
         character_data_obj.parsed_data[main_tab][sub_tab] = new_data
         
@@ -192,7 +202,7 @@ def update_data(main_tab, sub_tab):
         if main_tab == 'story' and sub_tab == 'general':
             update_global_general_data(new_data, increment_version=True)
             # 回傳新版版本號給前端
-            updated_version = new_data.get('!version', None)
+            # updated_version = new_data.get('!version', None)
             response_data['global_version_updated'] = True
 
         return jsonify(response_data)

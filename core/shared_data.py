@@ -372,7 +372,21 @@ def get_profile_map() -> Dict[str, Dict[str, Any]]:
     回傳目前的 profile_map 副本。
     """
     return profile_map.copy()
+
+def add_profile(updated_profile: Dict[str, Any]):
+    global profile_map
     
+    # 若且唯若傳進來的 !id 為 0
+    if updated_profile.get('!id') == 0:
+      # 找出目前最大的 id
+      new_id = max(profile_map.keys()) + 1
+      updated_profile['!id'] = new_id
+      
+      # 將 profile 加入到 profile_map
+      profile_map[new_id] = updated_profile
+    else:
+         print(f"add_profile with wrong id: {updated_profile.get('!id')}")
+
 def update_profile(profile_id: str, updated_profile: Dict[str, Any]):
     """
     更新指定 profile 的資料，同步到所有相關角色的 character_data。

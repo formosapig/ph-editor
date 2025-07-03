@@ -55,7 +55,7 @@ def clean_old_thumbnails(cache_dir, max_remove=3):
     for f, _ in files[:max_remove]:
         try:
             os.remove(os.path.join(cache_dir, f))
-            print(f"刪除快取縮圖: {f}")
+            #print(f"刪除快取縮圖: {f}")
         except Exception as e:
             print(f"刪除失敗: {f}, {e}")
 
