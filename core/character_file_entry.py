@@ -47,6 +47,14 @@ class CharacterFileEntry:
     def get_character_data(self) -> CharacterData:
         return self.character_data
 
+    def get_profile(self) -> dict:
+        if isinstance(self.character_data.parsed_data, dict):
+            story = self.character_data.parsed_data.get("story", {})
+            profile = story.get("profile")
+            if isinstance(profile, dict):
+                return profile
+        return {}
+    
     def __repr__(self):
         lines = [
             f"{'Character ID':>16}: {self.character_id}",

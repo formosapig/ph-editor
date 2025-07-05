@@ -2,6 +2,7 @@ import json
 import os
 import threading
 from typing import Dict, Any, Optional, Set, List
+from loguru import logger
 
 # 假設這些是從其他模組引入的
 from .character_data import CharacterData
@@ -9,16 +10,16 @@ from .character_file_entry import CharacterFileEntry
 # UserConfigManager 雖然不再用於載入 general data，但如果應用其他地方仍需，可保留
 from .user_config_manager import UserConfigManager 
 from .file_constants import PLAYHOME_MARKER
-
+        
 # 全域字典，儲存所有載入的角色檔案數據
 # Key: 角色檔案的 ID (通常是檔名，不含路徑)
 # Value: CharacterFileEntry 物件
 characters_db: Dict[str, CharacterFileEntry] = {}
 
-# 顯示名稱到檔案 ID 的映射
-# Key: 角色 display_name
-# Value: 包含對應 character_id 的集合 (因為 display_name 可能重複)
-character_file_map: Dict[str, Set[str]] = {}
+# 顯示 profile_id 到 character_id 的映射
+# Key: profile_id (int)
+# Value: 包含對應 character_id 的集合 (str)
+profile_character_ids: Dict[str, Set[str]] = {}
 
 # --- Profile Map 資料結構 ---
 # Key: profile_id
@@ -39,7 +40,7 @@ profile_map: Dict[int, Dict[str, Any]] = {
 # --- 同步鎖 for characters_db 和相關操作 ---
 # 為了保護 characters_db 在多執行緒/協程環境下的讀取和寫入
 # 特別是針對 characters_db 字典本身的修改、save_flag 的檢查和設置
-characters_db_lock = threading.Lock()
+characters_db_lock = threading.RLock()
 
 # --- 全域 general 資料預設值 ---
 DEFAULT_GENERAL_TEMPLATE = {
@@ -62,41 +63,6 @@ DEFAULT_GENERAL_TEMPLATE = {
 
 # 全域 general 資料快取
 global_general_data: Optional[Dict[str, Any]] = None
-
-def build_profile_map_from_characters():
-    """
-    掃描所有 characters_db，根據每個角色的 profile_id 建立 profile_map。
-    包含 character_ids 反向映射。
-    """
-    global profile_map
-    profile_map = {}  # 先清空
-
-    with characters_db_lock:
-        for character_id, entry in characters_db.items():
-            character_data = entry.get_character_data()
-            if not character_data:
-                continue
-
-            profile_id = character_data.get_value(["profile_id"])
-            profile_data = character_data.get_value(["profile"])
-            
-            if not profile_id or not isinstance(profile_data, dict):
-                continue  # 忽略沒有 profile 的角色
-
-            # 若 profile_id 不存在於 map 中，初始化
-            if profile_id not in profile_map:
-                # 複製 profile_data 並加入 character_ids 陣列
-                profile_map[profile_id] = {
-                    "id": profile_id,
-                    "name": profile_data.get("name", ""),
-                    "birth": profile_data.get("birth", ""),
-                    "physical": profile_data.get("physical", {}),
-                    "description": profile_data.get("description", ""),
-                    "character_ids": []
-                }
-
-            # 加入當前角色 id
-            profile_map[profile_id]["character_ids"].append(character_id)
             
 def _is_valid_general_data(data: Dict[str, Any]) -> bool:
     """
@@ -198,74 +164,10 @@ def get_global_general_data() -> dict:
 
     return global_general_data
 
-def _update_character_file_map(character_id: str, old_display_name: Optional[str], new_display_name: str):
-    """
-    更新 character_file_map。
-    此函數應在持有 characters_db_lock 的情況下被呼叫。
-    """
-    if old_display_name and old_display_name != new_display_name:
-        if old_display_name in character_file_map:
-            character_file_map[old_display_name].discard(character_id)
-            if not character_file_map[old_display_name]:
-                del character_file_map[old_display_name]
-
-    if new_display_name not in character_file_map:
-        character_file_map[new_display_name] = set()
-    character_file_map[new_display_name].add(character_id)
-
-def add_or_update_character(character_id: str, raw_data_with_marker: bytes):
-    """
-    接收角色的 ID 和原始資料，解析後存入 characters_db。
-    若角色資料中包含的 general 版本高於全域 general 資料快取，則更新全域資料。
-    同時會更新 character_file_map。
-    所有對 characters_db 的修改都應在這個鎖定區塊內進行。
-    """
-    # 對 characters_db 及其相關操作進行鎖定
-    with characters_db_lock:
-        try:
-            if not raw_data_with_marker.startswith(PLAYHOME_MARKER):
-                return
-
-            old_display_name: Optional[str] = None
-            if character_id in characters_db:
-                old_display_name = characters_db[character_id].display_name
-
-            character_data_obj = CharacterData(raw_data_with_marker)
-            character_file_entry_obj = CharacterFileEntry(character_id, character_data_obj)
-
-            # 將新的 CharacterFileEntry 存入或更新 characters_db
-            characters_db[character_id] = character_file_entry_obj
-
-            # 比較並更新全域 general 資料（如果角色版本較新）
-            char_ver = character_file_entry_obj.general_version or -1
-            global_data = get_global_general_data()
-            global_ver = global_data.get("!version", -1)
-            if char_ver > global_ver:
-                general_data = character_data_obj.get_value(["story", "general"])
-                update_global_general_data(general_data)
-                
-                
-                
-            
-        except Exception:
-            # 錯誤發生時，嘗試從 characters_db 和 character_file_map 中移除
-            # 確保在鎖定區塊內執行這些清理操作
-            if character_id in characters_db:
-                removed_entry = characters_db.pop(character_id)
-                if removed_entry.display_name and \
-                   removed_entry.display_name in character_file_map and \
-                   character_id in character_file_map[removed_entry.display_name]:
-                    character_file_map[removed_entry.display_name].discard(character_id)
-                    if not character_file_map[removed_entry.display_name]:
-                        del character_file_map[removed_entry.display_name]
-    # 建立 profile map...
-    build_profile_map_from_characters()                    
-
-def add_or_update_character_with_path(character_id: str, scan_path: str):
+def add_or_update_character_with_path(scan_path: str, character_id: str):
     """
     從 scan_path + character_id 載入角色資料，解析後存入 characters_db。
     若角色資料中的 general 版本高於全域 general 資料快取，則更新全域資料。
-    同時會更新 character_file_map。
     """
     with characters_db_lock:
         try:
@@ -287,6 +189,7 @@ def add_or_update_character_with_path(character_id: str, scan_path: str):
             # 假設 profile_map: Dict[int, Dict[str, Any]]
             profile_id = character_file_entry_obj.profile_id
             profile_version = character_file_entry_obj.profile_version
+            character_id = character_file_entry_obj.character_id
 
             if profile_id is not None:
                 new_profile_data = character_file_entry_obj.get_profile()
@@ -297,19 +200,15 @@ def add_or_update_character_with_path(character_id: str, scan_path: str):
                         profile_map[profile_id] = new_profile_data  # 更新資料
                 else:
                     profile_map[profile_id] = new_profile_data  # 新增資料
+                
+                # ✅ 縮排到這層：無論是否有更新 profile_map 都會同步對應
+                if profile_id not in profile_character_ids:
+                    profile_character_ids[profile_id] = set()
+                profile_character_ids[profile_id].add(character_id)                
                     
         except Exception as e:
             # 若讀取或解析失敗，清理 characters_db 和對應映射
             print(f"[錯誤] 處理角色 '{character_id}' 時發生例外：{e}")
-
-            if character_id in characters_db:
-                removed_entry = characters_db.pop(character_id)
-                if removed_entry.display_name and \
-                   removed_entry.display_name in character_file_map and \
-                   character_id in character_file_map[removed_entry.display_name]:
-                    character_file_map[removed_entry.display_name].discard(character_id)
-                    if not character_file_map[removed_entry.display_name]:
-                        del character_file_map[removed_entry.display_name]
                         
 def get_character_file_entry(character_id: str) -> Optional[CharacterFileEntry]:
     """
@@ -341,21 +240,6 @@ def get_all_character_ids() -> List[str]:
     with characters_db_lock:
         return list(characters_db.keys())
 
-def get_character_ids_by_display_name(display_name: str) -> Set[str]:
-    """
-    根據角色顯示名稱，獲取所有相關的檔案 ID 集合。
-    此操作需要鎖保護，以確保讀取時的數據一致性。
-
-    Args:
-        display_name: 角色在遊戲中顯示的名稱。
-
-    Returns:
-        一個包含相關檔案 ID 的集合，如果沒有找到則返回空集合。
-    """
-    with characters_db_lock:
-        # 使用 .get() 並提供預設值，確保即使 display_name 不存在也不會出錯
-        return character_file_map.get(display_name, set()).copy() # 回傳副本以避免外部直接修改內部集合
-
 def clear_characters_db():
     """
     清空 characters_db 數據庫和 character_file_map。
@@ -363,63 +247,264 @@ def clear_characters_db():
     """
     with characters_db_lock:
         characters_db.clear()
-        character_file_map.clear()
+        profile_character_ids.clear()
         # 移除 print 語句以符合之前移除除錯訊息的約定
         # print("角色數據庫和映射表已清空。")
+
         
-def get_profile_map() -> Dict[str, Dict[str, Any]]:
-    """
-    回傳目前的 profile_map 副本。
-    """
-    return profile_map.copy()
+def is_profile_changed(
+    current_profile: Dict[str, Any], 
+    updated_profile: Dict[str, Any]
+) -> bool:
+    # 檢查 !id 是否一致，若不一致拋出嚴重錯誤
+    current_id = current_profile.get('!id')
+    updated_id = updated_profile.get('!id')
+    if current_id != updated_id:
+        error_msg = f"[ERROR] Profile ID mismatch: current !id={current_id}, updated !id={updated_id}"
+        print(error_msg)
+        raise ValueError(error_msg)
 
-def add_profile(updated_profile: Dict[str, Any]):
-    global profile_map
-    
-    # 若且唯若傳進來的 !id 為 0
+    # 去除 !version 欄位
+    def strip_version(profile: Dict[str, Any]) -> Dict[str, Any]:
+        return {k: v for k, v in profile.items() if k != "!version"}
+
+    # 比較是否相同
+    if strip_version(current_profile) != strip_version(updated_profile):
+        # 有不同
+        return True
+
+    # 無不同
+    print(f"[WARNING] Profile ID {current_id} not changed.")
+    return False
+
+def add_profile(character_id: str, updated_profile: Dict[str, Any]) -> bool:
+    global profile_map, profile_character_ids
+
+    # 若跟預設 id 一模一樣,則不更新
+    if not is_profile_changed(profile_map[0], updated_profile):
+        return False
+
+    # 要更新時, 要改 id, 版號預設為 1
     if updated_profile.get('!id') == 0:
-      # 找出目前最大的 id
-      new_id = max(profile_map.keys()) + 1
-      updated_profile['!id'] = new_id
-      
-      # 將 profile 加入到 profile_map
-      profile_map[new_id] = updated_profile
-    else:
-         print(f"add_profile with wrong id: {updated_profile.get('!id')}")
+        new_id = max(profile_map.keys(), default=0) + 1
+        updated_profile['!id'] = new_id
 
-def update_profile(profile_id: str, updated_profile: Dict[str, Any]):
+        profile_map[new_id] = updated_profile
+
+        # ✅ 更新物件屬性
+        character_file_entry_obj = get_character_file_entry(character_id)
+        if character_file_entry_obj is None:
+            print(f"[ERROR] character_id {character_id} 找不到對應的 CharacterFileEntry")
+            return
+        character_file_entry_obj.profile_id = new_id
+        character_file_entry_obj.profile_version = updated_profile.get('!version', 0)
+        character_file_entry_obj.save_flag = True
+
+        # ✅ 更新 profile_character_ids
+        character_id = character_file_entry_obj.character_id
+        if new_id not in profile_character_ids:
+            profile_character_ids[new_id] = set()
+        profile_character_ids[new_id].add(character_id)
+        
+        # add profile success
+        return True
+
+    else:
+        print(f"[add_profile] Invalid profile id: {updated_profile.get('!id')}")
+        return False
+
+def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any]):
     """
-    更新指定 profile 的資料，同步到所有相關角色的 character_data。
+    將指定 profile_id 的更新，同步到所有相關角色的 character_data。
+    更新角色的 profile_version、profile 資料，並將 save_flag 設為 True。
+    """
+
+    if profile_id not in profile_character_ids:
+        print(f"[WARN] profile_id {profile_id} 沒有對應任何角色，跳過同步")
+        return
+
+    character_ids = profile_character_ids[profile_id]
+
+    print(f"[INFO] 將更新 profile_id {profile_id} 的資料至以下角色：")
+    print(json.dumps(updated_profile, ensure_ascii=False, indent=2))
+
+    updated_version = updated_profile.get("!version", 0)
+    updated_character_ids = []
+
+    for character_id in character_ids:
+        if character_id not in characters_db:
+            print(f"[ERROR] character_id {character_id} 在 characters_db 中找不到對應的 CharacterFileEntry，跳過")
+            continue
+
+        character_entry = characters_db[character_id]
+
+        current_version = getattr(character_entry, "profile_version", 0)
+        if current_version >= updated_version:
+            # 版本已是最新或更高，跳過
+            continue
+
+        # 更新 profile_version
+        character_entry.profile_version = updated_version
+
+        # 更新 character_data.parsed_data[story]['profile']
+        # 假設 story 是固定的字串或已知，這裡假設 story 名稱叫 "story"
+        story = "story"
+        if story not in character_entry.character_data.parsed_data:
+            character_entry.character_data.parsed_data[story] = {}
+
+        # 完整複製 profile 資料
+        character_entry.character_data.parsed_data[story]['profile'] = updated_profile.copy()
+
+        # 設定 save_flag
+        character_entry.save_flag = True
+
+        updated_character_ids.append(character_id)
+
+    print(f"[INFO] 更新完成，以下角色的資料被修改了: {updated_character_ids}")
+    
+def update_profile(character_id: str, profile_id: int, updated_profile: Dict[str, Any]) -> bool:
+    """
+    更新指定 profile 的資料，如果有變更，則同步到所有相關角色的 character_data，
     並設定角色的 save_flag 為 True。
     """
+
     with characters_db_lock:
+        character_file_entry_obj = get_character_file_entry(character_id)
+        if character_file_entry_obj is None:
+            print(f"[ERROR] character_id {character_id} 找不到對應的 CharacterFileEntry")
+            return False
+        
+        # 檢查 profile_id 是否存在
         if profile_id not in profile_map:
-            return
+            print(f"[ERROR] profile_id {profile_id} 不存在於 profile_map")
+            return False
 
-        # 更新 profile_map 本身
-        updated_profile["id"] = profile_id  # 確保 id 一致
-        updated_profile["character_ids"] = profile_map[profile_id]["character_ids"]
-        profile_map[profile_id] = updated_profile
+        # 檢查 character_file_entry_obj.profile_id 與 profile_id 是否一致
+        if character_file_entry_obj.profile_id != profile_id:
+            print(f"[ERROR] character_file_entry_obj.profile_id ({character_file_entry_obj.profile_id}) 與傳入的 profile_id ({profile_id}) 不一致")
+            return False
 
-        # 同步到所有角色
-        for character_id in profile_map[profile_id]["character_ids"]:
-            entry = characters_db.get(character_id)
-            if not entry:
-                continue
+        # 檢查 profile_character_ids 是否包含該 profile_id 且 character_id
+        character_id = character_file_entry_obj.character_id
+        if profile_id not in profile_character_ids or character_id not in profile_character_ids[profile_id]:
+            print(f"[ERROR] profile_character_ids 中沒有對應的 profile_id {profile_id} 與 character_id {character_id}")
+            return False
 
-            char_data = entry.get_character_data()
-            if not char_data:
-                continue
+        current_profile = profile_map[profile_id]
 
-            char_data.set_value(["profile"], {
-                "name": updated_profile.get("name", ""),
-                "birth": updated_profile.get("birth", ""),
-                "physical": updated_profile.get("physical", {}),
-                "description": updated_profile.get("description", "")
-            })
+        if not is_profile_changed(current_profile, updated_profile):
+            print(f"[WARNING] {profile_id} not changed.")
+            return False
 
-            entry.set_save_flag(True)
-            
+        # 更新 profile_map 並增加 !version
+        updated = updated_profile.copy()
+        current_version = current_profile.get("!version", 0)
+        updated["!version"] = current_version + 1
+
+        profile_map[profile_id] = updated
+
+        # **注意：character_file_entry_obj.profile_id 不變**
+        # 更新 character_file_entry_obj.profile_version
+        character_file_entry_obj.profile_version = updated["!version"]
+
+    # 執行同步邏輯（放在 lock 外）
+    sync_profile_to_characters(profile_id, updated)
+    
+    return True
+
+def update_profile1(character_id: str, updated_profile: Dict[str, Any]) -> bool:
+    """
+    更新指定 character 的 profile，如果 profile_id 有改變，
+    需調整 profile_character_ids 的對應關係。
+    """
+    updated_profile_id = updated_profile.get("!id")
+    if updated_profile_id is None:
+        print("[ERROR] updated_profile 中缺少 '!id'")
+        return False
+
+    with characters_db_lock:
+        character_file_entry_obj = get_character_file_entry(character_id)
+        if character_file_entry_obj is None:
+            print(f"[ERROR] character_id {character_id} 找不到對應的 CharacterFileEntry")
+            return False
+
+        current_profile_id = character_file_entry_obj.profile_id
+
+        # CASE 1: 後端無 profile（第一次）
+        if current_profile_id is None:
+            print(f"[INFO] character_id {character_id} 尚未設定 profile，新增為 {updated_profile_id}")
+            character_file_entry_obj.profile_id = updated_profile_id
+            character_file_entry_obj.profile_version = 1 # 預設為 1, 前端的 !version 不可信
+            character_file_entry_obj.save_flag = True
+            profile_character_ids.setdefault(updated_profile_id, set()).add(character_id)
+
+        # CASE 2: profile ID 改變（B -> A）
+        elif current_profile_id != updated_profile_id:
+            print(f"[INFO] character_id {character_id} profile 變更：{current_profile_id} -> {updated_profile_id}")
+
+            # 移除舊的關聯
+            if current_profile_id in profile_character_ids:
+                profile_character_ids[current_profile_id].discard(character_id)
+
+            # 加入新的關聯
+            profile_character_ids.setdefault(updated_profile_id, set()).add(character_id)
+
+            # 更新 character 的 profile_id
+            character_file_entry_obj.profile_id = updated_profile_id
+            character_file_entry_obj.profile_version = 1 # 預設為 1, 前端的 !version 不可信
+            character_file_entry_obj.save_flag = True
+
+        # 檢查 profile_character_ids 中是否有該 profile_id
+        if updated_profile_id not in profile_character_ids:
+            logger.debug(f"[ERROR] profile_character_ids 中找不到 profile_id: {updated_profile_id}")
+            return False
+
+        # 檢查該 profile_id 下是否有該 character_id
+        if character_id not in profile_character_ids[updated_profile_id]:
+            logger.debug(
+                f"[ERROR] profile_id {updated_profile_id} 中找不到 character_id: {character_id}\n"
+                f"目前存在的 character_ids: {list(profile_character_ids[updated_profile_id])}"
+            )
+            return False
+
+        # 取得當前後端 profile，如果沒有，表示新增
+        current_profile = profile_map.get(updated_profile_id)
+
+        profile_changed = True  # 預設為有改變
+
+        if current_profile is not None:
+            profile_changed = is_profile_changed(current_profile, updated_profile)
+
+            if not profile_changed:
+                if current_profile_id != updated_profile_id:
+                    # Case: None → A 或 B → A 且 profile 沒有變更
+                    print(f"[INFO] profile_id {updated_profile_id} 沒有變更（但角色切換），不進行同步")
+                    return True
+                else:
+                    # Case: A → A 且沒變更
+                    print(f"[WARNING] profile_id {updated_profile_id} 未變更")
+                    return False
+                    
+        # 更新 profile_map 並升級版本
+        updated = updated_profile.copy()
+        current_version = current_profile.get("!version", 0) if current_profile else 0
+        updated["!version"] = current_version + 1
+        profile_map[updated_profile_id] = updated
+
+        # 設定角色的 profile_version
+        character_file_entry_obj.profile_version = updated["!version"]
+
+    # 執行同步邏輯（放 lock 外）
+    sync_profile_to_characters(updated_profile_id, updated)
+
+    return True
+
+def get_profile(profile_id: int) -> Dict[str, Any]:
+    profile = profile_map.get(profile_id)
+    if profile is None:
+        raise ValueError(f"shared_data.py -> profile_id {profile_id} 不存在")
+    return profile
+    
 def get_profiles_by_name(name: str) -> List[Dict[str, Any]]:
     """
     根據名稱模糊搜尋 profile（區分大小寫）。

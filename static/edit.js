@@ -309,13 +309,23 @@ function autoSaveData() {
   .then(result => {
     showMessage(result.message || '儲存成功！');
     console.log('autoSaveData: 儲存成功。', result);
-    if (globalParsedData && globalParsedData[mainTabKey]) {
+	
+	// ✅ 如果後端有給新的 profile ID，先更新到 newData 上
+    if (result.new_profile_id) {
+      newData["!id"] = result.new_profile_id;
+    }
+    
+	if (globalParsedData && globalParsedData[mainTabKey]) {
       globalParsedData[mainTabKey][subTabKey] = newData;
     }
-    if (result.global_version_updated) {
-      console.log('偵測到全域版本號更新，觸發 pingPongSave');
-      pingPongSave();
+	
+    if (result.need_update_profile_dropdown) {
+	  fetchAndRenderDropdowns("story", "profile");
     }
+
+    //if (result.need_save_all) {
+      pingPongSave();
+    //}
   })
   .catch(error => {
     showMessage('儲存失敗：' + error.message, 'error');

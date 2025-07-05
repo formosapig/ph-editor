@@ -54,12 +54,37 @@ def get_dropdown_options(tab, subTab):
 @api_ui_config_bp.route('/profiles', methods=['GET'])
 def get_profile_list():
     """提供給下拉選單使用的簡易列表"""
-    options = [{"label": "請選擇", "value": ""}]
-    options += [
-        {
+    options = []
+
+    # 提前取出 id=0 的 profile（若存在）
+    zero_profile = profile_map.get(0)
+
+    # 除去 0 的 profile
+    other_profiles = {
+        k: v for k, v in profile_map.items() if k != 0
+    }
+
+    # 將其轉為 options 並根據 name 中文排序
+    sorted_profiles = sorted(
+        other_profiles.values(),
+        key=lambda p: p.get("name", "")
+    )
+
+    # 初始選項
+    options.append({"label": "請選擇", "value": ""})
+
+    # 第二順位是 id = 0 的 profile（若有）
+    if zero_profile:
+        options.append({
+            "label": zero_profile.get("name", f"id:{zero_profile.get('!id', '')}"),
+            "value": zero_profile.get("!id", "")
+        })
+
+    # 加入剩下排序後的 options
+    for profile in sorted_profiles:
+        options.append({
             "label": profile.get("name", f"id:{profile.get('!id', '')}"),
-            "value": profile.get('!id', '')
-        }
-        for profile in profile_map.values()
-    ]
-    return jsonify({"options": options})    
+            "value": profile.get("!id", "")
+        })
+
+    return jsonify({"options": options})

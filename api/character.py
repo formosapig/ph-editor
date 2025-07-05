@@ -14,6 +14,8 @@ from core.shared_data import (
     update_global_general_data,
     add_profile,
     update_profile,
+    update_profile1,
+    get_profile,
 )
 from core.character_file_entry import CharacterFileEntry
 
@@ -37,6 +39,33 @@ def ensure_general_data_updated(character_entry: CharacterFileEntry) -> None:
         character_entry.general_version = global_version
         character_entry.set_save_flag(True)
 
+def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
+    if character_entry.profile_id is None:
+        return
+
+    global_profile_data = get_profile(character_entry.profile_id)
+    global_profile_version = global_profile_data.get('!version', -1)
+
+    character_data = character_entry.get_character_data()
+    character_profile_data = character_data.get_value(["story", "profile"])
+    character_profile_version = character_entry.profile_version
+
+    if not isinstance(character_profile_data, dict) or character_profile_version < global_profile_version:
+        data = character_data.get_data()
+
+        # 確保 "story" 存在
+        if "story" not in data:
+            data["story"] = {}
+
+        # 直接更新 profile 區塊（不透過 set_value）
+        data["story"]["profile"] = global_profile_data.copy()
+
+        # 更新 character_entry 的 profile 狀態
+        character_entry.profile_id = global_profile_data.get("!id", character_entry.profile_id)
+        character_entry.profile_version = global_profile_version
+
+        character_entry.set_save_flag(True)
+
 def reload_character_data(scan_path: str, character_id: str) -> Union[Dict[str, Any], Tuple]:
     """
     重新讀取角色圖檔並解析，更新共享資料庫，並確保 general 資料是最新。
@@ -51,6 +80,7 @@ def reload_character_data(scan_path: str, character_id: str) -> Union[Dict[str, 
             return jsonify({"error": f"雖然成功讀取檔案，但解析後仍無法取得角色數據: {character_id}。"}), 500
 
         ensure_general_data_updated(character_file_entry_obj)
+        ensure_profile_data_updated(character_file_entry_obj)
 
         character_data_obj = character_file_entry_obj.get_character_data()
         return character_data_obj.get_data()
@@ -182,17 +212,36 @@ def update_data(main_tab, sub_tab):
         if main_tab not in character_data_obj.parsed_data:
             character_data_obj.parsed_data[main_tab] = {}
 
-        # 簡介資料檢查....
+        need_update_profile_dropdown = False
+        new_profile_id = None
+        need_save_all = False
+
+        # 簡介資料檢查...
         if main_tab == 'story' and sub_tab == 'profile':
             profile_id = new_data.get('!id')
             if profile_id == 0:
-                add_profile(new_data)
-            else:    
-                update_profile_data(profile_id, new_data)
+                success = add_profile(character_id, new_data)
+                new_profile_id = new_data.get('!id', None)
+            else:
+                # success = update_profile(character_id, profile_id, new_data)
+                success = update_profile1(character_id, new_data)
+                # 更新時, 不參考前端的 !version , new_data 也不會更新 !version
+
+            if not success:
+                return jsonify({
+                    'success': False,
+                    'message': f'角色資料節點 [{main_tab}][{sub_tab}] 不需要更新。'
+                })
+            else:
+                need_update_profile_dropdown = True
+
+        # 新增：印出前端傳來的資料 json 字串到後端日誌
+        print(f'[DEBUG] 結果：')
+        print(json.dumps(new_data, ensure_ascii=False, indent=2))
 
         # 更新子節點
         character_data_obj.parsed_data[main_tab][sub_tab] = new_data
-        
+
         response_data = {
             'success': True,
             'message': f'角色資料節點 [{main_tab}][{sub_tab}] 更新成功（尚未寫入檔案）。'
@@ -201,9 +250,15 @@ def update_data(main_tab, sub_tab):
         # 全域資料檢查...
         if main_tab == 'story' and sub_tab == 'general':
             update_global_general_data(new_data, increment_version=True)
-            # 回傳新版版本號給前端
-            # updated_version = new_data.get('!version', None)
-            response_data['global_version_updated'] = True
+            need_save_all = True
+
+        # 加入額外標記
+        if need_update_profile_dropdown:
+            response_data['need_update_profile_dropdown'] = True
+        if new_profile_id is not None:
+            response_data['new_profile_id'] = new_profile_id
+        if need_save_all:
+            response_data['need_save_all'] = True
 
         return jsonify(response_data)
 

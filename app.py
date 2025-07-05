@@ -12,7 +12,6 @@ from api.ui_config import api_ui_config_bp
 # 從 shared_data 模組引入相關函式
 from core.shared_data import (
     characters_db,
-    add_or_update_character,
     add_or_update_character_with_path,
     clear_characters_db,
     get_all_character_ids
@@ -137,7 +136,7 @@ def scan_folder():
 
                 # --- 角色數據載入邏輯 ---
                 try:
-                    add_or_update_character_with_path(character_id, folder_path)
+                    add_or_update_character_with_path(folder_path, character_id)
                     loaded_character_count += 1
                 except Exception as e:
                     print(f"  [錯誤] 載入或解析檔案 '{file_name_with_ext}' 的角色數據時發生錯誤: {e}")
