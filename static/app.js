@@ -90,6 +90,27 @@ folderBtn.addEventListener('click', () => {
   }
 });
 
+let sortAscending = true; // 初始為正序
+
+sortBtn.addEventListener('click', () => {
+  const sorted = [...allImages].sort((a, b) => {
+    const nameA = a.profile_name || '';
+    const nameB = b.profile_name || '';
+
+    if (nameA === '' && nameB === '') return 0;
+    // 空白不特別往前或往後丟.
+	//if (nameA === '') return 1;
+    //if (nameB === '') return -1;
+
+    const cmp = nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+    return sortAscending ? cmp : -cmp;
+  });
+
+  renderGallery(sorted);
+
+  sortAscending = !sortAscending; // 切換排序方向
+});
+
 // filter 按鈕
 filterBtn.addEventListener('click', () => {
   const keyword = prompt('請輸入篩選關鍵字（空白顯示全部）：', '');
@@ -197,11 +218,15 @@ function renderGallery(images) {
     }
   });
   
-  images.forEach(imgName => {
-    const baseName = imgName.replace(/^thumb_/, '').replace(/\.[^.]+$/, '');
-
+  images.forEach(item => {
+    //const baseName = imgName.replace(/^thumb_/, '').replace(/\.[^.]+$/, '');
+	const imgName = item.thumb; // thumb_*.jpg
+	const baseName = item.id;   // character_id
+	const profileName = item.profile_name || '';
+  
     const container = document.createElement('div');
     container.className = 'thumb-container';
+	container.dataset.name = baseName;
 
     // 勾選標示
     const checkmark = document.createElement('div');
@@ -209,15 +234,31 @@ function renderGallery(images) {
     checkmark.textContent = '✅';
     container.appendChild(checkmark);
 
-    const img = document.createElement('img');
-    img.src = `/cache/${imgName}`;
-    img.className = 'thumb';
-    img.alt = baseName;
-    img.width = 252;
-    img.height = 352;
-    img.draggable = false;
+    const thumbWrapper = document.createElement('div');
+	thumbWrapper.className = 'thumb-wrapper';
+	thumbWrapper.addEventListener('click', (e) => {
+      e.stopPropagation(); // 避免冒泡重複觸發
+      container.click();   // 轉給 thumb-container 處理
+    });
 
-    container.appendChild(img);
+	const img = document.createElement('img');
+	img.src = `/cache/${imgName}`;
+	img.className = 'thumb';
+	img.alt = baseName;
+	img.width = 252;
+	img.height = 352;
+	img.draggable = false;
+
+	thumbWrapper.appendChild(img);
+
+	if (profileName) {
+	  const badge = document.createElement('div');
+	  badge.className = 'profile-badge';
+	  badge.textContent = profileName;
+	  thumbWrapper.appendChild(badge);
+	}
+
+	container.appendChild(thumbWrapper);
 
     // ✅ 顯示檔名（補回來）
     const filenameLabel = document.createElement('div');

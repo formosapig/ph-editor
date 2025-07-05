@@ -72,7 +72,7 @@ html, body {
     }*/
 
 #gallery {
-  background-color: #4a041d;
+  background-color: #4b041d;
   color: #b0b0b0;  
   position: absolute;
   top: 70px;  /* 緊接 topBar 下方 */
@@ -95,67 +95,96 @@ html, body {
       cursor: pointer;
       user-select: none;
     }
+.thumb-wrapper {
+  position: relative;
+  width: 252px;
+  height: 352px;
+}
+.thumb {
+  display: block;
+  margin-bottom: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 252px;
+  height: 352px;
+  object-fit: contain;
+  user-select: none;
+}
+/* 勾選框 */
+.checkmark {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 28px;
+  color: transparent;
+  text-shadow: 0 0 0 rgba(0,0,0,0);
+  user-select: none;
+  transition: color 0.15s ease;
+  pointer-events: none;
+  z-index: 6; /* 加上這行！ */
+}
+.thumb-container.selected .checkmark {
+  color: #2ecc71; /* 綠色 */
+  text-shadow: 0 0 5px #27ae60;
+  pointer-events: auto;
+}
 
-    .thumb {
-      display: block;
-      margin-bottom: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      width: 252px;
-      height: 352px;
-      object-fit: contain;
-      user-select: none;
-    }
+.file-row {
+  display: flex;
+  justify-content: center;
+}
 
-    /* 勾選框 */
-    .checkmark {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      font-size: 28px;
-      color: transparent;
-      text-shadow: 0 0 0 rgba(0,0,0,0);
-      user-select: none;
-      transition: color 0.15s ease;
-      pointer-events: none;
-    }
-    .thumb-container.selected .checkmark {
-      color: #2ecc71; /* 綠色 */
-      text-shadow: 0 0 5px #27ae60;
-      pointer-events: auto;
-    }
+.file-block {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+  word-break: break-word;
+  white-space: normal;
+}
 
-    .file-row {
-      display: flex;
-      justify-content: center;
-    }
+.filename {
+  max-width: 200px;
+  word-break: break-word;
+  text-align: center;
+}
 
-    .file-block {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-      max-width: 100%;
-      word-break: break-word;
-      white-space: normal;
-    }
-
-    .filename {
-      max-width: 200px;
-      word-break: break-word;
-      text-align: center;
-    }
-
-    .delete-btn {
-      background: none;
-      border: none;
-      font-size: 1.2em;
-      cursor: pointer;
-    }
+.delete-btn {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+}
 .clickable-area {
   min-height: calc(100vh - 70px); /* 确保空白区域可点击 */
   cursor: default;
 }
 .clickable-area:active {
   background: rgba(1,1,1,1); /* 点击反馈 */
+}
+.profile-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+
+  background-color: rgba(255, 222, 100, 0.9); /* 溫和亮黃 */
+  color: #3b2a00; /* 深棕文字，強對比 */
+  font-size: 17px;
+  font-weight: bold;
+
+  padding: 4px 10px;
+  border: 2px solid rgba(255, 250, 200, 0.85); /* 淺米色邊框 */
+  border-radius: 6px;
+
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); /* 加深對比，避免白底時消失 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);   /* 浮起來效果 */
+
+  pointer-events: none; /* 確保不會擋到點擊事件 */
+  z-index: 5;
+
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

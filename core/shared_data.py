@@ -504,6 +504,24 @@ def get_profile(profile_id: int) -> Dict[str, Any]:
     if profile is None:
         raise ValueError(f"shared_data.py -> profile_id {profile_id} 不存在")
     return profile
+
+def get_profile_name(character_id: str) -> str:
+    entry = get_character_file_entry(character_id)
+    if not entry:
+        raise ValueError(f"❌ 找不到角色 entry：{character_id}")
+
+    if entry.profile_id is None:
+        return ''  # 沒綁定 profile 是正常的情況
+
+    profile = get_profile(entry.profile_id)
+    if not profile:
+        raise ValueError(f"❌ 找不到 profile：profile_id = {entry.profile_id}, character_id = {character_id}")
+
+    name = profile.get('name')
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError(f"❌ profile['name'] 無效或為空：profile_id = {entry.profile_id}, character_id = {character_id}")
+
+    return name.strip()
     
 def get_profiles_by_name(name: str) -> List[Dict[str, Any]]:
     """

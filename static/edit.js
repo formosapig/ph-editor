@@ -129,12 +129,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // 綁定 main-content 的 input 事件，觸發自動儲存
   const mainContent = document.getElementById('main-content');
-  // 輸入事件，500ms debounce 自動儲存
+  // 輸入事件，30 sec debounce 自動儲存
   mainContent.addEventListener('input', () => {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
       autoSaveData();
-    }, 5000);
+    }, 30000);
   });
 
   // 離焦事件，立即儲存（取消 debounce）
