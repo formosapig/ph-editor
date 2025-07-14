@@ -23,16 +23,21 @@ profile_character_ids: Dict[str, Set[str]] = {}
 
 # --- Profile Map 資料結構 ---
 # Key: profile_id
-# Value: profile 資料物件，包含 name、birth、physical 等欄位
+# Value: profile 資料物件，包含 name、born、physical 等欄位
 DEFAULT_PROFILE_TEMPLATE = {
     '!version': 1,          # profile 版本號
     '!id': 0,               # profile id, 0 為特殊佔用, 創建新角色用
-    'name': '新角色',        # 在列表上直接顯示為新角色
-    'cup': 'A-',            # 罩杯
-    'birth': 1911,          # 出生年份
+    'name': '新角色',       # 在列表上直接顯示為新角色
+    'born': 1911,           # 出生年份
+    'job': '工作',          # 工作
+    'role': '與其他角色的關係',  # 與他人的關係
     'height': 166,          # 身高
-    'desc' : '用來創建新角色的佔位角色',
+    'cup': 'A-',            # 罩杯
+    'look': '長相,體形,膚色等等',           # 長相,體形,膚色等等
+    'sex': '名穴,毫乳,性感帶等等', # 名穴,毫乳等等...
+    'about' : '關於角色',
 }
+
 profile_map: Dict[int, Dict[str, Any]] = {
     0: DEFAULT_PROFILE_TEMPLATE
 }
