@@ -123,7 +123,7 @@ editBtn.addEventListener('click', () => {
   if (selectedSet.size === 1) {
     const characterId = Array.from(selectedSet)[0];
     const url = `/edit?character_id=${encodeURIComponent(characterId)}`;
-    window.open(url, 'editWindow');
+    window.open(url, '_blank');
   }
 });
 

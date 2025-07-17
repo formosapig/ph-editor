@@ -1,6 +1,7 @@
 # ph-editor/api/ui_config.py
 
 import importlib
+import locale
 from flask import Blueprint, jsonify
 from config.dropdown_config import dropdown_config_map
 from core.shared_data import profile_map
@@ -64,10 +65,11 @@ def get_profile_list():
         k: v for k, v in profile_map.items() if k != 0
     }
 
+    locale.setlocale(locale.LC_COLLATE, 'zh_TW.UTF-8')
     # 將其轉為 options 並根據 name 中文排序
     sorted_profiles = sorted(
         other_profiles.values(),
-        key=lambda p: p.get("name", "")
+        key=lambda p: locale.strxfrm(p.get("name", ""))
     )
 
     # 初始選項

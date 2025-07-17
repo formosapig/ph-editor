@@ -575,7 +575,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
 	if (isProfileDropdown) {
       if (result.options && Array.isArray(result.options)) {
         dropdownsToRender = [{
-          displayLabel: '使用者角色',
+          displayLabel: '角色列表',
           dataKey: '!id',
           labelKey: 'name',
           options: result.options,
