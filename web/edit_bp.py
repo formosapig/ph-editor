@@ -33,7 +33,7 @@ def ensure_general_data_updated(character_entry: CharacterFileEntry) -> None:
         character_data.get_data()["story"]["general"] = global_general
         character_data.global_data = global_general
         character_entry.general_version = global_version
-        character_entry.set_save_flag(True)
+        character_entry.set_sync_flag(True)
 
 def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
     if character_entry.profile_id is None:
@@ -60,7 +60,7 @@ def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
         character_entry.profile_id = global_profile_data.get("!id", character_entry.profile_id)
         character_entry.profile_version = global_profile_version
 
-        character_entry.set_save_flag(True)
+        character_entry.set_sync_flag(True)
 
 def reload_character_data(scan_path: str, character_id: str) -> [Dict[str, Any], tuple]:
     """

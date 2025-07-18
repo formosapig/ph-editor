@@ -133,7 +133,12 @@ editBtn.addEventListener('click', () => {
   if (selectedSet.size === 1) {
     const characterId = Array.from(selectedSet)[0];
     const url = `/edit?character_id=${encodeURIComponent(characterId)}`;
-    window.open(url, '_blank');
+	
+	// 使用 characterId 作為視窗名稱
+    // 這樣每次開啟同一個 characterId 的編輯頁面時，都會重複使用同一個分頁
+    const windowName = `edit_character_${characterId}`;
+    
+    window.open(url, windowName); 
   }
 });
 

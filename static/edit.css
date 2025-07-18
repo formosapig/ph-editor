@@ -169,6 +169,15 @@ button:hover {
   background-color: #45a049;
 }
 
+/* 禁用狀態 */
+button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  /* 取消 hover 效果 */
+  pointer-events: none;
+}
+
 /* 第二層 tab 開始 */
 #sub-tab-buttons {
   display: flex;

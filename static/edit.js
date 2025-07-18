@@ -314,8 +314,8 @@ function autoSaveData() {
     return response.json();
   })
   .then(result => {
-    showMessage(result.message || '儲存成功！');
-    console.log('autoSaveData: 儲存成功。', result);
+    showMessage(result.message || '更新成功！');
+    console.log('autoSaveData: 更新成功。', result);
 	
 	// ✅ 如果後端有給新的 profile ID，先更新到 newData 上
     if (result.new_profile_id) {
@@ -329,9 +329,15 @@ function autoSaveData() {
     if (result.need_update_profile_dropdown) {
 	  fetchAndRenderDropdowns("story", "profile");
     }
+	
+	// 當檔案需要儲存, 但是不是 general / profile 時...
+	if (result.need_save) {
+		document.getElementById('saveButton').disabled = false;
+	}
 
     //if (result.need_save_all) {
-      pingPongSave();
+	// 無腦走 pingPongSync() 應該沒關係...	
+    pingPongSync();
     //}
   })
   .catch(error => {
@@ -404,7 +410,7 @@ function saveFile() {
   showMessage('正在儲存資料...');
   //hexDisplay.textContent = '正在儲存資料...';
 
-  fetch('/edit/save_bak', {
+  fetch('/api/character/save', {
     method: 'POST'
   })
     .then(response => {
@@ -421,6 +427,7 @@ function saveFile() {
       showMessage(result.message || '儲存成功！');
 	  //hexDisplay.textContent = result.message || '儲存成功！';
       console.log('saveFile: 儲存成功。', result); // 新增日誌
+	  document.getElementById('saveButton').disabled = true;
     })
     .catch(error => {
 	  showMessage('儲存失敗：' + error.message, 'error');
@@ -433,13 +440,13 @@ function saveFile() {
  * 觸發後端儲存待處理角色的函式。
  * 會持續呼叫後端路由，直到沒有待儲存的檔案為止。
  */
-async function pingPongSave() {
+async function pingPongSync() {
     let savedCount = 0;
 
     async function saveNext() {
         try {
             // 呼叫後端儲存待處理檔案的路由
-            const response = await fetch('/api/character/ping_pong_save', {
+            const response = await fetch('/api/character/ping_pong_sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
@@ -454,19 +461,19 @@ async function pingPongSave() {
 
             if (data.character_id) {
                 savedCount++;
-                showMessage(`成功儲存檔案: ${data.character_id}。正在檢查是否有更多檔案...`);
+                showMessage(`成功同步檔案: ${data.character_id}。繼續檢查...`);
                 await saveNext(); // 繼續處理下一個
             } else {
                 // 沒有更多檔案要存了
-                showMessage(`所有待儲存檔案 ${savedCount} 個已處理完畢。`);
+                showMessage(`所有待同步檔案 ${savedCount} 個已處理完畢。`);
             }
         } catch (err) {
-            console.error("儲存失敗", err);
-            showMessage(`儲存失敗: ${err.message}`, 'error');
+            console.error("同步失敗", err);
+            showMessage(`同步失敗: ${err.message}`, 'error');
         }
     }
 
-    showMessage("正在檢查並儲存待處理檔案...");
+    showMessage("正在檢查並同步待處理檔案...");
     await saveNext();
 }
 
@@ -546,11 +553,14 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
  * @param {string} subTab - 子 tab 的 key。
  */
 async function fetchAndRenderDropdowns(mainTab, subTab) {
-  // 判斷是否為 profile 路由
+  // 判斷是否為 profile 或 scenario 路由
   let apiUrl = `/api/ui_config/options/${mainTab}/${subTab}`;
   const isProfileDropdown = (mainTab === 'story' && subTab === 'profile');
+  const isScenarioDropdown = (mainTab === 'story' && subTab === 'scenario');
   if (isProfileDropdown) {
 	  apiUrl = `/api/ui_config/profiles`;
+  } else if (isScenarioDropdown) {
+	  apiUrl = `/api/ui_config/scenario_options`;
   }
   
   console.log(`執行 fetchAndRenderDropdowns 函數，請求: ${apiUrl}`);
@@ -783,4 +793,4 @@ function showMessage(text, type = 'success') {
 
 window.reloadFile = reloadFile;
 window.saveFile = saveFile;
-window.pingPongSave = pingPoneSave;
+//window.pingPongSync = pingPoneSync;

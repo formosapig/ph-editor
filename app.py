@@ -3,6 +3,7 @@ from PIL import Image
 from flask import current_app
 import os
 import time
+from colorlog import ColoredFormatter
 import logging
 from web.edit_bp import edit_bp
 from web.general_bp import general_bp
@@ -37,6 +38,24 @@ scan_path = UserConfigManager.load_scan_path()
 app.config['SCAN_PATH'] = scan_path if scan_path else ""
 # 設定 session key
 app.config['SECRET_KEY'] = 'sadflkfsdflksdf' # 替換這裡
+
+# 設定全域 logging 
+handler = logging.StreamHandler()
+formatter = ColoredFormatter(
+    "%(log_color)s[%(levelname)s] (%(filename)s:%(lineno)d) → %(message)s\n",
+    log_colors={
+        'DEBUG': 'white',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    }
+)
+handler.setFormatter(formatter)
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+logger.handlers = [handler]
 
 # 獲取 Werkzeug 的日誌器
 log = logging.getLogger('werkzeug')
@@ -147,7 +166,7 @@ def scan_folder():
                     continue # 繼續處理下一個檔案
             
                 # 將資料整理好放進 character_list
-                print(f"prepare get profile name {character_id}")
+                logging.debug(f"prepare get profile name {character_id}")
                 profile_name = get_profile_name(character_id)
                 character_list.append({
                     'thumb': thumbnail_name,

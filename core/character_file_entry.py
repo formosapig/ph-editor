@@ -1,5 +1,6 @@
 # ph-editor/core/character_file_entry.py
 import os
+import logging
 from typing import Optional, Type
 from .character_data import CharacterData
 from .file_constants import PLAYHOME_MARKER
@@ -25,6 +26,7 @@ class CharacterFileEntry:
         self.filename: str = os.path.join(scan_path, character_id + ".png")  # 組成完整檔案路徑
         self.character_data: CharacterData = character_data
         self.save_flag: bool = False  # 預設不需儲存
+        self.sync_flag: bool = False  # 預設不需同步資料
 
         if isinstance(character_data.parsed_data, dict):
             story = character_data.parsed_data.get("story", {})
@@ -32,8 +34,14 @@ class CharacterFileEntry:
             self.profile_version = _get_int(story, "profile", "!version")
             self.profile_id = _get_int(story, "profile", "!id")
                 
-        self.display_name = "測試中"          
-        print(self)
+        self.display_name = "測試中"
+        logging.debug(self)
+        
+    def set_sync_flag(self, value: bool = True):
+        self.sync_flag = value
+        
+    def needs_syncing(self) -> bool:
+        return self.sync_flag
         
     def set_save_flag(self, value: bool = True):
         self.save_flag = value
@@ -60,13 +68,14 @@ class CharacterFileEntry:
             f"{'Character ID':>16}: {self.character_id}",
             f"{'Filename':>16}: {self.filename}",
             f"{'Save Flag':>16}: {self.save_flag}",
+            f"{'Sync Flag':>16}: {self.sync_flag}",
             f"{'General Version':>16}: {self.general_version}",
             f"{'Profile Version':>16}: {self.profile_version}",
             f"{'Profile ID':>16}: {self.profile_id}",
         ]
         return "\n".join(lines)
 
-    def save(self):
+    def save(self, individual_only=False):
         # 取得最新 PlayHome 自訂資料 bytes (包含 marker)
         playhome_data = self.character_data.to_raw_data()
 
@@ -91,6 +100,8 @@ class CharacterFileEntry:
             raise IOError(f"寫入檔案失敗：{self.filename} -> {e}")
 
         self.save_flag = False
+        if not individual_only:
+            self.sync_flag = False
 
 
     @classmethod

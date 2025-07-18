@@ -28,13 +28,6 @@ DEFAULT_PROFILE_TEMPLATE = {
     '!version': 1,          # profile 版本號
     '!id': 0,               # profile id, 0 為特殊佔用, 創建新角色用
     'name': '新角色',       # 在列表上直接顯示為新角色
-    'born': 1911,           # 出生年份
-    'job': '工作',          # 工作
-    'role': '與其他角色的關係',  # 與他人的關係
-    'height': 166,          # 身高
-    'cup': 'A-',            # 罩杯
-    'look': '長相,體形,膚色等等',           # 長相,體形,膚色等等
-    'sex': '名穴,毫乳,性感帶等等', # 名穴,毫乳等等...
     'about' : '關於角色',
 }
 
@@ -44,7 +37,7 @@ profile_map: Dict[int, Dict[str, Any]] = {
 
 # --- 同步鎖 for characters_db 和相關操作 ---
 # 為了保護 characters_db 在多執行緒/協程環境下的讀取和寫入
-# 特別是針對 characters_db 字典本身的修改、save_flag 的檢查和設置
+# 特別是針對 characters_db 字典本身的修改、sync_flag 的檢查和設置
 characters_db_lock = threading.RLock()
 
 # --- 全域 general 資料預設值 ---
@@ -97,7 +90,7 @@ def sync_global_general_to_characters(global_data: Dict[str, Any], global_versio
     """
     同步全域 general 資料到所有角色檔案：
     - 若角色 general 版本低於 global_version，更新其 general 節點資料
-    - 並將該角色的 save_flag 設為 True，等待儲存
+    - 並將該角色的 sync_flag 設為 True，等待儲存
     """
     from core.shared_data import characters_db, characters_db_lock
 
@@ -122,7 +115,7 @@ def sync_global_general_to_characters(global_data: Dict[str, Any], global_versio
                 data["story"]["general"] = global_data
                 # 設定角色物件屬性方便存檔
                 entry.general_version = global_version
-                entry.set_save_flag(True)
+                entry.set_sync_flag(True)
                 
 def update_global_general_data(new_data: Dict[str, Any], increment_version: bool = False):
     """
@@ -303,7 +296,7 @@ def add_profile(character_id: str, updated_profile: Dict[str, Any]) -> bool:
             return
         character_file_entry_obj.profile_id = new_id
         character_file_entry_obj.profile_version = updated_profile.get('!version', 0)
-        character_file_entry_obj.save_flag = True
+        character_file_entry_obj.sync_flag = True
 
         # ✅ 更新 profile_character_ids
         character_id = character_file_entry_obj.character_id
@@ -321,7 +314,7 @@ def add_profile(character_id: str, updated_profile: Dict[str, Any]) -> bool:
 def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any]):
     """
     將指定 profile_id 的更新，同步到所有相關角色的 character_data。
-    更新角色的 profile_version、profile 資料，並將 save_flag 設為 True。
+    更新角色的 profile_version、profile 資料，並將 sync_flag 設為 True。
     """
 
     if profile_id not in profile_character_ids:
@@ -360,8 +353,8 @@ def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any])
         # 完整複製 profile 資料
         character_entry.character_data.parsed_data[story]['profile'] = updated_profile.copy()
 
-        # 設定 save_flag
-        character_entry.save_flag = True
+        # 設定 sync_flag
+        character_entry.sync_flag = True
 
         updated_character_ids.append(character_id)
 
@@ -370,7 +363,7 @@ def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any])
 def update_profile(character_id: str, profile_id: int, updated_profile: Dict[str, Any]) -> bool:
     """
     更新指定 profile 的資料，如果有變更，則同步到所有相關角色的 character_data，
-    並設定角色的 save_flag 為 True。
+    並設定角色的 sync_flag 為 True。
     """
 
     with characters_db_lock:
@@ -440,7 +433,7 @@ def update_profile1(character_id: str, updated_profile: Dict[str, Any]) -> bool:
             print(f"[INFO] character_id {character_id} 尚未設定 profile，新增為 {updated_profile_id}")
             character_file_entry_obj.profile_id = updated_profile_id
             character_file_entry_obj.profile_version = 1 # 預設為 1, 前端的 !version 不可信
-            character_file_entry_obj.save_flag = True
+            character_file_entry_obj.sync_flag = True
             profile_character_ids.setdefault(updated_profile_id, set()).add(character_id)
 
         # CASE 2: profile ID 改變（B -> A）
@@ -457,7 +450,7 @@ def update_profile1(character_id: str, updated_profile: Dict[str, Any]) -> bool:
             # 更新 character 的 profile_id
             character_file_entry_obj.profile_id = updated_profile_id
             character_file_entry_obj.profile_version = 1 # 預設為 1, 前端的 !version 不可信
-            character_file_entry_obj.save_flag = True
+            character_file_entry_obj.sync_flag = True
 
         # 檢查 profile_character_ids 中是否有該 profile_id
         if updated_profile_id not in profile_character_ids:

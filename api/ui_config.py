@@ -4,7 +4,7 @@ import importlib
 import locale
 from flask import Blueprint, jsonify
 from config.dropdown_config import dropdown_config_map
-from core.shared_data import profile_map
+from core.shared_data import profile_map, get_global_general_data
 
 api_ui_config_bp = Blueprint('api_ui_config', __name__, url_prefix='/api/ui_config')
 
@@ -90,3 +90,62 @@ def get_profile_list():
         })
 
     return jsonify({"options": options})
+    
+@api_ui_config_bp.route('/scenario_options', methods=['GET'])
+def get_scenario_options():
+    """提供 scenario 編輯所需的多組下拉選單"""
+    dropdowns = []
+    general_data = get_global_general_data()
+
+    # ===== 第一組 dropdown：Tag 下拉選單 =====
+    tag_list = general_data.get('tag', [])
+    tag_type_map = general_data.get('tag_type_setting', {})
+
+    tag_options = []
+    for tag in tag_list:
+        tag_type = tag.get('type', '')
+        tag_type_name = tag_type_map.get(tag_type, {}).get('name', {}).get('zh', tag_type)
+        tag_name = tag.get('name', {}).get('zh', f"id:{tag.get('id')}")
+        label = f"{tag_type_name}-{tag_name}"
+
+        tag_options.append({
+            "label": label,
+            "value": tag.get('id')
+        })
+
+    dropdowns.append({
+        "displayLabel": "標籤",  # or anything fitting your UI
+        "dataKey": "!tag_id",
+        "labelKey": "tag",
+        "options": tag_options,
+        "defaultValue": ""
+    })
+
+    # ===== 第二 & 第三組 dropdown：Color Trait 下拉選單 =====
+    color_traits = general_data.get('color_traits', [])
+
+    color_options = [
+        {
+            "label": trait.get('trait', {}).get('zh', ""),
+            "value": trait.get('code')  # or index
+        }
+        for trait in color_traits
+    ]
+
+    dropdowns.append({
+        "displayLabel": "外顯特質",
+        "dataKey": "!out_code",
+        "labelKey": "outward",
+        "options": color_options,
+        "defaultValue": ""
+    })
+
+    dropdowns.append({
+        "displayLabel": "內在特質",
+        "dataKey": "!in_code",
+        "labelKey": "inward",
+        "options": color_options,
+        "defaultValue": ""
+    })
+
+    return jsonify({"dropdowns": dropdowns})

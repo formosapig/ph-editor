@@ -7,10 +7,10 @@
 </head>
 <body>
   <div class="top-right-button-container">
-    <button type="button" onclick="pingPongSave()">乒乓</button>
+    <!-- <button type="button" onclick="pingPongSync()">乒乓</button> -->
     <button type="button" onclick="reloadFile()">重讀</button>
-    <button type="button" onclick="saveFile()">儲存</button>
-    <button type="button" onclick="window.close()">結束</button>
+    <button id="saveButton" type="button" onclick="saveFile()" disabled>儲存</button>
+    <!-- <button type="button" onclick="window.close()">結束</button> -->
   </div>
 
   <h1>編輯角色：{{ character_id }}</h1>

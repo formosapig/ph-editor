@@ -18,8 +18,8 @@
     <table>
       <thead>
         <tr>
-          <th>特質 (中文)</th>
-          <th>顏色名稱 (中文)</th>
+          <th>特質</th>
+          <th>顏色</th>
           <th>編碼</th>
           <th>操作</th>
         </tr>
@@ -41,7 +41,7 @@
   </section>
 
     <section>
-    <h3>標籤類型設定 (tag_type_setting)</h3>
+    <h3>標籤類型</h3>
     <table>
       <thead>
         <tr>
@@ -80,16 +80,16 @@
   </section>
 
     <section>
-    <h3>標籤設定 (tag)</h3>
+    <h3>標籤設定</h3>
     <table>
       <thead>
         <tr>
           <th>類型</th>
-          <th>名稱 (中文)</th>
-          <th>描述 (中文)</th>
-          <th>拍照 (中文)</th>
-          <th>特徵 (中文)</th>
-          <th>穿著 (中文)</th>
+          <th>名稱</th>
+          <th>描述</th>
+          <th>拍照</th>
+          <th>特徵</th>
+          <th>穿著</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -101,11 +101,21 @@
                               <option v-for="typeItem in tag_type_settings_array" :value="typeItem.key">{% raw %}{{ typeItem.name.zh }}{% endraw %}</option>
             </select>
           </td>
-          <td><input type="text" v-model="item.name.zh" placeholder="名稱 (中文)" /></td>
-          <td><textarea v-model="item.desc.zh" placeholder="描述 (中文)"></textarea></td>
-          <td><textarea v-model="item.snapshot.zh" placeholder="拍照資訊 (中文)"></textarea></td>
-          <td><textarea v-model="item.marks.zh" placeholder="特徵 (中文)"></textarea></td>
-          <td><textarea v-model="item.clothing.zh" placeholder="穿著 (中文)"></textarea></td>
+          <td>
+		    <input
+                type="text"
+                v-model="item.name.zh"
+                placeholder="名稱" 
+				:style="{
+                  color: tagTypeSettingsMap[item.type] ? tagTypeSettingsMap[item.type].color : '',
+                  backgroundColor: tagTypeSettingsMap[item.type] ? tagTypeSettingsMap[item.type].background : ''
+                }"
+            />
+          </td>
+          <td><textarea v-model="item.desc.zh" placeholder="描述"></textarea></td>
+          <td><textarea v-model="item.snapshot.zh" placeholder="拍照"></textarea></td>
+          <td><textarea v-model="item.marks.zh" placeholder="特徵"></textarea></td>
+          <td><textarea v-model="item.clothing.zh" placeholder="穿著"></textarea></td>
           <td>
             <button @click="removeTag(index)" :disabled="tag_array.length === 1">刪除</button>
           </td>
@@ -163,6 +173,14 @@
         clothing: { zh: '' }
     }],
 
+    get tagTypeSettingsMap() {
+      return this.tag_type_settings_array.reduce((map, item) => {
+        if (item.key) {
+          map[item.key] = item;
+        }
+        return map;
+      }, {});
+    },
 
     // --- color_traits 相關方法 ---
     addColorTrait() {
@@ -259,26 +277,31 @@
         }
       });
 
-      // 過濾 tag 數據，只保留有效的部分
-      const filteredTags = this.tag_array.filter(item =>
-        item.type.trim() && item.name.zh.trim()
-      ).map(item => ({
-        id: item.id,
-        type: item.type,
-        name: { zh: item.name.zh },
-        desc: { zh: item.desc.zh },
-        snapshot: { zh: item.snapshot.zh },
-        marks: { zh: item.marks.zh },
-        clothing: { zh: item.clothing.zh }
-      }));
+      // 過濾並排序 tag 數據，只保留有效的部分
+      const finalFilteredTags = this.tag_array
+        .filter(item => item.type.trim() && item.name.zh.trim())
+        .sort((a, b) => {
+          const orderA = filteredTagTypeSettings[a.type]?.order || Infinity;
+          const orderB = filteredTagTypeSettings[b.type]?.order || Infinity;
+          return orderA - orderB;
+        })
+        .map((item, index) => ({
+          id: index + 1, // 從 1 開始重新給予 id
+          type: item.type,
+          name: { zh: item.name.zh },
+          desc: { zh: item.desc.zh },
+          snapshot: { zh: item.snapshot.zh },
+          marks: { zh: item.marks.zh },
+          clothing: { zh: item.clothing.zh }
+        }));
 
       const dataToSend = {
         color_traits: filteredColorTraits,
         tag_type_setting: filteredTagTypeSettings,
-        tag: filteredTags 
+        tag_list: finalFilteredTags 
       };
       
-      fetch('/your-api-endpoint', { // 這裡的 API 端點是用來 POST 資料的
+      fetch('/general/update', { // 這裡的 API 端點是用來 POST 資料的
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend),
@@ -293,9 +316,9 @@
         return res.json();
       })
       .then(data => {
-        // 使用自定義的訊息框代替 alert
-        this.showMessage('送出成功！', 'success');
-        console.log('提交成功:', data);
+        this.showMessage('送出成功，正在儲存資料...', 'info');
+        // 加入 pingPongSave 流程
+        return this.pingPongSave();  // 確保是 this 上的函式
       })
       .catch(err => {
         // 使用自定義的訊息框代替 alert
@@ -348,6 +371,40 @@
         messageBox.style.transform = 'translateX(-50%) translateY(-20px)';
         messageBox.addEventListener('transitionend', () => messageBox.remove());
       }, 3000); // 3 秒後自動消失
+    },
+	pingPongSave() {
+      let savedCount = 0;
+      const self = this;
+
+      async function saveNext() {
+        try {
+          const response = await fetch('/api/character/ping_pong_save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`伺服器回應錯誤: ${response.status} ${response.statusText} - ${errorText}`);
+          } 
+
+          const data = await response.json();
+
+          if (data.character_id) {  
+            savedCount++;
+            //self.showMessage(`成功儲存檔案: ${data.character_id}。繼續儲存...`, 'info');
+            await saveNext();
+          } else {
+            self.showMessage(`✅ 所有資料 (${savedCount} 筆) 已成功儲存！`, 'success');
+          }
+        } catch (err) {
+          console.error("儲存失敗", err);
+          self.showMessage(`❌ 儲存失敗: ${err.message}`, 'error');
+        }
+      }
+      self.showMessage("⏳ 正在儲存資料，請稍候...", 'info');
+      return saveNext();
     }
   }
 </script>

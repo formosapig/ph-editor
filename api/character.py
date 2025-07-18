@@ -2,6 +2,7 @@
 
 from flask import Blueprint, request, jsonify, current_app, session, Response
 import json
+import logging
 from typing import Dict, Any, Union, Tuple
 
 from core.shared_data import (
@@ -18,6 +19,9 @@ from core.shared_data import (
     get_profile,
 )
 from core.character_file_entry import CharacterFileEntry
+
+log= logging.getLogger(__name__)
+#log.setLevel(logging.DEBUG)
 
 api_character_bp = Blueprint('api_character', __name__, url_prefix='/api/character')
 
@@ -37,7 +41,7 @@ def ensure_general_data_updated(character_entry: CharacterFileEntry) -> None:
         data["story"]["general"] = global_general
         character_data.global_data = global_general
         character_entry.general_version = global_version
-        character_entry.set_save_flag(True)
+        character_entry.set_sync_flag(True)
 
 def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
     if character_entry.profile_id is None:
@@ -64,7 +68,7 @@ def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
         character_entry.profile_id = global_profile_data.get("!id", character_entry.profile_id)
         character_entry.profile_version = global_profile_version
 
-        character_entry.set_save_flag(True)
+        character_entry.set_sync_flag(True)
 
 def reload_character_data(scan_path: str, character_id: str) -> Union[Dict[str, Any], Tuple]:
     """
@@ -129,7 +133,7 @@ def save_file():
         return jsonify({'error': f'找不到角色資料：{character_id}，請重新載入檔案。'}), 404
 
     try:
-        entry.save()
+        entry.save(True)  # individual save only.
         return jsonify({'success': True, 'message': '角色資料已成功保存！'})
 
     except FileNotFoundError as e:
@@ -141,10 +145,10 @@ def save_file():
     except Exception as e:
         return jsonify({'error': f'發生未知錯誤：{str(e)}'}), 500
 
-@api_character_bp.route('/ping_pong_save', methods=['POST'])
-def ping_pong_save():
+@api_character_bp.route('/ping_pong_sync', methods=['POST'])
+def ping_pong_sync():
     """
-    掃描 characters_db 找第一個 save_flag 為 True 的角色，呼叫其 save() 儲存。
+    掃描 characters_db 找第一個 sync_flag 為 True 的角色，呼叫其 save() 儲存。
     回傳成功或錯誤 JSON。
     """
     saved_character_id: Optional[str] = None
@@ -152,9 +156,9 @@ def ping_pong_save():
     try:
         with characters_db_lock:
             for character_id, character_file_entry in characters_db.items():
-                if character_file_entry.needs_saving():
+                if character_file_entry.needs_syncing():
                     character_file_entry.save()
-                    character_file_entry.set_save_flag(False)
+                    # character_file_entry.set_sync_flag(False) 上一行的 save 內會做.
                     saved_character_id = character_id
                     break
 
@@ -196,8 +200,8 @@ def update_data(main_tab, sub_tab):
         return jsonify({'error': '缺少 data 欄位。'}), 400
 
     # 新增：印出前端傳來的資料 json 字串到後端日誌
-    print(f'[DEBUG] 更新資料 {main_tab}/{sub_tab} 內容：')
-    print(json.dumps(new_data, ensure_ascii=False, indent=2))
+    log.debug(f'更新資料 {main_tab}/{sub_tab} 內容：')
+    log.debug("\n" + json.dumps(new_data, ensure_ascii=False, indent=2))
 
     character_id = session.get('current_edit_character_id')
     if not character_id:
@@ -236,8 +240,8 @@ def update_data(main_tab, sub_tab):
                 need_update_profile_dropdown = True
 
         # 新增：印出前端傳來的資料 json 字串到後端日誌
-        print(f'[DEBUG] 結果：')
-        print(json.dumps(new_data, ensure_ascii=False, indent=2))
+        log.debug(f'結果：')
+        log.debug(json.dumps(new_data, ensure_ascii=False, indent=2))
 
         # 更新子節點
         character_data_obj.parsed_data[main_tab][sub_tab] = new_data
@@ -259,6 +263,18 @@ def update_data(main_tab, sub_tab):
             response_data['new_profile_id'] = new_profile_id
         if need_save_all:
             response_data['need_save_all'] = True
+
+        # 若節點不是 'story' 'general' 或 'story' 'profile' 時，把 save_flag 設為 true
+        entry = get_character_file_entry(character_id)
+        if entry is not None:
+            if not (main_tab == 'story' and sub_tab in ('general', 'profile')):
+                entry.set_save_flag(True)
+                response_data['need_save'] = True
+
+            # 看一下 save flag
+            log.debug(f"save flag : {entry.save_flag}")
+        else:
+            log.warning(f"Character file entry not found for character_id: {character_id}")
 
         return jsonify(response_data)
 
