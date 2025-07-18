@@ -1,0 +1,163 @@
+body {
+  font-family: sans-serif;
+  margin: 20px;
+  background: #e9f2f5; /* 淺暖灰色背景，更柔和 */
+  color: #4a4a4a; /* 深灰色文字，減少對比刺激 */
+  line-height: 1.6;
+}
+h2, h3 {
+  color: #3d5a80; /* 深藍綠色標題，沉穩 */
+  margin-bottom: 15px;
+}
+h3 {
+  margin-top: 30px;
+}
+section {
+  background: #ffffff; /* 卡片背景保持白色 */
+  padding: 25px;
+  margin-bottom: 25px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04); /* 更輕微的陰影 */
+}
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin-top: 15px;
+  }
+  th, td {
+    border: none;
+    padding: 12px 18px;
+    text-align: center;
+    background-color: #ffffff; /* 確保單元格背景是白色 */
+    vertical-align: middle; /* 確保垂直居中對齊 */
+  }
+  thead th {
+    background-color: #f6f9fc; /* 表頭背景色更淺 */
+    color: #6a6a6a; /* 表頭文字色更柔和 */
+    font-weight: bold;
+    border-bottom: 2px solid #dde3e9; /* 表頭底部邊框更淺 */
+    padding-top: 15px;
+    padding-bottom: 15px;
+	text-align: center;
+  }
+  tbody tr {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #fdfdfe; /* 斑馬紋效果，非常淺的顏色 */
+  }
+  tbody tr:hover {
+    background-color: #f0f5f8; /* 滑鼠移上時的背景色更柔和 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); /* 輕微陰影 */
+    transform: translateY(-1px); /* 輕微上浮效果 */
+  }
+
+  input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    border: 1px solid #cdd4da; /* 邊框顏色更淺 */
+    border-radius: 6px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); /* 更輕微的內陰影 */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	text-align: center; /* 讓輸入框內的文字置中 */
+  }
+
+  textarea {
+    resize: vertical; /* 允許垂直調整大小 */
+    min-height: 50px; /* 最小高度 */
+    text-align: left; /* textarea 內容通常靠左對齊 */
+  }
+
+  input[type="color"] {
+    width: 60px; /* 設定固定寬度 */
+    height: 34px;
+    padding: 2px;
+    box-sizing: border-box;
+    border: 1px solid #cdd4da; /* 邊框顏色更淺 */
+    border-radius: 6px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); /* 更輕微的內陰影 */
+    cursor: pointer;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, input[type="color"]:focus, textarea:focus {
+    outline: none;
+    border-color: #72a0c7; /* 焦點時的邊框顏色，更柔和的藍色 */
+    box-shadow: 0 0 0 3px rgba(114, 160, 199, 0.25); /* 焦點時的陰影，與邊框顏色搭配 */
+  }
+  button {
+    padding: 8px 16px;
+    margin: 4px 2px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: 1px solid #5a80b0; /* 按鈕邊框，更柔和的藍色 */
+    background-color: #72a0c7; /* 按鈕背景，更柔和的藍色 */
+    color: white;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* 輕微陰影 */
+  }
+  button:hover {
+    background-color: #5a80b0; /* hover 時的藍色，稍微深一點 */
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  }
+  button:disabled {
+    background-color: #c7d2e1; /* 更淺的禁用按鈕背景 */
+    border-color: #b0bbcb;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  pre {
+    background: #f6f9fc; /* 代碼預覽區背景更淺 */
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 13px;
+    overflow-x: auto;
+    border: 1px solid #e0e7ef;
+    color: #5a6d80; /* 代碼文字顏色更柔和 */
+  }
+
+  /* 為 tag_type_setting 的名稱輸入框添加動態樣式 */
+  .tag-type-name-input {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #cdd4da;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    border: 1px solid #cdd4da;
+    border-radius: 6px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    appearance: none; /* 移除預設的下拉箭頭 */
+    background-color: #fff;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234a4a4a%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-6.7%200-13.3%202.4-17.3%207.4-3.6%204.6-3.6%2011.6%200%2016.2l128.8%20137.9c4.2%204.6%2010.5%207.2%2017.2%207.2s13-2.6%2017.2-7.2l128.8-137.9c3.6-4.6%203.6-11.6%200-16.2z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+  }
+
+  select:focus {
+    outline: none;
+    border-color: #72a0c7;
+    box-shadow: 0 0 0 3px rgba(114, 160, 199, 0.25);
+  }
+
+  /* 調整 td 內 select 的文字對齊 */
+  td select {
+    text-align: center; /* 讓下拉選單文字置中 */
+    text-align-last: center; /* 確保選中項也置中 */
+  }

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>全域設定</title>
+  <!--<script src="/static/petite-vue.iife.js" defer init></script>-->
+  <script src="{{ url_for('static', filename='petite-vue.iife.js') }}" defer init></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='general.css') }}" />
+</head>
+<body>
+
+<div v-scope="app">
+  <h2>全域設定</h2>
+
+    <section>
+    <h3>特質-顏色 設定</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>特質 (中文)</th>
+          <th>顏色名稱 (中文)</th>
+          <th>編碼</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in color_traits" :key="index">
+          <td><input type="text" v-model="item.trait.zh" placeholder="特質 (中文)" /></td>
+          <td><input type="text" v-model="item.name.zh" placeholder="顏色名稱 (中文)" /></td>
+          <td><input type="color" v-model="item.code" /></td>
+          <td>
+            <button @click="removeColorTrait(index)" :disabled="color_traits.length === 1">刪除</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button @click="addColorTrait">新增一行</button>
+
+    <pre>目前 color_traits 資料： {{ color_traits }}</pre>
+  </section>
+
+    <section>
+    <h3>標籤類型設定 (tag_type_setting)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>鍵值(英文)</th>
+          <th>標籤類型</th>
+          <th>文字</th>
+          <th>背景</th>
+          <th>排序</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in tag_type_settings_array" :key="item.key">
+          <td><input type="text" v-model="item.key" placeholder="例如: origin" /></td>
+          <td>
+            <input
+              type="text"
+              v-model="item.name.zh"
+              placeholder="例如: 本源 (中文)"
+              class="tag-type-name-input"
+              :style="{ color: item.color, backgroundColor: item.background }"
+            />
+          </td>
+          <td><input type="color" v-model="item.color" /></td>
+          <td><input type="color" v-model="item.background" /></td>
+          <td><input type="number" v-model.number="item.order" placeholder="排序數字" min="1" /></td>
+          <td>
+            <button @click="removeTagTypeSetting(index)" :disabled="tag_type_settings_array.length === 1">刪除</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button @click="addTagTypeSetting">新增一行</button>
+
+    <pre>目前 tag_type_setting 資料： {{ tag_type_setting }}</pre>
+  </section>
+
+    <section>
+    <h3>標籤設定 (tag)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>類型</th>
+          <th>名稱 (中文)</th>
+          <th>描述 (中文)</th>
+          <th>拍照 (中文)</th>
+          <th>特徵 (中文)</th>
+          <th>穿著 (中文)</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in tag_array" :key="item.id || index">
+          <td>
+            <select v-model="item.type">
+              <option disabled value="">請選擇類型</option>
+                              <option v-for="typeItem in tag_type_settings_array" :value="typeItem.key">{% raw %}{{ typeItem.name.zh }}{% endraw %}</option>
+            </select>
+          </td>
+          <td><input type="text" v-model="item.name.zh" placeholder="名稱 (中文)" /></td>
+          <td><textarea v-model="item.desc.zh" placeholder="描述 (中文)"></textarea></td>
+          <td><textarea v-model="item.snapshot.zh" placeholder="拍照資訊 (中文)"></textarea></td>
+          <td><textarea v-model="item.marks.zh" placeholder="特徵 (中文)"></textarea></td>
+          <td><textarea v-model="item.clothing.zh" placeholder="穿著 (中文)"></textarea></td>
+          <td>
+            <button @click="removeTag(index)" :disabled="tag_array.length === 1">刪除</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button @click="addTag">新增一行</button>
+
+    <pre>目前 tag 資料： {{ tag_list }}</pre>
+  </section>
+
+    <button @click="submit" :disabled="submitDisabled">送出資料</button>
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    PetiteVue.createApp(window.app).mount('[v-scope]');
+  });
+
+  // 使用 Jinja2 語法將後端傳遞的變數注入到 JavaScript 中
+  const initialColorTraits = {{ color_traits | tojson }};
+  const initialTagTypeSettings = {{ tag_type_setting | tojson }}; // 假設後端傳遞 tag_type_setting
+  const initialTags = {{ tag_list | tojson }}; // 假設後端傳遞 tag 資料
+
+  window.app = {
+    // color_traits 初始化
+    color_traits: initialColorTraits.length > 0 ? initialColorTraits : [{ 
+      code: '#000000', 
+      name: { en: '', zh: '' }, // 保持結構，但 UI 只顯示 zh
+      trait: { zh: '' } 
+    }],
+
+    // tag_type_settings 初始化
+    // 將後端傳來的物件轉換為陣列，並依照 order 排序
+    tag_type_settings_array: Object.keys(initialTagTypeSettings).length > 0
+      ? Object.entries(initialTagTypeSettings)
+          .map(([key, value]) => ({ key, ...value }))
+          .sort((a, b) => a.order - b.order) // 在這裡進行排序
+      : [{ 
+          key: '', 
+          name: { zh: '' }, 
+          order: 1, 
+          color: '#000000', 
+          background: '#FFFFFF' 
+        }],
+    
+    // tag_array 初始化
+    tag_array: initialTags.length > 0 ? initialTags : [{
+        id: Date.now(), // 給予一個臨時 ID，確保 key 的唯一性
+        type: '',
+        name: { zh: '' },
+        desc: { zh: '' },
+        snapshot: { zh: '' },
+        marks: { zh: '' },
+        clothing: { zh: '' }
+    }],
+
+
+    // --- color_traits 相關方法 ---
+    addColorTrait() {
+      this.color_traits.push({ 
+        code: '#000000', 
+        name: { en: '', zh: '' }, 
+        trait: { zh: '' } 
+      });
+    },
+    removeColorTrait(index) {
+      if (this.color_traits.length > 1) {
+        this.color_traits.splice(index, 1);
+      }
+    },
+
+    // --- tag_type_setting 相關方法 ---
+    addTagTypeSetting() {
+      // 找到目前最大的 order 值，新項目 order 為其加一
+      const maxOrder = this.tag_type_settings_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
+      this.tag_type_settings_array.push({
+        key: '',
+        name: { zh: '' }, // 只初始化中文名稱
+        order: maxOrder + 1,
+        color: '#000000',
+        background: '#FFFFFF'
+      });
+    },
+    removeTagTypeSetting(index) {
+      if (this.tag_type_settings_array.length > 1) {
+        this.tag_type_settings_array.splice(index, 1);
+      }
+    },
+
+    // --- tag 相關方法 ---
+    addTag() {
+        // 為新項目生成一個獨特的 ID，避免與現有 ID 重複，並保持遞增
+        const maxId = this.tag_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
+        this.tag_array.push({
+            id: maxId + 1,
+            type: '',
+            name: { zh: '' },
+            desc: { zh: '' },
+            snapshot: { zh: '' },
+            marks: { zh: '' },
+            clothing: { zh: '' }
+        });
+    },
+    removeTag(index) {
+        if (this.tag_array.length > 1) {
+            this.tag_array.splice(index, 1);
+        }
+    },
+
+
+    // --- 提交相關邏輯 ---
+    get submitDisabled() {
+      // 檢查 color_traits
+      const colorTraitsInvalid = this.color_traits.some(item => 
+        !item.trait.zh.trim() || !item.name.zh.trim()
+      );
+
+      // 檢查 tag_type_settings
+      const tagTypeSettingsInvalid = this.tag_type_settings_array.some(item =>
+        !item.key.trim() || !item.name.zh.trim() || !item.order || item.order < 1
+      );
+
+      // 檢查 tag
+      const tagsInvalid = this.tag_array.some(item =>
+        !item.type.trim() || !item.name.zh.trim()
+      );
+
+
+      return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid;
+    },
+    submit() {
+      // 過濾並轉換 color_traits
+      const filteredColorTraits = this.color_traits.filter(item => 
+        item.trait.zh.trim() && item.name.zh.trim()
+      );
+
+      // 過濾並轉換 tag_type_settings 回原始物件格式
+      const filteredTagTypeSettings = {};
+      // 提交前，先根據 order 重新排序，確保提交的數據順序一致
+      const sortedTagTypeForSubmission = [...this.tag_type_settings_array].sort((a, b) => a.order - b.order);
+
+      sortedTagTypeForSubmission.forEach(item => {
+        if (item.key.trim() && item.name.zh.trim() && item.order && item.order >= 1) {
+          filteredTagTypeSettings[item.key.trim()] = {
+            name: { zh: item.name.zh }, // 確保只提交中文名稱
+            order: item.order,
+            color: item.color,
+            background: item.background
+          };
+        }
+      });
+
+      // 過濾 tag 數據，只保留有效的部分
+      const filteredTags = this.tag_array.filter(item =>
+        item.type.trim() && item.name.zh.trim()
+      ).map(item => ({
+        id: item.id,
+        type: item.type,
+        name: { zh: item.name.zh },
+        desc: { zh: item.desc.zh },
+        snapshot: { zh: item.snapshot.zh },
+        marks: { zh: item.marks.zh },
+        clothing: { zh: item.clothing.zh }
+      }));
+
+      const dataToSend = {
+        color_traits: filteredColorTraits,
+        tag_type_setting: filteredTagTypeSettings,
+        tag: filteredTags 
+      };
+      
+      fetch('/your-api-endpoint', { // 這裡的 API 端點是用來 POST 資料的
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend),
+      })
+      .then(res => {
+        if (!res.ok) {
+          // 嘗試讀取錯誤訊息
+          return res.json().then(errData => {
+            throw new Error(errData.message || '伺服器錯誤');
+          });
+        }
+        return res.json();
+      })
+      .then(data => {
+        // 使用自定義的訊息框代替 alert
+        this.showMessage('送出成功！', 'success');
+        console.log('提交成功:', data);
+      })
+      .catch(err => {
+        // 使用自定義的訊息框代替 alert
+        this.showMessage(`送出失敗：${err.message || '請稍後再試'}`, 'error');
+        console.error('提交失敗:', err);
+      });
+    },
+
+    // 自定義訊息框方法 (取代 alert)
+    showMessage(message, type = 'info') {
+      const messageBox = document.createElement('div');
+      messageBox.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      `;
+
+      if (type === 'success') {
+        messageBox.style.backgroundColor = '#4CAF50';
+        messageBox.style.color = 'white';
+      } else if (type === 'error') {
+        messageBox.style.backgroundColor = '#F44336';
+        messageBox.style.color = 'white';
+      } else {
+        messageBox.style.backgroundColor = '#2196F3';
+        messageBox.style.color = 'white';
+      }
+
+      messageBox.textContent = message;
+      document.body.appendChild(messageBox);
+
+      // 顯示動畫
+      setTimeout(() => {
+        messageBox.style.opacity = '1';
+        messageBox.style.transform = 'translateX(-50%) translateY(0)';
+      }, 10); // 小延遲確保過渡生效
+
+      // 隱藏動畫並移除
+      setTimeout(() => {
+        messageBox.style.opacity = '0';
+        messageBox.style.transform = 'translateX(-50%) translateY(-20px)';
+        messageBox.addEventListener('transitionend', () => messageBox.remove());
+      }, 3000); // 3 秒後自動消失
+    }
+  }
+</script>
+</body>
+</html>

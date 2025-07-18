@@ -5,6 +5,7 @@ import os
 import time
 import logging
 from web.edit_bp import edit_bp
+from web.general_bp import general_bp
 from api.character import api_character_bp
 from api.profile import api_profile_bp
 from api.ui_config import api_ui_config_bp
@@ -24,6 +25,7 @@ UserConfigManager.ensure_dir()
 
 app = Flask(__name__)
 app.register_blueprint(edit_bp)
+app.register_blueprint(general_bp)
 app.register_blueprint(api_character_bp)
 app.register_blueprint(api_profile_bp)
 app.register_blueprint(api_ui_config_bp)

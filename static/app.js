@@ -9,6 +9,8 @@ const editBtn = document.getElementById('editBtn');
 const compareBtn = document.getElementById('compareBtn');
 const deleteBtn = document.getElementById('deleteBtn');
 
+const generalBtn = document.getElementById('generalBtn');
+
 let currentScanPath = '';
 let selectedSet = new Set();
 let totalFilesCount = 0; // 全域變數，記錄總檔案數
@@ -21,6 +23,11 @@ async function scan(path) {
     return;
   }
   localStorage.setItem('scanPath', path);
+  
+  // 初始化 UI，避免閃爍
+  document.getElementById('scanPathText').textContent = '📂 掃描中...';
+  document.getElementById('selectionCount').textContent = '已選取 0 項';
+  
   try {
     const res = await fetch('/scan', {
       method: 'POST',
@@ -42,12 +49,15 @@ async function scan(path) {
     selectedSet.clear();
     updateActionButtons();
 	
+	generalBtn.disabled = false;
+	
 	// 新存一份完整 images 陣列
 	allImages = data.images;
 	
     renderGallery(data.images);
 	// 更新路徑
-	document.getElementById('scanPathText').textContent = `📂 掃描路徑：${path}`;
+	const shortPath = shortenPath(path);
+	document.getElementById('scanPathText').textContent = `📂 掃描路徑：${shortPath}`;
   } catch (e) {
     alert('網路或伺服器錯誤');
     console.error(e);
@@ -165,6 +175,9 @@ deleteBtn.addEventListener('click', () => {
   });
 });
 
+generalBtn.addEventListener('click', () => {
+  window.open(`/general`, 'EditGeneralSetting');
+});
 
 // 更新按鈕狀態
 function updateActionButtons() {
@@ -282,4 +295,11 @@ function renderGallery(images) {
   });
 
   updateActionButtons();
+}
+
+function shortenPath(path, maxLen = 100) {
+  if (path.length <= maxLen) return path;
+  const parts = path.split(/[\\/]/); // 支援 / 或 \
+  if (parts.length < 3) return path.slice(0, maxLen - 3) + '...';
+  return `${parts[0]}\\${parts[1]}\\...\\${parts[parts.length - 1]}`;
 }

@@ -55,12 +55,12 @@ DEFAULT_GENERAL_TEMPLATE = {
         { 'code': '#0000FF', 'name': { 'en': 'Blue', 'zh': '藍' }, 'trait': { 'zh': '冷靜' } }
     ],
     'tag_type_setting': {
-        'setting': { 'index': 1, 'color': '#808080', 'background': '#000000' },
-        'opccupation': { 'index': 2, 'color': '#0000FF', 'background': '#00AAAA' }
+        'setting': { 'name': { 'zh': '設定'}, 'order': 1,  'color': '#808080', 'background': '#000000' },
+        'opccupation': { 'name': { 'zh': '身份'}, 'order': 2,  'color': '#0000FF', 'background': '#00AAAA' }
     },
     'tag': [
-        { 'id': 1, 'type': 1, 'name': { 'zh': 'virgin' }, 'desc': { 'zh': 'virgin' }, 'snapshot': 'snapshot', 'restriction': 'restriction' },
-        { 'id': 2, 'type': 2, 'name': { 'zh': '學生' }, 'desc': { 'zh': '一名學生' }, 'snapshot': 'snapshot', 'restriction': 'restriction' }
+        { 'id': 1, 'type': 'setting', 'name': { 'zh': 'virgin' }, 'desc': { 'zh': 'virgin' }, 'snapshot': { 'zh': '拍照' }, 'marks': { 'zh': '特徵'}, 'clothing': { 'zh': '穿著'} },
+        { 'id': 2, 'type': 'opccupation', 'name': { 'zh': '學生' }, 'desc': { 'zh': '一名學生' }, 'snapshot': { 'zh': '拍照' }, 'marks': { 'zh': '特徵'}, 'clothing': { 'zh': '穿著'}}
     ]
 }
 

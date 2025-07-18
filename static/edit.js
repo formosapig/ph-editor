@@ -129,8 +129,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // 綁定 main-content 的 input 事件，觸發自動儲存
   const mainContent = document.getElementById('main-content');
+  
+  let hasChanged = false;  // ← 宣告在事件處理器外，整個模組都能共用
+  
   // 輸入事件，30 sec debounce 自動儲存
   mainContent.addEventListener('input', () => {
+	hasChanged = true;
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
       autoSaveData();
@@ -143,7 +147,10 @@ window.addEventListener('DOMContentLoaded', () => {
       clearTimeout(autoSaveTimer);
       autoSaveTimer = null;
     }
-    autoSaveData();
+	if (hasChanged) {
+      autoSaveData();
+      hasChanged = false;
+    } 
   });
 });
 

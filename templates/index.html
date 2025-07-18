@@ -3,26 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <title>PH editor</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
 </head>
 <body>
-  <!-- 新增的四個按鈕 -->
-  <div id="actionButtons">
-    <!-- 所有按鈕 + 選擇統計 -->
-    <div>
-      <button id="folderBtn" title="修改掃描資料夾">📁</button>
-      <button id="sortBtn" title="排序">🔃</button>
-      <button id="filterBtn" title="篩選(尚未實作)">🔍</button>
-      <button id="editBtn" title="編輯" disabled>✏️</button>
-      <button id="compareBtn" title="比較" disabled>⚖️</button>
-	  <button id="deleteBtn" title="刪除" disabled>🗑️</button>
-	  <span id="selectionCount" style="margin-left: 8px; font-weight: bold;"></span>
-	</div>
+  <div id="actionButtons" class="action-bar">
+    <!-- 按鈕群組(左右分開) -->
+    <div class="buttons-row">
+      <div class="left-buttons">
+        <button id="folderBtn" title="修改掃描資料夾">📁</button>
+        <button id="sortBtn" title="排序">🔃</button>
+        <button id="filterBtn" title="篩選(尚未實作)">🔍</button>
+        <button id="editBtn" title="編輯" disabled>✏️</button>
+        <button id="compareBtn" title="比較" disabled>⚖️</button>
+        <button id="deleteBtn" title="刪除" disabled>🗑️</button>
+      </div>
+      <div class="right-button">
+        <button id="generalBtn" title="全域" disabled>📋️</button>
+      </div>
+    </div>
 	
-	<!-- 掃描路徑 -->
-    <span id="scanPathText" style="font-size: 13px; margin-top: 4px; display: inline-block;">
-      📂 掃描路徑：尚未選擇
-    </span>
+	<!-- 掃描路徑 + selection count -->
+    <div class="status-bar">
+      <span id="scanPathText">📂 掃描路徑：尚未選擇</span>
+      <span id="selectionCount"></span>
+    </div>
   </div>
 
   <div id="gallery" class="clickable-area"></div>
