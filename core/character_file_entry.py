@@ -40,9 +40,10 @@ class CharacterFileEntry:
             self.general_version = _get_int(story, "general", "!version")
             self.profile_version = _get_int(story, "profile", "!version")
             self.profile_id = _get_int(story, "profile", "!id")
+            self.tag_id = _get_int(story, "scenario", "!tag_id")
 
         self.display_name = "測試中"
-        # logger.debug(self)
+        logger.debug("\n" + repr(self))
 
     def set_sync_flag(self, value: bool = True):
         self.sync_flag = value
@@ -69,16 +70,29 @@ class CharacterFileEntry:
             if isinstance(profile, dict):
                 return profile
         return {}
+        
+    def update_tag_id(self):
+        tag_id_value = None
+        try:
+            tag_id_value = self.parsed_data['story']['scenario'].get('!tag_id')
+
+            if tag_id_value is not None:
+                temp_tag_id = int(tag_id_value)
+                self.tag_id = temp_tag_id
+
+        except (KeyError, ValueError, TypeError) as e:
+            logger.error(f"處理 !tag_id 時發生錯誤：{e}。self.tag_id 將保持不變。")
 
     def __repr__(self):
         lines = [
-            f"{'Character ID':>16}: {self.character_id}",
-            f"{'Filename':>16}: {self.filename}",
-            f"{'Save Flag':>16}: {self.save_flag}",
-            f"{'Sync Flag':>16}: {self.sync_flag}",
-            f"{'General Version':>16}: {self.general_version}",
-            f"{'Profile Version':>16}: {self.profile_version}",
-            f"{'Profile ID':>16}: {self.profile_id}",
+            f"{'Character ID':>12}: {self.character_id}",
+            f"{'Filename':>12}: {self.filename}",
+            f"{'Save Flag':>12}: {self.save_flag}",
+            f"{'Sync Flag':>12}: {self.sync_flag}",
+            f"{'General Ver.':>12}: {self.general_version}",
+            f"{'Profile Ver.':>12}: {self.profile_version}",
+            f"{'Profile ID':>12}: {self.profile_id}",
+            f"{'Tag ID':>12}: {self.tag_id}",
         ]
         return "\n".join(lines)
 

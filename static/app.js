@@ -15,6 +15,7 @@ let currentScanPath = '';
 let selectedSet = new Set();
 let totalFilesCount = 0; // 全域變數，記錄總檔案數
 let allImages = [];
+let globalTagStyles = {};
 
 // 將掃描邏輯封裝成函式
 async function scan(path) {
@@ -50,6 +51,9 @@ async function scan(path) {
     updateActionButtons();
 	
 	generalBtn.disabled = false;
+	
+	// 儲存全域的 tagStyles
+	globalTagStyles = data.tag_styles;
 	
 	// 新存一份完整 images 陣列
 	allImages = data.images;
@@ -241,6 +245,8 @@ function renderGallery(images) {
 	const imgName = item.thumb; // thumb_*.jpg
 	const baseName = item.id;   // character_id
 	const profileName = item.profile_name || '';
+	const tagStyleKey = item.tag_style || '';
+	const tagName = item.tag_name || '';
   
     const container = document.createElement('div');
     container.className = 'thumb-container';
@@ -275,6 +281,24 @@ function renderGallery(images) {
 	  badge.textContent = profileName;
 	  thumbWrapper.appendChild(badge);
 	}
+
+    // --- 新增：顯示 tag_name 並套用樣式 ---
+    if (tagName) {
+      const tagLabel = document.createElement('div');
+      tagLabel.className = 'tag-label';
+      tagLabel.textContent = tagName;
+
+      // 根據 tagStyleKey 取得對應的樣式
+      if (globalTagStyles && globalTagStyles[tagStyleKey]) {
+        const style = globalTagStyles[tagStyleKey];
+        tagLabel.style.color = style.color;
+        tagLabel.style.backgroundColor = style.bg_color;
+		tagLabel.style.border = `2px solid ${style.color}`; // 新增邊框，顏色與文字顏色相同
+      }
+      thumbWrapper.appendChild(tagLabel);
+	}
+	// --- 新增結束 ---
+
 
 	container.appendChild(thumbWrapper);
 

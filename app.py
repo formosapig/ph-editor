@@ -21,6 +21,7 @@ from core.shared_data import (
     clear_characters_db,
     get_global_general_data,
     get_profile_name,
+    process_tag_info,
 )
 from core.user_config_manager import UserConfigManager
 from web.edit_bp import edit_bp
@@ -163,13 +164,19 @@ def scan_folder():
                     continue  # 繼續處理下一個檔案
 
                 # 將資料整理好放進 character_list
-                # logger.debug(f"prepare get profile name {character_id}")
                 profile_name = get_profile_name(character_id)
+                # logger.debug(f"prepare get profile name {character_id}")
+
+                tag_style, tag_name = process_tag_info(character_id)
+                logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
+
                 character_list.append(
                     {
                         "thumb": thumbnail_name,
                         "id": character_id,
                         "profile_name": profile_name or "",  # 若無資料則為空字串
+                        "tag_style": tag_style,  # 可能為 ""
+                        "tag_name": tag_name,  # 可能為　""
                     }
                 )
 
@@ -178,9 +185,9 @@ def scan_folder():
 
     # 2. 整理 tag type 的樣式資料
     tag_type_setting = global_data.get("tag_type_setting", {})
-    tags_style = {}
+    tag_styles = {}
     for tag_type, style in tag_type_setting.items():
-        tags_style[tag_type] = {
+        tag_styles[tag_type] = {
             "color": style.get("color", "#000"),
             "bg_color": style.get("background", "#fff"),
         }
@@ -191,7 +198,7 @@ def scan_folder():
     return jsonify(
         {
             "images": character_list,
-            "tags_style": tags_style,
+            "tag_styles": tag_styles,
             "message": f"成功掃描 {len(thumbnails)} 個檔案並載入 {loaded_character_count} 個角色數據。",
         }
     )

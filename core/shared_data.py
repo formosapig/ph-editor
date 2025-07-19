@@ -613,3 +613,37 @@ def get_profiles_by_name(name: str) -> List[Dict[str, Any]]:
     根據名稱模糊搜尋 profile（區分大小寫）。
     """
     return [p for p in profile_map.values() if name in p["name"]]
+
+
+def process_tag_info(character_id: str) -> tuple[str, str]:
+    tag_style = ""
+    tag_name = ""
+
+    entry = get_character_file_entry(character_id)
+    if not entry:
+        raise ValueError(f"❌ 找不到角色 entry：'{character_id}'。")
+
+    tag_id = entry.tag_id
+
+    if tag_id is None:
+        return tag_style, tag_name
+
+    all_tags_list = global_general_data.get('tag', [])
+
+    # 遍歷列表尋找匹配的 tag_id
+    found_tag_data = None
+    for tag_item in all_tags_list:
+        if isinstance(tag_item, dict) and tag_item.get('id') == tag_id:
+            found_tag_data = tag_item
+            break
+
+    if not found_tag_data:
+        raise ValueError(
+            f"無法在全域標籤資料中找到 tag_id "
+            f"'{tag_id}' (角色ID: '{character_id}') 的資訊。"
+        )
+
+    tag_style = found_tag_data.get('type', "")
+    tag_name = found_tag_data.get('name', {}).get('zh', "")
+
+    return tag_style, tag_name

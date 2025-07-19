@@ -1,7 +1,3 @@
-/*body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }*/
 html, body {
   height: 100%;
   margin: 0;
@@ -109,15 +105,34 @@ html, body {
   justify-content: flex-start;
   cursor: default;
 }
-    .thumb-container {
-      position: relative; /* 方便放勾選 */
-      display: inline-block;
-      text-align: center;
-      margin: 10px;
-      width: 252px;
-      cursor: pointer;
-      user-select: none;
-    }
+.thumb-container {
+  position: relative; /* 方便放勾選 */
+  display: inline-block;
+  text-align: center;
+  margin: 10px;
+  width: 252px;
+  cursor: pointer;
+  user-select: none;
+  
+  padding: 10px; /* **新增內邊距，讓內容與 gallery 背景有間隔** */
+  height: auto; /* 確保高度能自動適應內容 */
+
+    /* 移除背景色和明顯的邊框 */
+	
+    /* background-color: #380a1c; */
+    border: none; /* 移除邊框或設定為 0 */
+    border-radius: 0; /* 如果縮圖本身有圓角，這裡不需要 */
+
+    /* 調整陰影，使其更柔和，作為輕微的區隔 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 更輕微的陰影 */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* 保持過渡效果 */
+    /* padding-bottom: 0; /* 移除之前為「盒子」加的底部內邊距 */
+}
+.thumb-container:hover {
+    transform: translateY(-2px); /* 稍微調整上浮效果 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* 陰影稍微加深 */
+}
+
 .thumb-wrapper {
   position: relative;
   width: 252px;
@@ -151,63 +166,72 @@ html, body {
   text-shadow: 0 0 5px #27ae60;
   pointer-events: auto;
 }
-
-.file-row {
-  display: flex;
-  justify-content: center;
+.profile-badge {
+  position: absolute;
+  bottom: 0; /* 卡在底部邊框上 */
+  left: 50%; /* 水平置中起點 */
+  transform: translateX(-50%) translateY(25%); /* 向左移動自身寬度的一半以實現真正置中 */
+  background-color: rgba(255, 222, 100, 0.8); /* 溫和亮黃 */
+  color: #3b2a00; /* 深棕文字，強對比 */
+  font-size: 16px;
+  font-weight: bold;
+  padding: 6px 12px;
+  border: 2px solid rgba(255, 250, 200, 0.85); /* 淺米色邊框 */
+  border-radius: 6px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); /* 加深對比，避免白底時消失 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);   /* 浮起來效果 */
+  pointer-events: none; /* 確保不會擋到點擊事件 */
+  z-index: 10;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.file-block {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 100%;
-  word-break: break-word;
-  white-space: normal;
+.tag-label {
+    position: absolute;
+    top: 4px; /* 保持距離頂部 */
+    right: 4px; /* 調整為 4px，稍微與左邊界對齊 */
+    padding: 2px 5px; /* 稍微縮小 padding */
+    border-radius: 4px;
+    font-size: 14px; /* 稍微縮小字體，使其為輔 */
+    font-weight: bold;
+    z-index: 5; /* 保持在 profile-badge 下方 */
+    color: #fff; /* 預設文字顏色 */
+    background-color: rgba(0, 0, 0, 0.6); /* 預設背景色 */
+    /* 添加一個小小的陰影，讓它更突出但不搶眼 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
+.filename-label {
+  /* 關鍵：調整這個 margin-top 以確保與 profile-badge 不重疊 */
+  /* 這個值需要大於 profile-badge 突出圖片的高度，再加上您想要的文字與徽章間距 */
+  /* 假設 profile-badge 底部是 -15px，且其高度約 25px (即 15px 在圖片外，10px 在圖片內)，
+    那麼從圖片底部算起，filename-label 的頂部至少要距離圖片底部 15px + 5px (額外間距) = 20px */
+  margin-top: 20px; /* **從這個值開始微調，直到視覺效果滿意為止** */
 
-.filename {
-  max-width: 200px;
-  word-break: break-word;
+  /* 確保檔名文字水平置中 */
   text-align: center;
-}
 
-.delete-btn {
-  background: none;
-  border: none;
-  font-size: 1.2em;
-  cursor: pointer;
+    /* 確保長檔名能夠換行，並限制其最大寬度 */
+    max-width: 252px; /* 設置與圖片相同的寬度，或稍微小一點，例如 240px */
+    word-break: break-word; /* 允許單詞內換行，防止超長單詞溢出 */
+    white-space: normal; /* 確保正常換行，而不是單行顯示 */
+
+    /* 基本字體樣式 */
+    font-size: 14px; /* 檔名常用的字體大小 */
+    color: #f0e6e6; /* 柔和的淺米白色，在深酒紅背景下清晰且舒適 */
+    font-weight: normal; /* 檔名通常不需要粗體 */
+    line-height: 1.4; /* 行高，增加文字可讀性 */
+
+    /* 其他可選的視覺效果 */
+    padding: 0 5px; /* 左右稍微留一點邊距，防止文字太靠近邊緣 */
+    /* box-sizing: border-box; 確保 padding 不會增加總寬度，如果 max-width 是嚴格限制的話 */
 }
 .clickable-area {
   min-height: calc(100vh - 70px); /* 确保空白区域可点击 */
   cursor: default;
 }
 .clickable-area:active {
-  background: rgba(1,1,1,1); /* 点击反馈 */
-}
-.profile-badge {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-
-  background-color: rgba(255, 222, 100, 0.9); /* 溫和亮黃 */
-  color: #3b2a00; /* 深棕文字，強對比 */
-  font-size: 17px;
-  font-weight: bold;
-
-  padding: 4px 10px;
-  border: 2px solid rgba(255, 250, 200, 0.85); /* 淺米色邊框 */
-  border-radius: 6px;
-
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); /* 加深對比，避免白底時消失 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);   /* 浮起來效果 */
-
-  pointer-events: none; /* 確保不會擋到點擊事件 */
-  z-index: 5;
-
-  max-width: 90%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  
+  background: rgba(255,255,255,0.1); /* 点击反馈 */
+  background-color: yellow; /* 暫時設為亮黃色來測試，非常明顯 */
 }

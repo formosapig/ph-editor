@@ -304,6 +304,10 @@ def update_data(main_tab, sub_tab):
         # 若節點不是 'story' 'general' 或 'story' 'profile' 時，把 save_flag 設為 true
         entry = get_character_file_entry(character_id)
         if entry is not None:
+            # 順便更新一下 tag_id
+            if main_tab == "story" and sub_tab == "scenario":
+                entry.update_tag_id()
+
             if not (main_tab == "story" and sub_tab in ("general", "profile")):
                 entry.set_save_flag(True)
                 response_data["need_save"] = True
