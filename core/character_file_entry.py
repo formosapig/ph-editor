@@ -1,10 +1,11 @@
 # ph-editor/core/character_file_entry.py
 import logging
 import os
-from typing import Optional, Type
 
 from .character_data import CharacterData
 from .file_constants import PLAYHOME_MARKER
+
+logger = logging.getLogger(__name__)
 
 
 class CharacterFileEntry:
@@ -41,7 +42,7 @@ class CharacterFileEntry:
             self.profile_id = _get_int(story, "profile", "!id")
 
         self.display_name = "測試中"
-        # logging.debug(self)
+        # logger.debug(self)
 
     def set_sync_flag(self, value: bool = True):
         self.sync_flag = value
@@ -150,7 +151,7 @@ if __name__ == "__main__":
         # 假設 CharacterData 還有其他方法，例如解析器和序列化器會用到 BytesIO
         # 為簡化範例，這裡省略具體實現
 
-    print("--- 測試 CharacterFileEntry ---")
+    logger.info("--- 測試 CharacterFileEntry ---")
 
     # 創建一個 CharacterData 實例
     mock_data_1 = MockCharacterData(global_version="1.0.0", display_name="勇者艾倫")

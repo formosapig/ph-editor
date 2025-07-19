@@ -1,6 +1,5 @@
 # ph-editor/core/shared_data.py
 import json
-import os
 import threading
 import logging
 from typing import Any, Dict, List, Optional, Set
@@ -8,10 +7,6 @@ from typing import Any, Dict, List, Optional, Set
 # 假設這些是從其他模組引入的
 from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
-from .file_constants import PLAYHOME_MARKER
-
-# UserConfigManager 雖然不再用於載入 general data，但如果應用其他地方仍需，可保留
-from .user_config_manager import UserConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -599,13 +594,15 @@ def get_profile_name(character_id: str) -> str:
     profile = get_profile(entry.profile_id)
     if not profile:
         raise ValueError(
-            f"❌ 找不到 profile：profile_id = {entry.profile_id}, character_id = {character_id}"
+            f"❌ 找不到 profile："
+            f"profile_id = {entry.profile_id}, character_id = {character_id}"
         )
 
     name = profile.get("name")
     if not isinstance(name, str) or not name.strip():
         raise ValueError(
-            f"❌ profile['name'] 無效或為空：profile_id = {entry.profile_id}, character_id = {character_id}"
+            f"❌ profile['name'] 無效或為空："
+            f"profile_id = {entry.profile_id}, character_id = {character_id}"
         )
 
     return name.strip()

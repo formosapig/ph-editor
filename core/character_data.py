@@ -1,10 +1,6 @@
 # ph-editor/core/character_data.py
-import struct
 import logging
 from io import BytesIO
-
-logger = logging.getLogger(__name__)
-
 
 # 引入所有解析器模組
 from parsers import (
@@ -27,6 +23,9 @@ from serializers import (
     hair_serializer,
     story_serializer,
 )
+
+logger = logging.getLogger(__name__)
+
 
 class CharacterData:
     """

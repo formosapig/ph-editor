@@ -175,7 +175,7 @@ def format_for_test(category_name, item):
         formatted_data = {
             "id": item["id"],
             "color": _random_color_str(),
-            "!padding": "43 00 00 00",  # .join(random.choice('0123456789abcdef') for _ in range(8)) # 8個十六進制字符 = 4 bytes
+            "!padding": "43 00 00 00",  # 似乎是固定分格符號, 必定為 43 00 00 00
         }
     else:
         # 如果有其他未處理的類別，可以在這裡添加日誌或錯誤處理
@@ -294,7 +294,8 @@ def test_random_face_roundtrip(_):
     print(f"  Overall Contour ID: {original_face_data['overall']['contour_id']}")
     print(f"  Eyebrows ID: {original_face_data['eyebrows']['id']}")
     print(
-        f"  Left Eyeball ID: {original_face_data['eyeballs']['left_eyeball']['pupil_id']}"
+        f"  Left Eyeball ID:"
+        f"{original_face_data['eyeballs']['left_eyeball']['pupil_id']}"
     )
     print(f"  Tattoo ID: {original_face_data['tattoo']['id']}")
 

@@ -1,7 +1,5 @@
 from io import BytesIO
 
-import pytest
-
 from parsers.fixed_header_parser import parse_fixed_header
 from serializers.fixed_header_serializer import serialize_fixed_header
 
