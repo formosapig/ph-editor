@@ -1,0 +1,23 @@
+# pyproject.toml
+[tool.isort]
+profile = "black" # 將此行設定為您想使用的 profile
+skip_glob = [
+    "venv_ph", 
+    ".git", 
+    "__pycache__", 
+    "*.egg-info", 
+]
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    venv_ph
+  | venv
+  | game_data
+  | \.git
+  | \.venv
+  | build
+  | dist
+)/
+'''

@@ -1,0 +1,18 @@
+[flake8]
+# 設定最大行長度為 88 (與 Black 常用設定一致)
+max-line-length = 88
+# 忽略某些特定的錯誤代碼
+ignore = E203, W503
+# E203: Space before ':' (通常與 Black 衝突，可以忽略)
+# W503: Line break before binary operator (通常與 Black 衝突，可以忽略)
+# 排除特定目錄或檔案
+# 排除虛擬環境目錄 venv_ph
+exclude =
+    .git,
+    __pycache__,
+    venv_ph,
+    */venv_ph/*,
+    ./venv_ph/*,
+    build,
+    dist,
+	game_data,

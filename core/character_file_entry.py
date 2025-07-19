@@ -1,16 +1,20 @@
 # ph-editor/core/character_file_entry.py
-import os
 import logging
+import os
 from typing import Optional, Type
+
 from .character_data import CharacterData
 from .file_constants import PLAYHOME_MARKER
+
 
 class CharacterFileEntry:
     """
     封裝單一角色檔案資訊，包含角色 ID、完整檔案路徑、角色資料，以及快取的元數據。
     """
 
-    def __init__(self, character_id: str, scan_path: str, character_data: CharacterData):
+    def __init__(
+        self, character_id: str, scan_path: str, character_data: CharacterData
+    ):
         # 取得 int 小函式
         def _get_int(data, *keys):
             for key in keys:
@@ -18,12 +22,14 @@ class CharacterFileEntry:
                     return None
                 data = data.get(key)
             return data if isinstance(data, int) else None
-        
+
         if not isinstance(character_data, CharacterData):
             raise TypeError("character_data 必須是 CharacterData 類型的實例。")
 
         self.character_id: str = character_id
-        self.filename: str = os.path.join(scan_path, character_id + ".png")  # 組成完整檔案路徑
+        self.filename: str = os.path.join(
+            scan_path, character_id + ".png"
+        )  # 組成完整檔案路徑
         self.character_data: CharacterData = character_data
         self.save_flag: bool = False  # 預設不需儲存
         self.sync_flag: bool = False  # 預設不需同步資料
@@ -33,16 +39,16 @@ class CharacterFileEntry:
             self.general_version = _get_int(story, "general", "!version")
             self.profile_version = _get_int(story, "profile", "!version")
             self.profile_id = _get_int(story, "profile", "!id")
-                
+
         self.display_name = "測試中"
-        logging.debug(self)
-        
+        # logging.debug(self)
+
     def set_sync_flag(self, value: bool = True):
         self.sync_flag = value
-        
+
     def needs_syncing(self) -> bool:
         return self.sync_flag
-        
+
     def set_save_flag(self, value: bool = True):
         self.save_flag = value
 
@@ -62,7 +68,7 @@ class CharacterFileEntry:
             if isinstance(profile, dict):
                 return profile
         return {}
-    
+
     def __repr__(self):
         lines = [
             f"{'Character ID':>16}: {self.character_id}",
@@ -80,7 +86,7 @@ class CharacterFileEntry:
         playhome_data = self.character_data.to_raw_data()
 
         try:
-            with open(self.filename, 'rb') as f:
+            with open(self.filename, "rb") as f:
                 full_png_data = f.read()
         except FileNotFoundError:
             raise FileNotFoundError(f"找不到角色檔案：{self.filename}")
@@ -94,7 +100,7 @@ class CharacterFileEntry:
         combined_data = png_part + playhome_data
 
         try:
-            with open(self.filename, 'wb') as f:
+            with open(self.filename, "wb") as f:
                 f.write(combined_data)
         except Exception as e:
             raise IOError(f"寫入檔案失敗：{self.filename} -> {e}")
@@ -102,7 +108,6 @@ class CharacterFileEntry:
         self.save_flag = False
         if not individual_only:
             self.sync_flag = False
-
 
     @classmethod
     def load(cls, scan_path: str, character_id: str) -> "CharacterFileEntry":
@@ -132,15 +137,16 @@ class CharacterFileEntry:
             raise ValueError(f"無法解析角色資料：{file_path} -> {e}")
 
         return cls(character_id, scan_path, character_data_obj)
-    
+
+
 # 範例用法 (僅供測試參考，實際應用會在後端框架中調用)
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 假設您有一個 CharacterData 類別的簡易實現，用於測試
     class MockCharacterData:
         def __init__(self, global_version: str, display_name: str):
-            self.global_data = {'general_version': global_version}
-            self.metadata = {'display_name': display_name}
-        
+            self.global_data = {"general_version": global_version}
+            self.metadata = {"display_name": display_name}
+
         # 假設 CharacterData 還有其他方法，例如解析器和序列化器會用到 BytesIO
         # 為簡化範例，這裡省略具體實現
 
@@ -148,7 +154,7 @@ if __name__ == '__main__':
 
     # 創建一個 CharacterData 實例
     mock_data_1 = MockCharacterData(global_version="1.0.0", display_name="勇者艾倫")
-    
+
     # 創建 CharacterFileEntry
     entry1 = CharacterFileEntry("character_001.bin", mock_data_1)
     print(f"初始化 entry1: {entry1}")
@@ -170,15 +176,19 @@ if __name__ == '__main__':
     # 測試缺少某些數據的 CharacterData
     class IncompleteMockCharacterData:
         def __init__(self):
-            self.global_data = {} # 缺少 general_version
-            self.metadata = {}    # 缺少 display_name
+            self.global_data = {}  # 缺少 general_version
+            self.metadata = {}  # 缺少 display_name
 
     print("\n--- 測試不完整數據的 CharacterFileEntry ---")
     incomplete_data = IncompleteMockCharacterData()
     incomplete_entry = CharacterFileEntry("incomplete.bin", incomplete_data)
     print(f"初始化 incomplete_entry: {incomplete_entry}")
-    print(f"incomplete_entry.general_version: {incomplete_entry.general_version}") # 應該是 None
-    print(f"incomplete_entry.display_name: {incomplete_entry.display_name}")     # 應該是 None
+    print(
+        f"incomplete_entry.general_version: {incomplete_entry.general_version}"
+    )  # 應該是 None
+    print(
+        f"incomplete_entry.display_name: {incomplete_entry.display_name}"
+    )  # 應該是 None
 
     # 測試傳入非 CharacterData 類型的錯誤
     try:
