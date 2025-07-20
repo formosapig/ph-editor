@@ -62,6 +62,63 @@ html, body {
   opacity: 0.5;
   cursor: default;
 }
+/* 排序按鈕開啟時高亮（與 action bar 一致風格） */
+button.active {
+  background-color: #2a6b78;         /* 深一點的藍綠 */
+  border: 1px solid #a8dadc;         /* 淺藍綠描邊 */
+  color: #ffffff;                    /* 更亮的字色 */
+  box-shadow: 0 0 6px rgba(168, 218, 220, 0.4);
+  border-radius: 4px;
+}
+
+/* 浮動選單共用樣式，不含定位與尺寸 */
+.float-menu {
+  position: fixed;
+  background-color: #264653;
+  color: #a8dadc;
+  border: 1px solid #3a5a6b;
+  border-radius: 6px;
+  z-index: 9999;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  transition: opacity 0.15s ease;
+  min-width: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  left: 22px; /* 範例：距離左邊 20px */
+  top: 52px; /* 替換 100px 為 #actionButtons 的實際總高度 */
+  padding: 8px 12px; /* 給浮動選單內容一個內邊距 */
+  flex-direction: row;
+  user-select: none;   /* <--- 新增這一行：禁用文字選取 */
+}
+
+/* 排序選項 */
+.float-menu .option {
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, border 0.2s ease;
+}
+
+/* 排序選項 Hover */
+.float-menu .option:hover {
+  background-color: #2f5e6e;
+}
+
+/* 排序選項 Active */
+.float-menu .option.active {
+  border: 1px solid #a8dadc;
+  background-color: #355a66;
+}
+
+/* 分隔線 */
+.float-menu .divider {
+  width: 1px;
+  height: 24px;
+  background-color: #3a5a6b;
+}
 
 /* 掃描路徑與選取計數的容器 */
 .status-bar {

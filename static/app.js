@@ -9,6 +9,11 @@ window.app = {
   displayedImages: [],
   selectedSet: [],
   sortAscending: true,
+  sortKey: 'filename',
+  showSortMenu: false,
+  filterKey: 'id',
+  filterKeyword: '',
+  showFilterMenu: false,
   globalTagStyles: {},
   
   // Computed
@@ -20,6 +25,9 @@ window.app = {
   },
   get totalFilesCount() {
     return this.displayedImages.length;
+  },
+  get isAnyMenuOpen() {
+    return this.showSortMenu || this.showFilterMenu;
   },
   
   // Methods
@@ -59,9 +67,7 @@ window.app = {
       
       this.globalTagStyles = data.tag_styles || {};
       this.allImages = data.images;
-	  console.log("原始資料順序:", this.allImages.map(item => item.id));
       this.displayedImages = [...data.images];
-	  console.log("原始資料順序:", this.displayedImages.map(item => item.id));
     } catch (e) {
       alert('網路或伺服器錯誤');
       console.error(e);
@@ -76,26 +82,66 @@ window.app = {
   },
   
   toggleSort() {
-    //this.sortAscending = !this.sortAscending;
-    //this.displayedImages.sort((a, b) => {
-    //  const nameA = a.profile_name || '';
-    //  const nameB = b.profile_name || '';
-	//  console.log("compare : " + a.profile_name + "-" + b.profile_name);
-      
-    //  if (nameA === '' && nameB === '') return 0;
-    //  const cmp = nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
-    //  return this.sortAscending ? cmp : -cmp;
-    //});
-	// 方法 1：完全重新賦值
-    //const newArray = [...this.displayedImages].sort((a, b) => {
-    //  const cmp = (a.profile_name || '').localeCompare(b.profile_name || '');
-    //  return this.sortAscending ? cmp : -cmp;
-    //});
-    
-    //this.displayedImages = newArray;
-    //this.sortAscending = !this.sortAscending;
+    this.showSortMenu = !this.showSortMenu;
+	
+	if (this.showSortMenu) {
+      this.showFilterMenu = false;	  
+	}
   },
   
+  applySort(key) {
+    this.sortKey = key;
+    this.stableSortImages();
+  },
+
+  toggleSortOrder() {
+    this.sortAscending = !this.sortAscending;
+    this.stableSortImages();
+  },
+
+  stableSortImages() {
+    this.displayedImages = this.displayedImages
+      .map((img, idx) => ({ ...img, __originalIndex: idx })) // 保留原順序
+      .sort((a, b) => {
+        const valA = (a[this.sortKey] || '').toString();
+        const valB = (b[this.sortKey] || '').toString();
+        const cmp = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+        return cmp !== 0
+          ? (this.sortAscending ? cmp : -cmp)
+          : a.__originalIndex - b.__originalIndex;
+      })
+      .map(({ __originalIndex, ...img }) => img); // 移除臨時欄位
+  },
+  
+  toggleFilter() {
+    this.showFilterMenu = !this.showFilterMenu;
+	
+	if (this.showFilterMenu) {
+      this.showSortMenu = false;
+	}
+  },
+  
+  applyFilter(key) {
+    this.filterKey = key;
+    const kw = this.filterKeyword.trim().toLowerCase();
+
+console.log("filterKey = " + this.filterKey);
+    if (!kw || !this.filterKey) {
+      this.displayedImages = [...this.allImages];
+      return;
+    }
+
+    this.displayedImages = this.allImages.filter(item => {
+      const val = (item[key] || '').toString().toLowerCase();
+      return val.includes(kw);
+    });
+  },
+
+  clearFilter() {
+    this.filterKeyword = '';
+    this.displayedImages = [...this.allImages];
+  },
+
   filterImages() {
     const keyword = prompt('請輸入篩選關鍵字（空白顯示全部）：', '');
     if (keyword === null) return;

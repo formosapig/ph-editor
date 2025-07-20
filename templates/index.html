@@ -12,12 +12,12 @@
     <div id="actionButtons" class="action-bar">
       <div class="buttons-row">
         <div class="left-buttons">
-          <button @click="changeFolder" title="修改掃描資料夾">📁</button>
-          <button @click="toggleSort" title="排序">🔃</button>
-          <button @click="filterImages" title="篩選">🔍</button>
-          <button @click="editSelected" :disabled="selectedCount !== 1" title="編輯">✏️</button>
-          <button @click="compareSelected" :disabled="selectedCount < 2" title="比較">⚖️</button>
-          <button @click="deleteSelected" :disabled="selectedCount === 0" title="刪除">🗑️</button>
+          <button @click="changeFolder" title="修改掃描資料夾" :disabled="isAnyMenuOpen">📁</button>
+		  <button @click="toggleSort" ref="sortButton" :class="{ active: showSortMenu }" title="排序">🔃</button>
+		  <button @click="toggleFilter" :class="{ active: showFilterMenu }" title="篩選">🔍</button>
+          <button @click="editSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="編輯">✏️</button>
+          <button @click="compareSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="比較">⚖️</button>
+          <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
         </div>
         <div class="right-button">
           <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📋️</button>
@@ -53,6 +53,26 @@
         <div class="filename-label">{{ item.id }}</div>
       </div>
     </div>
+
+	<!-- 排序選單 -->
+    <div v-if="showSortMenu" id="sortMenu" class="float-menu horizontal" @click.stop>
+      <div class="option" :class="{ active: sortKey === 'id' }" @click="applySort('id')">📄 檔名</div>
+      <div class="option" :class="{ active: sortKey === 'profile_name' }" @click="applySort('profile_name')">👤 人名</div>
+      <div class="option" :class="{ active: sortKey === 'tag_name' }" @click="applySort('tag_name')">🏷️ 標籤</div>
+      <div class="divider"></div>
+      <div class="option" @click="toggleSortOrder">{{ sortAscending ? '⬆️ 昇序' : '⬇️ 降序' }}</div>
+    </div>
+
+    <!-- 篩選選單 -->
+    <div v-if="showFilterMenu" class="float-menu horizontal" @click.stop>
+      <div class="option" :class="{ active: filterKey === 'id' }" @click="applyFilter('id')">📄 檔名</div>
+      <div class="option" :class="{ active: filterKey === 'profile_name' }" @click="applyFilter('profile_name')">👤 人名</div>
+      <div class="option" :class="{ active: filterKey === 'tag_name' }" @click="applyFilter('tag_name')">🏷️ 標籤</div>
+      <div class="option" :class="{ active: filterKey === '' }" @click="applyFilter('')">🧹 清除</div>
+	  <div class="divider"></div>
+      <input type="text" v-model="filterKeyword" placeholder="輸入關鍵字..." />
+    </div>
+	
   </div>
 
   <script src="[[ url_for('static', filename='app.js') ]]"></script>
