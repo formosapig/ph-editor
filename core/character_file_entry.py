@@ -6,6 +6,7 @@ from .character_data import CharacterData
 from .file_constants import PLAYHOME_MARKER
 
 logger = logging.getLogger(__name__)
+logger.disabled = True
 
 
 class CharacterFileEntry:
@@ -74,7 +75,7 @@ class CharacterFileEntry:
     def update_tag_id(self):
         tag_id_value = None
         try:
-            tag_id_value = self.parsed_data['story']['scenario'].get('!tag_id')
+            tag_id_value = self.character_data.parsed_data['story']['scenario'].get('!tag_id')
 
             if tag_id_value is not None:
                 temp_tag_id = int(tag_id_value)

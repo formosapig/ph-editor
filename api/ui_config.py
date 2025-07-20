@@ -6,7 +6,7 @@ import locale
 from flask import Blueprint, jsonify
 
 from config.dropdown_config import dropdown_config_map
-from core.shared_data import get_global_general_data, profile_map
+from core.shared_data import get_global_general_data, profile_map, get_default_scenario
 
 api_ui_config_bp = Blueprint("api_ui_config", __name__, url_prefix="/api/ui_config")
 
@@ -106,8 +106,8 @@ def get_scenario_options():
     general_data = get_global_general_data()
 
     # ===== 第一組 dropdown：Tag 下拉選單 =====
-    tag_list = general_data.get("tag", [])
-    tag_type_map = general_data.get("tag_type_setting", {})
+    tag_list = general_data.get("tag_list", [])
+    tag_type_map = general_data.get("tag_styles", {})
 
     tag_options = []
     for tag in tag_list:
@@ -133,19 +133,28 @@ def get_scenario_options():
     # ===== 第二 & 第三組 dropdown：Color Trait 下拉選單 =====
     color_traits = general_data.get("color_traits", [])
 
+    #color_options = [
+    #    {
+    #        "label": trait.get("trait", {}).get("zh", ""),
+    #        "value": trait.get("code"),  # or index
+    #    }
+    #    for trait in color_traits
+    #]
     color_options = [
+        {"label": "無", "value": ""},  # 或 value: "none"
+    ] + [
         {
             "label": trait.get("trait", {}).get("zh", ""),
-            "value": trait.get("code"),  # or index
+            "value": trait.get("code"),
         }
         for trait in color_traits
     ]
 
     dropdowns.append(
         {
-            "displayLabel": "外顯特質",
-            "dataKey": "!out_code",
-            "labelKey": "outward",
+            "displayLabel": "外顯特質(面具)",
+            "dataKey": "!persona_code",
+            "labelKey": "persona",
             "options": color_options,
             "defaultValue": "",
         }
@@ -153,12 +162,18 @@ def get_scenario_options():
 
     dropdowns.append(
         {
-            "displayLabel": "內在特質",
-            "dataKey": "!in_code",
-            "labelKey": "inward",
+            "displayLabel": "內在特質(陰影)",
+            "dataKey": "!shadow_code",
+            "labelKey": "shadow",
             "options": color_options,
             "defaultValue": "",
         }
     )
 
-    return jsonify({"dropdowns": dropdowns})
+    # 取得預設情境模板
+    default_scenario_data = get_default_scenario()
+
+    return jsonify({
+        "dropdowns": dropdowns ,
+        "defaultScenario" : default_scenario_data
+    })

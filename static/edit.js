@@ -590,43 +590,95 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
     let dropdownsToRender = [];
 
 	if (isProfileDropdown) {
-      if (result.options && Array.isArray(result.options)) {
-        dropdownsToRender = [{
-          displayLabel: '角色列表',
-          dataKey: '!id',
-          labelKey: 'name',
-          options: result.options,
-          defaultValue: ""
-        }];
-      } else {
-        showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "options" 陣列)。`, 'warning');
-        console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "options" 鍵。`, result);
-        return;
-      }
-	} else {
+            if (result.options && Array.isArray(result.options)) {
+                dropdownsToRender = [{
+                    displayLabel: '角色列表',
+                    dataKey: '!id',
+                    labelKey: 'name',
+                    options: result.options,
+                    defaultValue: ""
+                }];
+            } else {
+                showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "options" 陣列)。`, 'warning');
+                console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "options" 鍵。`, result);
+                return;
+            }
+        } else if (isScenarioDropdown) { // <-- 修改區塊從這裡開始
+            // 新增: 處理 defaultScenario 模板
+            // **修改開始**
+            // 只有當 globalParsedData[mainTab][subTab] 不存在或為空物件時，才使用 defaultScenario 填充
+            if (result.defaultScenario && (!globalParsedData[mainTab] || !globalParsedData[mainTab][subTab] || Object.keys(globalParsedData[mainTab][subTab]).length === 0)) {
+                if (!globalParsedData[mainTab]) {
+                    globalParsedData[mainTab] = {};
+                }
+                // 將後端傳來的 defaultScenario 模板深層複製到 globalParsedData 對應位置
+                globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultScenario));
+                console.log('Default Scenario 模板已填充到 globalParsedData (因為原數據為空):', globalParsedData[mainTab][subTab]);
 
-      if (result.dropdowns && Array.isArray(result.dropdowns)) {
-          dropdownsToRender = result.dropdowns;
-          console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`); // 新增日誌
-      } else {
-          // START: 調整錯誤訊息
-          if (result.dropdowns === undefined) {
-              showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
-	  		//hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
-              console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
-          } else if (!Array.isArray(result.dropdowns)) {
-              showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
-	  		//hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
-              console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
-          } else {
-              showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
-	  		//hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
-              console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
-          }
-          // END: 調整錯誤訊息
-          return; 
-      }
-	}
+                // 立即更新主內容顯示，以便用戶看到初始模板
+                const mainContent = document.getElementById('main-content');
+                mainContent.textContent = JSON.stringify(
+                    globalParsedData[mainTab][subTab],
+                    (key, value) => key.startsWith('!') ? undefined : value,
+                    2
+                );
+
+                // 觸發自動儲存（如果需要）
+                if (autoSaveTimer) clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    autoSaveData();
+                }, 500);
+
+            } else if (result.defaultScenario) { // 如果 defaultScenario 存在但未填充（因為 globalParsedData 不為空）
+                console.log('Default Scenario 模板存在，但未填充到 globalParsedData (因已存在數據)。');
+            } else { // 如果 result.defaultScenario 不存在
+                showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "defaultScenario" 鍵)。`, 'warning');
+                console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "defaultScenario" 鍵。`, result);
+            }
+            // **修改結束**
+
+            if (result.dropdowns && Array.isArray(result.dropdowns)) {
+                dropdownsToRender = result.dropdowns;
+                console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`);
+            } else {
+                if (result.dropdowns === undefined) {
+                    showMessage(`後端 API /api/ui_config/scenario_options 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
+                    console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result);
+                } else if (!Array.isArray(result.dropdowns)) {
+                    showMessage(`後端 API /api/ui_config/scenario_options 回傳的 "dropdowns" 不是陣列。`, 'warning');
+                    console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result);
+                } else {
+                    showMessage(`後端 API /api/ui_config/scenario_options 回傳格式未知錯誤。`, 'warning');
+                    console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result);
+                }
+                // 如果沒有 dropdowns，但有 defaultScenario，我們可能仍會繼續
+                // 這裡的 return 語句會阻止後續渲染，請根據你的具體需求決定是否保留
+                if (!result.defaultScenario) return; // 如果既沒有 defaultScenario 也沒有 dropdowns 才返回
+            }
+        } else {
+            // ... (unchanged code for other cases)
+            if (result.dropdowns && Array.isArray(result.dropdowns)) {
+                dropdownsToRender = result.dropdowns;
+                console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`); // 新增日誌
+            } else {
+                // START: 調整錯誤訊息
+                if (result.dropdowns === undefined) {
+                    showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
+                    //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
+                    console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
+                } else if (!Array.isArray(result.dropdowns)) {
+                    showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
+                    //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
+                    console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
+                } else {
+                    showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
+                    //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
+                    console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
+                }
+                // END: 調整錯誤訊息
+                return;
+            }
+        }
 
     // 如果 dropdownsToRender 陣列為空
     if (!dropdownsToRender || dropdownsToRender.length === 0) {

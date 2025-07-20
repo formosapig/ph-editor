@@ -21,14 +21,14 @@ general_bp = Blueprint("general_bp", __name__)
 def general():
     general_data = get_global_general_data()
     color_traits_data = general_data["color_traits"]
-    tag_type_setting_data = general_data["tag_type_setting"]
-    tag_data = general_data["tag"]
+    tag_styles_data = general_data["tag_styles"]
+    tag_list_data = general_data["tag_list"]
 
     return render_template(
         "general.html",
         color_traits=color_traits_data,
-        tag_type_setting=tag_type_setting_data,
-        tag_list=tag_data,
+        tag_styles=tag_styles_data,
+        tag_list=tag_list_data,
     )
 
 
@@ -44,17 +44,17 @@ def update_general_settings():
 
         # 從接收到的資料中提取各個設定部分
         color_traits = data.get("color_traits")
-        tag_type_setting = data.get("tag_type_setting")
+        tag_styles = data.get("tag_styles")
         tag_list = data.get("tag_list")
 
         # 進行資料驗證 (這裡可以根據你的需求添加更嚴格的驗證邏輯)
-        if color_traits is None or tag_type_setting is None or tag_list is None:
+        if color_traits is None or tag_styles is None or tag_list is None:
             return (
                 jsonify(
                     {
                         "message": (
                             "缺少必要的設定資料 "
-                            "(color_traits, tag_type_setting, tag_list)"
+                            "(color_traits, tag_styles, tag_list)"
                         )
                     }
                 ),
@@ -66,10 +66,8 @@ def update_general_settings():
 
         # 更新 general_data 的相關欄位
         current_general_data["color_traits"] = color_traits
-        current_general_data["tag_type_setting"] = tag_type_setting
-        current_general_data["tag"] = (
-            tag_list  # 注意，前端傳的是 tag_list，後端儲存的是 tag
-        )
+        current_general_data["tag_styles"] = tag_styles
+        current_general_data["tag_list"] = tag_list
 
         # 呼叫 function 來更新全域設定資料
         # 假設 update_global_general_data 負責將資料寫入檔案或資料庫

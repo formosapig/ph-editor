@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>全域設定</title>
   <!--<script src="/static/petite-vue.iife.js" defer init></script>-->
-  <script src="{{ url_for('static', filename='petite-vue.iife.js') }}" defer init></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='general.css') }}" />
+  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer init></script>
+  <link rel="stylesheet" href="[[ url_for('static', filename='general.css') ]]" />
 </head>
 <body>
 
@@ -37,7 +37,7 @@
     </table>
     <button @click="addColorTrait">新增一行</button>
 
-    <pre>目前 color_traits 資料： {{ color_traits }}</pre>
+    <pre>目前 color_traits 資料： [[ color_traits ]]</pre>
   </section>
 
     <section>
@@ -76,7 +76,7 @@
     </table>
     <button @click="addTagTypeSetting">新增一行</button>
 
-    <pre>目前 tag_type_setting 資料： {{ tag_type_setting }}</pre>
+    <pre>目前 tag_styles 資料： [[ tag_styles ]]</pre>
   </section>
 
     <section>
@@ -124,7 +124,7 @@
     </table>
     <button @click="addTag">新增一行</button>
 
-    <pre>目前 tag 資料： {{ tag_list }}</pre>
+    <pre>目前 tag_list 資料： [[ tag_list ]]</pre>
   </section>
 
     <button @click="submit" :disabled="submitDisabled">送出資料</button>
@@ -136,9 +136,9 @@
   });
 
   // 使用 Jinja2 語法將後端傳遞的變數注入到 JavaScript 中
-  const initialColorTraits = {{ color_traits | tojson }};
-  const initialTagTypeSettings = {{ tag_type_setting | tojson }}; // 假設後端傳遞 tag_type_setting
-  const initialTags = {{ tag_list | tojson }}; // 假設後端傳遞 tag 資料
+  const initialColorTraits = [[ color_traits | tojson ]];
+  const initialTagTypeSettings = [[ tag_styles | tojson ]]; // 假設後端傳遞 tag_type_setting
+  const initialTags = [[ tag_list | tojson ]]; // 假設後端傳遞 tag 資料
 
   window.app = {
     // color_traits 初始化

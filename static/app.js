@@ -1,334 +1,231 @@
-const pathInput = document.getElementById('pathInput');
-const scanBtn = document.getElementById('scanBtn');
-const gallery = document.getElementById('gallery');
+window.addEventListener('DOMContentLoaded', () => {
+  PetiteVue.createApp(window.app).mount('[v-scope]');
+});
 
-const folderBtn = document.getElementById('folderBtn');
-const sortBtn = document.getElementById('sortBtn');
-const filterBtn = document.getElementById('filterBtn');
-const editBtn = document.getElementById('editBtn');
-const compareBtn = document.getElementById('compareBtn');
-const deleteBtn = document.getElementById('deleteBtn');
-
-const generalBtn = document.getElementById('generalBtn');
-
-let currentScanPath = '';
-let selectedSet = new Set();
-let totalFilesCount = 0; // 全域變數，記錄總檔案數
-let allImages = [];
-let globalTagStyles = {};
-
-// 將掃描邏輯封裝成函式
-async function scan(path) {
-  if (!path) {
-    alert('請輸入路徑');
-    return;
-  }
-  localStorage.setItem('scanPath', path);
+window.app = {
+  // State
+  currentScanPath: '',
+  allImages: [],
+  displayedImages: [],
+  selectedSet: [],
+  sortAscending: true,
+  globalTagStyles: {},
   
-  // 初始化 UI，避免閃爍
-  document.getElementById('scanPathText').textContent = '📂 掃描中...';
-  document.getElementById('selectionCount').textContent = '已選取 0 項';
+  // Computed
+  get scanPathDisplay() {
+    return this.currentScanPath ? this.shortenPath(this.currentScanPath) : '尚未選擇';
+  },
+  get selectedCount() {
+    return this.selectedSet.length;
+  },
+  get totalFilesCount() {
+    return this.displayedImages.length;
+  },
   
-  try {
-    const res = await fetch('/scan', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ path })
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      alert('掃描錯誤: ' + (err.error || res.statusText));
+  // Methods
+  onMounted() {
+	this.init(); // 安全執行初始化
+  },
+  
+  async scan(path) {
+    if (!path) {
+      alert('請輸入路徑');
       return;
     }
-    const data = await res.json();
-    if (!data.images || data.images.length === 0) {
-      alert('沒有找到 PNG 檔案');
-      gallery.innerHTML = '';
-      return;
-    }
-    currentScanPath = path;
-    selectedSet.clear();
-    updateActionButtons();
-	
-	generalBtn.disabled = false;
-	
-	// 儲存全域的 tagStyles
-	globalTagStyles = data.tag_styles;
-	
-	// 新存一份完整 images 陣列
-	allImages = data.images;
-	
-    renderGallery(data.images);
-	// 更新路徑
-	const shortPath = shortenPath(path);
-	document.getElementById('scanPathText').textContent = `📂 掃描路徑：${shortPath}`;
-  } catch (e) {
-    alert('網路或伺服器錯誤');
-    console.error(e);
-  }
-}
-
-// 頁面載入時從後端取得掃描路徑，並自動掃描
-window.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const res = await fetch('/get_scan_path');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.scanPath) {
-        currentScanPath = data.scanPath;
-        await scan(currentScanPath);
-      }
-    }
-  } catch (e) {
-    console.error('取得掃描路徑失敗', e);
-  }
-});
-
-function adjustGalleryTop() {
-  const actionButtons = document.getElementById('actionButtons');
-  const gallery = document.getElementById('gallery');
-  if (actionButtons && gallery) {
-    const height = actionButtons.offsetHeight;
-    gallery.style.top = height + 'px';
-  }
-}
-
-window.addEventListener('load', adjustGalleryTop);
-window.addEventListener('resize', adjustGalleryTop);
-
-// folder 按鈕點擊改路徑並自動掃描
-folderBtn.addEventListener('click', () => {
-  const newPath = prompt('請輸入掃描資料夾絕對路徑：', currentScanPath || '');
-  if (newPath && newPath.trim() !== '' && newPath.trim() !== currentScanPath) {
-    scan(newPath.trim());
-  }
-});
-
-let sortAscending = true; // 初始為正序
-
-sortBtn.addEventListener('click', () => {
-  const sorted = [...allImages].sort((a, b) => {
-    const nameA = a.profile_name || '';
-    const nameB = b.profile_name || '';
-
-    if (nameA === '' && nameB === '') return 0;
-    // 空白不特別往前或往後丟.
-	//if (nameA === '') return 1;
-    //if (nameB === '') return -1;
-
-    const cmp = nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
-    return sortAscending ? cmp : -cmp;
-  });
-
-  renderGallery(sorted);
-
-  sortAscending = !sortAscending; // 切換排序方向
-});
-
-// filter 按鈕
-filterBtn.addEventListener('click', () => {
-  const keyword = prompt('請輸入篩選關鍵字（空白顯示全部）：', '');
-  if (keyword === null) return;  // 使用者按取消就不動作
-  const trimmed = keyword.trim();
-  filterGallery(trimmed);  // 呼叫之前提到的 filterGallery 函式
-});
-
-editBtn.addEventListener('click', () => {
-  if (selectedSet.size === 1) {
-    const characterId = Array.from(selectedSet)[0];
-    const url = `/edit?character_id=${encodeURIComponent(characterId)}`;
-	
-	// 使用 characterId 作為視窗名稱
-    // 這樣每次開啟同一個 characterId 的編輯頁面時，都會重複使用同一個分頁
-    const windowName = `edit_character_${characterId}`;
     
-    window.open(url, windowName); 
-  }
-});
-
-// 比較按鈕點擊跳轉，前提是2個以上選
-compareBtn.addEventListener('click', () => {
-  if (selectedSet.size >= 2) {
-    const files = Array.from(selectedSet).map(f => encodeURIComponent(f)).join(',');
-    window.location.href = `/compare?files=${files}`;
-  }
-});
-
-// 刪除按扭呼叫刪除, 選了一個以上即可觸發
-deleteBtn.addEventListener('click', () => {
-  if (selectedSet.size === 0) return;
-  if (!confirm('確定要刪除選取的圖片？')) return;
-
-  const filenames = Array.from(selectedSet).map(name => name + '.png');
-
-  fetch('/delete_files', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filenames })
-  })
-  .then(res => res.json())
-  .then(data => {
-    const results = data.results || [];
-    results.forEach(r => {
-      if (r.status === 'success') {
-        const thumb = document.querySelector(`.thumb-container[data-name="${r.filename.replace('.png', '')}"]`);
-        if (thumb) thumb.remove();
-        selectedSet.delete(r.filename.replace('.png', ''));
-      }
-    });
-    updateActionButtons();
-  })
-  .catch(err => {
-    alert('刪除失敗');
-    console.error(err);
-  });
-});
-
-generalBtn.addEventListener('click', () => {
-  window.open(`/general`, 'EditGeneralSetting');
-});
-
-// 更新按鈕狀態
-function updateActionButtons() {
-  editBtn.disabled = selectedSet.size !== 1;
-  compareBtn.disabled = selectedSet.size < 2;
-  deleteBtn.disabled = selectedSet.size === 0;
-  
-  // 更新總檔案數（理論上 renderGallery 時更新）
-  // 這邊用 totalFilesCount
-  const selectionCountSpan = document.getElementById('selectionCount');
-  selectionCountSpan.textContent = `選擇: ${selectedSet.size} / 總數: ${totalFilesCount}`;
-}
-
-// 新增一個篩選函式，從 allImages 篩選
-function filterGallery(keyword) {
-  const gallery = document.getElementById('gallery');
-  const lowerKeyword = keyword.toLowerCase();
-
-  const filtered = !keyword
-    ? allImages
-    : allImages.filter(name => name.toLowerCase().includes(lowerKeyword));
-
-  renderGallery(filtered);
-
-  requestAnimationFrame(() => {
-    gallery.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-}
-
-// 渲染圖片列表（含勾選功能）
-function renderGallery(images) {
-  gallery.innerHTML = '';
-  totalFilesCount = images.length;
-
-  // 在现有代码的 renderGallery 函数内添加：
-  gallery.addEventListener('click', (e) => {
-    const isBlankClick = e.target === gallery;
-    const isCtrlPressed = e.ctrlKey || e.metaKey; // 兼容 Mac 的 Command 键
-
-    if (isCtrlPressed || isBlankClick) {
-      // 空白处：取消全选 | Ctrl+图片：全选, 再點還是全選
-      const shouldSelectAll = !isBlankClick;// && selectedSet.size < totalFilesCount;
+    this.currentScanPath = path;
+	this.selectedSet = [];
     
-      document.querySelectorAll('.thumb-container').forEach(el => {
-        const name = el.dataset.name;
-        el.classList.toggle('selected', shouldSelectAll);
+    try {
+      const res = await fetch('/scan', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ path })
       });
-    
-      selectedSet = shouldSelectAll ? new Set(allImages) : new Set();
-      updateActionButtons();
+      
+      if (!res.ok) {
+        const err = await res.json();
+        alert('掃描錯誤: ' + (err.error || res.statusText));
+        return;
+      }
+      
+      const data = await res.json();
+      if (!data.images || data.images.length === 0) {
+        alert('沒有找到 PNG 檔案');
+        this.allImages = [];
+        this.displayedImages = [];
+        return;
+      }
+      
+      this.globalTagStyles = data.tag_styles || {};
+      this.allImages = data.images;
+	  console.log("原始資料順序:", this.allImages.map(item => item.id));
+      this.displayedImages = [...data.images];
+	  console.log("原始資料順序:", this.displayedImages.map(item => item.id));
+    } catch (e) {
+      alert('網路或伺服器錯誤');
+      console.error(e);
     }
-  });
+  },
   
-  images.forEach(item => {
-    //const baseName = imgName.replace(/^thumb_/, '').replace(/\.[^.]+$/, '');
-	const imgName = item.thumb; // thumb_*.jpg
-	const baseName = item.id;   // character_id
-	const profileName = item.profile_name || '';
-	const tagStyleKey = item.tag_style || '';
-	const tagName = item.tag_name || '';
+  changeFolder() {
+    const newPath = prompt('請輸入掃描資料夾絕對路徑：', this.currentScanPath || '');
+    if (newPath && newPath.trim() !== '' && newPath.trim() !== this.currentScanPath) {
+      this.scan(newPath.trim());
+    }
+  },
   
-    const container = document.createElement('div');
-    container.className = 'thumb-container';
-	container.dataset.name = baseName;
+  toggleSort() {
+    //this.sortAscending = !this.sortAscending;
+    //this.displayedImages.sort((a, b) => {
+    //  const nameA = a.profile_name || '';
+    //  const nameB = b.profile_name || '';
+	//  console.log("compare : " + a.profile_name + "-" + b.profile_name);
+      
+    //  if (nameA === '' && nameB === '') return 0;
+    //  const cmp = nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+    //  return this.sortAscending ? cmp : -cmp;
+    //});
+	// 方法 1：完全重新賦值
+    //const newArray = [...this.displayedImages].sort((a, b) => {
+    //  const cmp = (a.profile_name || '').localeCompare(b.profile_name || '');
+    //  return this.sortAscending ? cmp : -cmp;
+    //});
+    
+    //this.displayedImages = newArray;
+    //this.sortAscending = !this.sortAscending;
+  },
+  
+  filterImages() {
+    const keyword = prompt('請輸入篩選關鍵字（空白顯示全部）：', '');
+    if (keyword === null) return;
+    
+    const trimmed = keyword.trim().toLowerCase();
+    this.displayedImages = trimmed 
+      ? this.allImages.filter(item => 
+          (item.id.toLowerCase().includes(trimmed) || 
+          (item.profile_name && item.profile_name.toLowerCase().includes(trimmed))))
+      : [...this.allImages];
+  },
+  
+  editSelected() {
+    if (this.selectedSet.length === 1) {
+      const characterId = this.selectedSet[0];
+      const windowName = `edit_character_${characterId}`;
+      window.open(`/edit?character_id=${encodeURIComponent(characterId)}`, windowName);
+    }
+  },
+  
+  compareSelected() {
+    if (this.selectedSet.length >= 2) {
+      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+      window.location.href = `/compare?files=${files}`;
+    }
+  },
+  
+  async deleteSelected() {
+    if (this.selectedSet.length === 0 || !confirm('確定要刪除選取的圖片？')) return;
+    
+    const filenames = this.selectedSet.map(name => name + '.png');
+    
+    try {
+      const res = await fetch('/delete_files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filenames })
+      });
+      
+      const data = await res.json();
+      const results = data.results || [];
+      
+      results.forEach(r => {
+        if (r.status === 'success') {
+          this.selectedSet.delete(r.filename.replace('.png', ''));
+          this.allImages = this.allImages.filter(img => img.id !== r.filename.replace('.png', ''));
+          this.displayedImages = this.displayedImages.filter(img => img.id !== r.filename.replace('.png', ''));
+        }
+      });
+    } catch (err) {
+      alert('刪除失敗');
+      console.error(err);
+    }
+  },
+  
+  openGeneral() {
+    window.open('/general', 'EditGeneralSetting');
+  },
+  
+  isSelected(id) {
+    return this.selectedSet.includes(id);
+  },
+  
+  toggleSelect(id, event) {
+    event.stopPropagation();
+    const index = this.selectedSet.indexOf(id);
+    if (index !== -1) {
+      this.selectedSet.splice(index, 1);
+    } else {
+      this.selectedSet.push(id);
+    }
+  },
 
-    // 勾選標示
-    const checkmark = document.createElement('div');
-    checkmark.className = 'checkmark';
-    checkmark.textContent = '✅';
-    container.appendChild(checkmark);
-
-    const thumbWrapper = document.createElement('div');
-	thumbWrapper.className = 'thumb-wrapper';
-	thumbWrapper.addEventListener('click', (e) => {
-      e.stopPropagation(); // 避免冒泡重複觸發
-      container.click();   // 轉給 thumb-container 處理
-    });
-
-	const img = document.createElement('img');
-	img.src = `/cache/${imgName}`;
-	img.className = 'thumb';
-	img.alt = baseName;
-	img.width = 252;
-	img.height = 352;
-	img.draggable = false;
-
-	thumbWrapper.appendChild(img);
-
-	if (profileName) {
-	  const badge = document.createElement('div');
-	  badge.className = 'profile-badge';
-	  badge.textContent = profileName;
-	  thumbWrapper.appendChild(badge);
-	}
-
-    // --- 新增：顯示 tag_name 並套用樣式 ---
-    if (tagName) {
-      const tagLabel = document.createElement('div');
-      tagLabel.className = 'tag-label';
-      tagLabel.textContent = tagName;
-
-      // 根據 tagStyleKey 取得對應的樣式
-      if (globalTagStyles && globalTagStyles[tagStyleKey]) {
-        const style = globalTagStyles[tagStyleKey];
-        tagLabel.style.color = style.color;
-        tagLabel.style.backgroundColor = style.bg_color;
-		tagLabel.style.border = `2px solid ${style.color}`; // 新增邊框，顏色與文字顏色相同
-      }
-      thumbWrapper.appendChild(tagLabel);
-	}
-	// --- 新增結束 ---
-
-
-	container.appendChild(thumbWrapper);
-
-    // ✅ 顯示檔名（補回來）
-    const filenameLabel = document.createElement('div');
-    filenameLabel.className = 'filename-label';
-    filenameLabel.textContent = baseName;
-    container.appendChild(filenameLabel);
-
-    // 點擊圖片切換選中
-    container.addEventListener('click', () => {
-      if (selectedSet.has(baseName)) {
-        selectedSet.delete(baseName);
-        container.classList.remove('selected');
+  
+  handleGalleryClick(event) {
+    if (event.target === event.currentTarget || event.ctrlKey || event.metaKey) {
+      const shouldSelectAll = event.target !== event.currentTarget;
+      
+      if (shouldSelectAll) {
+        this.displayedImages.forEach(item => {
+          if (!this.selectedSet.includes(item.id)) {
+            this.selectedSet.push(item.id);
+          }
+        });
       } else {
-        selectedSet.add(baseName);
-        container.classList.add('selected');
+        this.selectedSet = [];
       }
-      updateActionButtons();
-    });
-
-    gallery.appendChild(container);
-  });
-
-  updateActionButtons();
-}
-
-function shortenPath(path, maxLen = 100) {
-  if (path.length <= maxLen) return path;
-  const parts = path.split(/[\\/]/); // 支援 / 或 \
-  if (parts.length < 3) return path.slice(0, maxLen - 3) + '...';
-  return `${parts[0]}\\${parts[1]}\\...\\${parts[parts.length - 1]}`;
-}
+    }
+  },
+  
+  getTagStyle(tagStyleKey) {
+    if (!tagStyleKey || !this.globalTagStyles[tagStyleKey]) return {};
+    const style = this.globalTagStyles[tagStyleKey];
+    return {
+      color: style.color,
+      backgroundColor: style.bg_color,
+      border: `2px solid ${style.color}`
+    };
+  },
+  
+  shortenPath(path, maxLen = 100) {
+    if (path.length <= maxLen) return path;
+    const parts = path.split(/[\\/]/);
+    if (parts.length < 3) return path.slice(0, maxLen - 3) + '...';
+    return `${parts[0]}\\${parts[1]}\\...\\${parts[parts.length - 1]}`;
+  },
+  
+  async init() {
+    try {
+      const res = await fetch('/get_scan_path');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.scanPath) {
+          await this.scan(data.scanPath);
+        }
+      }
+    } catch (e) {
+      console.error('取得掃描路徑失敗', e);
+    }
+    
+    // Adjust gallery position
+    const adjustGalleryTop = () => {
+      const actionButtons = document.getElementById('actionButtons');
+      const gallery = document.getElementById('gallery');
+      if (actionButtons && gallery) {
+        gallery.style.top = actionButtons.offsetHeight + 'px';
+      }
+    };
+    
+    window.addEventListener('resize', adjustGalleryTop);
+    adjustGalleryTop();
+  }
+};

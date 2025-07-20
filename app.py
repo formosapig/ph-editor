@@ -1,3 +1,5 @@
+# ph-editor/app.py
+import json
 import logging
 import os
 
@@ -30,7 +32,12 @@ from web.general_bp import general_bp
 # 初始化時確保所有目錄存在
 UserConfigManager.ensure_dir()
 
-app = Flask(__name__)
+# app = Flask(__name__)
+# 建立 Flask 應用程式實例，並只設定變數的分隔符號
+app = Flask(__name__, template_folder='templates')
+app.jinja_env.variable_start_string = '[['
+app.jinja_env.variable_end_string = ']]'
+
 app.register_blueprint(edit_bp)
 app.register_blueprint(general_bp)
 app.register_blueprint(api_character_bp)
@@ -182,12 +189,15 @@ def scan_folder():
 
     # 1. 掃描完成後, 才有確定的 tag 資料
     global_data = get_global_general_data()
+    # dump 全域資料
+    logger.debug("全域資料：")
+    logger.debug(json.dumps(global_data, ensure_ascii=False, indent=2))
 
     # 2. 整理 tag type 的樣式資料
-    tag_type_setting = global_data.get("tag_type_setting", {})
-    tag_styles = {}
-    for tag_type, style in tag_type_setting.items():
-        tag_styles[tag_type] = {
+    tag_styles = global_data.get("tag_styles", {})
+    tag_styles_data = {}
+    for tag_type, style in tag_styles.items():
+        tag_styles_data[tag_type] = {
             "color": style.get("color", "#000"),
             "bg_color": style.get("background", "#fff"),
         }
@@ -195,10 +205,11 @@ def scan_folder():
     logger.debug(
         f"掃描完成。總計處理 {len(thumbnails)} 個檔案，成功載入 {loaded_character_count} 個角色數據。"
     )
+    
     return jsonify(
         {
             "images": character_list,
-            "tag_styles": tag_styles,
+            "tag_styles": tag_styles_data,
             "message": f"成功掃描 {len(thumbnails)} 個檔案並載入 {loaded_character_count} 個角色數據。",
         }
     )

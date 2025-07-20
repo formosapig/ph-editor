@@ -1,36 +1,60 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <title>PH editor</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+  <link rel="stylesheet" href="[[ url_for('static', filename='app.css') ]]" />
+  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]"></script>
 </head>
 <body>
-  <div id="actionButtons" class="action-bar">
-    <!-- 按鈕群組(左右分開) -->
-    <div class="buttons-row">
-      <div class="left-buttons">
-        <button id="folderBtn" title="修改掃描資料夾">📁</button>
-        <button id="sortBtn" title="排序">🔃</button>
-        <button id="filterBtn" title="篩選(尚未實作)">🔍</button>
-        <button id="editBtn" title="編輯" disabled>✏️</button>
-        <button id="compareBtn" title="比較" disabled>⚖️</button>
-        <button id="deleteBtn" title="刪除" disabled>🗑️</button>
+  <div v-scope="app">
+    <div v-effect="onMounted()"></div>
+    <div id="actionButtons" class="action-bar">
+      <div class="buttons-row">
+        <div class="left-buttons">
+          <button @click="changeFolder" title="修改掃描資料夾">📁</button>
+          <button @click="toggleSort" title="排序">🔃</button>
+          <button @click="filterImages" title="篩選">🔍</button>
+          <button @click="editSelected" :disabled="selectedCount !== 1" title="編輯">✏️</button>
+          <button @click="compareSelected" :disabled="selectedCount < 2" title="比較">⚖️</button>
+          <button @click="deleteSelected" :disabled="selectedCount === 0" title="刪除">🗑️</button>
+        </div>
+        <div class="right-button">
+          <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📋️</button>
+        </div>
       </div>
-      <div class="right-button">
-        <button id="generalBtn" title="全域" disabled>📋️</button>
+      <div class="status-bar">
+        <span>📂 掃描路徑：{{ scanPathDisplay }}</span>
+        <span>選擇: {{ selectedCount }} / 總數: {{ totalFilesCount }}</span>
       </div>
     </div>
-	
-	<!-- 掃描路徑 + selection count -->
-    <div class="status-bar">
-      <span id="scanPathText">📂 掃描路徑：尚未選擇</span>
-      <span id="selectionCount"></span>
+
+    <div id="gallery" class="clickable-area" @click="handleGalleryClick">
+      <div v-for="item in displayedImages" 
+           :key="`${item.id}-${sortAscending}`"
+           class="thumb-container"
+           :class="{ selected: isSelected(item.id) }"
+           @click="toggleSelect(item.id, $event)">
+        <div class="checkmark">✅</div>
+        <div class="thumb-wrapper">
+          <img :src="'/cache/' + item.thumb" 
+               class="thumb" 
+               :alt="item.id" 
+               width="252" 
+               height="352" 
+               draggable="false">
+          <div v-if="item.profile_name" class="profile-badge">{{ item.profile_name }}</div>
+          <div v-if="item.tag_name" 
+               class="tag-label"
+               :style="getTagStyle(item.tag_style)">
+            {{ item.tag_name }}
+          </div>
+        </div>
+        <div class="filename-label">{{ item.id }}</div>
+      </div>
     </div>
   </div>
 
-  <div id="gallery" class="clickable-area"></div>
-
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="[[ url_for('static', filename='app.js') ]]"></script>
 </body>
 </html>

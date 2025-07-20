@@ -313,7 +313,7 @@ def update_data(main_tab, sub_tab):
                 response_data["need_save"] = True
 
             # 看一下 save flag
-            logger.debug(f"save flag : {entry.save_flag}")
+            #logger.debug(f"save flag : {entry.save_flag}")
         else:
             logger.warning(
                 f"Character file entry not found for character_id: {character_id}"

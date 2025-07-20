@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>編輯檔案</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='edit.css') }}" />
+  <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
 </head>
 <body>
   <div class="top-right-button-container">
@@ -13,7 +13,7 @@
     <!-- <button type="button" onclick="window.close()">結束</button> -->
   </div>
 
-  <h1>編輯角色：{{ character_id }}</h1>
+  <h1>編輯角色：[[ character_id ]]</h1>
 
   <div class="tab-container">
     <div class="tab-buttons">
@@ -39,8 +39,8 @@
   <div id="result-message"></div>
   
   <script>
-    const characterData = {{ data | safe }};
+    const characterData = [[ data | safe ]];
   </script>
-  <script src="{{ url_for('static', filename='edit.js') }}"></script>
+  <script src="[[ url_for('static', filename='edit.js') ]]"></script>
 </body>
 </html>

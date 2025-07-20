@@ -1,4 +1,5 @@
 # ph-editor/core/shared_data.py
+import copy
 import json
 import threading
 import logging
@@ -9,11 +10,23 @@ from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
 
 logger = logging.getLogger(__name__)
+logger.disabled = True
 
 # 全域字典，儲存所有載入的角色檔案數據
 # Key: 角色檔案的 ID (通常是檔名，不含路徑)
 # Value: CharacterFileEntry 物件
 characters_db: Dict[str, CharacterFileEntry] = {}
+
+DEFAULT_SCENARIO_TEMPLATE = {
+    "!tag_id": 1,  # 參考 tag_list 的 id
+    "tag": "設定-virgin",
+    "!persona_code": "#FF0000",
+    "persona": "熱情",
+    "!shadow_code": "#FF0000",
+    "shadow": "熱情",
+    # NOTE: 簡化版模板。
+}
+
 
 # 顯示 profile_id 到 character_id 的映射
 # Key: profile_id (int)
@@ -28,6 +41,7 @@ DEFAULT_PROFILE_TEMPLATE = {
     "!id": 0,  # profile id, 0 為特殊佔用, 創建新角色用
     "name": "新角色",  # 在列表上直接顯示為新角色
     "about": "關於角色",
+    # NOTE: 簡化版模板。
 }
 
 profile_map: Dict[int, Dict[str, Any]] = {0: DEFAULT_PROFILE_TEMPLATE}
@@ -48,21 +62,21 @@ DEFAULT_GENERAL_TEMPLATE = {
             "trait": {"zh": "冷靜"},
         },
     ],
-    "tag_type_setting": {
+    "tag_styles": {
         "setting": {
             "name": {"zh": "設定"},
             "order": 1,
             "color": "#808080",
             "background": "#000000",
         },
-        "opccupation": {
+        "occupation": {
             "name": {"zh": "身份"},
             "order": 2,
             "color": "#0000FF",
             "background": "#00AAAA",
         },
     },
-    "tag": [
+    "tag_list": [
         {
             "id": 1,
             "type": "setting",
@@ -82,6 +96,7 @@ DEFAULT_GENERAL_TEMPLATE = {
             "clothing": {"zh": "穿著"},
         },
     ],
+    # NOTE: 簡化版模板。
 }
 
 
@@ -93,23 +108,24 @@ def _is_valid_general_data(data: Dict[str, Any]) -> bool:
     """
     基礎格式驗證：確認必要欄位存在且格式正確
     """
-    required_keys = ["!version", "color_traits", "tag_type_setting", "tag"]
+    return True
+    required_keys = ["!version", "color_traits", "tag_styles", "tag_list"]
     for key in required_keys:
         if key not in data:
-            print(f"key fail {key}")
+            logger.debug(f"key fail {key}")
             return False
 
     if not isinstance(data["!version"], int):
-        print("version is not int")
+        logger.debug("version is not int")
         return False
     if not isinstance(data["color_traits"], list):
-        print("color_traits is not list")
+        logger.debug("color_traits is not list")
         return False
-    if not isinstance(data["tag_type_setting"], dict):
-        print("tag_type_setting is not dict")
+    if not isinstance(data["tag_styles"], dict):
+        logger.debug("tag_styles is not dict")
         return False
-    if not isinstance(data["tag"], list):
-        print("tag is not list")
+    if not isinstance(data["tag_list"], list):
+        logger.debug("tag_list is not list")
         return False
     return True
 
@@ -122,8 +138,10 @@ def sync_global_general_to_characters(global_data: Dict[str, Any], global_versio
     """
     from core.shared_data import characters_db, characters_db_lock
 
+    logger.debug("準備同步全域資料")
     with characters_db_lock:
         for character_id, entry in characters_db.items():
+            logger.debug(f"同步 {character_id}")
             character_data = entry.get_character_data()
             if not character_data:
                 continue
@@ -132,7 +150,7 @@ def sync_global_general_to_characters(global_data: Dict[str, Any], global_versio
             character_version = -1
             if isinstance(character_general, dict):
                 character_version = character_general.get("!version", -1)
-            # print(f"{character_id} : {character_version} vs {global_version}")
+            logger.debug(f"{character_id} : {character_version} vs {global_version}")
 
             if character_version < global_version:
                 # 更新角色 general 節點資料
@@ -158,13 +176,16 @@ def update_global_general_data(
         increment_version (bool): 是否要將版本號加一，預設為 False。
     """
     global global_general_data
-
+    
+    logger.debug("enter update_global_general_data")
+    
     # 僅當資料不合法且不要求版本更新時才略過更新
     if not increment_version and not _is_valid_general_data(new_data):
         return
     # print(new_data)
 
     if increment_version:
+        logger.debug("更新版本號")
         # 從舊資料讀取版本號，預設 -1 表示沒版本
         original_version = (
             global_general_data.get("!version", -1) if global_general_data else -1
@@ -175,12 +196,15 @@ def update_global_general_data(
             new_version = 1
         # 把版本號寫入 new_data 裡
         new_data["!version"] = new_version
+        logger.debug(f"新版本號 : {new_version}")
         sync_global_general_to_characters(new_data, new_version)
 
     global_general_data = new_data
-    # current_global_general_data = get_global_general_data()
-    # current_global_version = current_global_general_data.get("!version", -1)
-    # print(f"after update global general data : {current_global_version}")
+    
+    # 再次確認全域資料
+    #current_global_general_data = get_global_general_data()
+    #current_global_version = current_global_general_data.get("!version", -1)
+    #logger.debug(f"after update global general data : {current_global_version}")
 
 
 def get_global_general_data() -> dict:
@@ -628,7 +652,7 @@ def process_tag_info(character_id: str) -> tuple[str, str]:
     if tag_id is None:
         return tag_style, tag_name
 
-    all_tags_list = global_general_data.get('tag', [])
+    all_tags_list = global_general_data.get('tag_list', [])
 
     # 遍歷列表尋找匹配的 tag_id
     found_tag_data = None
@@ -647,3 +671,56 @@ def process_tag_info(character_id: str) -> tuple[str, str]:
     tag_name = found_tag_data.get('name', {}).get('zh', "")
 
     return tag_style, tag_name
+
+
+def get_default_scenario() -> dict:
+    general_data = get_global_general_data()
+
+    scenario = copy.deepcopy(DEFAULT_SCENARIO_TEMPLATE)
+
+    # 檢查 global_general_data 是否已載入
+    if general_data is None:
+        # 如果 global_general_data 為 None，可能需要返回一個基本模板或報錯
+        # 這裡選擇返回基於 DEFAULT_SCENARIO_TEMPLATE 的空值，或根據需求處理
+        print("警告: global_general_data 尚未初始化，返回空的預設情境模板。")
+        return scenario
+
+    # --- 填充 !tag_id 和 tag ---
+    if general_data.get('tag_list'):
+        first_tag = general_data['tag_list'][0]
+        scenario['!tag_id'] = first_tag['id']
+
+        tag_type = first_tag['type']
+        tag_style_name_zh = ""
+        # 安全地從 tag_styles 獲取名稱
+        if tag_type in general_data.get('tag_styles', {}):
+            tag_style_name_zh = general_data['tag_styles'][tag_type]['name']['zh']
+
+        tag_name_zh = first_tag['name']['zh']
+        scenario['tag'] = f"{tag_style_name_zh}-{tag_name_zh}"
+    else:
+        # 如果 tag_list 為空或不存在
+        scenario['!tag_id'] = None
+        scenario['tag'] = ""
+
+
+    # --- 填充 !persona_code 和 persona ---
+    if general_data.get('color_traits'):
+        first_color_trait = general_data['color_traits'][0]
+        scenario['!persona_code'] = first_color_trait['code']
+        scenario['persona'] = first_color_trait['trait']['zh']
+    else:
+        scenario['!persona_code'] = ""
+        scenario['persona'] = ""
+
+
+    # --- 填充 !shadow_code 和 shadow ---
+    if general_data.get('color_traits') and len(general_data['color_traits']) > 0:
+        last_color_trait = general_data['color_traits'][-1] # 使用 -1 取得最後一項
+        scenario['!shadow_code'] = last_color_trait['code']
+        scenario['shadow'] = last_color_trait['trait']['zh']
+    else:
+        scenario['!shadow_code'] = ""
+        scenario['shadow'] = ""
+
+    return scenario

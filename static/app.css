@@ -127,6 +127,8 @@ html, body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 更輕微的陰影 */
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* 保持過渡效果 */
     /* padding-bottom: 0; /* 移除之前為「盒子」加的底部內邊距 */
+  order: 0 !important; /* 強制覆蓋可能的動態 order */
+  float: none !important;
 }
 .thumb-container:hover {
     transform: translateY(-2px); /* 稍微調整上浮效果 */
