@@ -235,29 +235,42 @@ button:disabled {
 }
 /* 第二層 tab 結束 */
 
-#main-content {
-  flex: 1; /* 這是關鍵：讓它佔據所有剩餘空間 */
-  white-space: pre-wrap;
-  font-family: monospace, Consolas, 'Courier New', monospace;
-  background-color: #fdfaf3; /* 柔和紙色底 */
-  color: #333; /* 深灰文字 */
-  padding: 12px 15px;
+#main-content-shell {
+  flex: 1;                  /* 佔滿剩餘空間 */
+  position: relative;       /* 給絕對定位用的參考點 */
+  background-color: #fdfaf3; /* 保留背景色 */
+  border: 1px solid #d8cfc0; /* 保留邊框 */
+  border-radius: 4px;       /* 邊框圓角 */
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05); /* 內陰影 */
   margin-top: 8px;
-  border: 1px solid #d8cfc0; /* 暖灰邊框 */
-  border-radius: 4px;
-  overflow: auto; /* 這是關鍵：讓它產生自己的捲動條 */
-  outline: none;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05);
-  line-height: 1.5;
-  font-size: 14px;
-  caret-color: #bb8855; /* 柔和焦點色 */
-  min-height: 0; /* 確保在 flex 容器中能正確縮小 */
+  min-height: 0;            /* flex 正常縮小 */
+  box-sizing: border-box;
 }
 
 #main-content:focus {
   background-color: #fbf6e9; /* 專注狀態：稍微加亮的紙色 */
   border-color: #c6b69f;
   box-shadow: 0 0 0 2px rgba(204, 187, 150, 0.3); /* 柔光陰影 */
+}
+
+#main-content {
+  flex: 1 1 auto;           
+  max-width: 75%;           /* 保留右側留白 */
+  white-space: pre-wrap;
+  font-family: monospace, Consolas, 'Courier New', monospace;
+  color: #333;
+  padding: 12px 15px;
+  overflow: auto;           /* 產生自己的捲動條 */
+  outline: none;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05);
+  line-height: 1.5;
+  font-size: 14px;
+  caret-color: #bb8855;
+  min-height: 0;
+  background-color: transparent; /* 背景由 shell 統一管理 */
+  border: none;                   /* 邊框由 shell 統一管理 */
+  margin-top: 0;                  /* 由 shell 控制外距 */
+  box-sizing: border-box;
 }
 
 /* START: 修改部分 - 浮動下拉選單及其插槽樣式 */
@@ -277,6 +290,7 @@ button:disabled {
   font-size: 14px;
   font-family: Arial, sans-serif;
   color: #333;
+  box-sizing: border-box;
 }
 
 .floating-dropdown:not(.show) {

@@ -809,31 +809,35 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
 // END: 修改
 
 function positionDropdown() {
-  console.log('執行 positionDropdown 函數。'); // 新增日誌
   const dropdown = document.getElementById('dropdown-container');
+  const mainContentShell = document.querySelector('.main-content-shell');
   const mainContent = document.getElementById('main-content');
   const tabContainer = document.querySelector('.tab-container');
 
-  if (!dropdown || !mainContent || !tabContainer) {
-      console.warn("定位下拉選單元素不存在。");
-      return;
-  }
+  if (!dropdown || !mainContentShell || !mainContent || !tabContainer) return;
 
-  const mainRect = mainContent.getBoundingClientRect();
+  const shellRect = mainContentShell.getBoundingClientRect();
   const containerRect = tabContainer.getBoundingClientRect();
-  const dropdownRect = dropdown.getBoundingClientRect(); // 取得下拉選單實際寬高
+  const dropdownRect = dropdown.getBoundingClientRect();
 
-  // 計算相對於 tab-container 的位置
-  // 右上角對齊 main-content 的右邊和頂部，並留一些邊距
-  const topOffset = (mainRect.top - containerRect.top) + 10;
-  // 由於 dropdown 是 flex-direction: column，其寬度會被內容撐開，所以要用實際寬度計算
-  const rightOffset = (containerRect.right - mainRect.right) + 10; // 距離 mainContent 右邊的距離
+  const margin = 10; // 邊距
+
+  // 計算浮動選單位置（相對 tab-container）
+  const top = shellRect.top - containerRect.top + margin;
+  const right = containerRect.right - shellRect.right + margin;
 
   dropdown.style.position = 'absolute';
-  dropdown.style.top = `${topOffset}px`;
-  dropdown.style.right = `${rightOffset}px`; // 使用 right 屬性來對齊右邊
-  // dropdown.style.left = (mainRect.right - containerRect.left - dropdownRect.width - 10) + 'px'; // 舊的 left 計算方式
-  console.log(`下拉選單定位完成：Top: ${topOffset}px, Right: ${rightOffset}px`); // 新增日誌
+  dropdown.style.top = `${top}px`;
+  dropdown.style.right = `${right}px`;
+
+  // 計算 main-content max-width
+  const maxWidth = shellRect.width - dropdownRect.width - margin * 2;
+
+  if (maxWidth > 0) {
+    mainContent.style.maxWidth = `${maxWidth}px`;
+  } else {
+    mainContent.style.maxWidth = '50px'; // 防止太小
+  }
 }
 
 function showMessage(text, type = 'success') {
@@ -846,3 +850,6 @@ function showMessage(text, type = 'success') {
 window.reloadFile = reloadFile;
 window.saveFile = saveFile;
 //window.pingPongSync = pingPoneSync;
+
+window.addEventListener('load', positionDropdown);
+window.addEventListener('resize', positionDropdown);
