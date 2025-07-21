@@ -810,7 +810,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
 
 function positionDropdown() {
   const dropdown = document.getElementById('dropdown-container');
-  const mainContentShell = document.querySelector('.main-content-shell');
+  const mainContentShell = document.getElementById('main-content-shell');
   const mainContent = document.getElementById('main-content');
   const tabContainer = document.querySelector('.tab-container');
 
@@ -831,7 +831,7 @@ function positionDropdown() {
   dropdown.style.right = `${right}px`;
 
   // 計算 main-content max-width
-  const maxWidth = shellRect.width - dropdownRect.width - margin * 2;
+  const maxWidth = shellRect.width - (dropdownRect.width === 0 ? 0 : dropdownRect.width + margin * 2);
 
   if (maxWidth > 0) {
     mainContent.style.maxWidth = `${maxWidth}px`;

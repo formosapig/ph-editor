@@ -91,7 +91,7 @@ h1 {
 .tab-buttons {
   display: flex;
   border-bottom: 1px solid #ddd;
-  background-color: #1e8f5e9;
+  background-color: #1e8f5e;
   border-radius: 4px 4px 0 0;
   padding: 0;
   margin: 0;
@@ -127,7 +127,7 @@ h1 {
 
 /* Tab 內容 */
 .tab-content {
-  background-color: #1e8f5e9;
+  background-color: #1e8f5e;
   display: none;
   position: absolute;
   top: 0;
@@ -245,6 +245,8 @@ button:disabled {
   margin-top: 8px;
   min-height: 0;            /* flex 正常縮小 */
   box-sizing: border-box;
+  
+  
 }
 
 #main-content:focus {
@@ -271,6 +273,7 @@ button:disabled {
   border: none;                   /* 邊框由 shell 統一管理 */
   margin-top: 0;                  /* 由 shell 控制外距 */
   box-sizing: border-box;
+  height: 100%;
 }
 
 /* START: 修改部分 - 浮動下拉選單及其插槽樣式 */
