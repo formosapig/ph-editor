@@ -25,6 +25,7 @@ from core.shared_data import (
     get_global_general_data,
     get_profile_name,
     process_tag_info,
+    dump_all_data,  # debug use.
 )
 from core.user_config_manager import UserConfigManager
 from web.edit_bp import edit_bp
@@ -192,8 +193,8 @@ def scan_folder():
     # 1. 掃描完成後, 才有確定的 tag 資料
     global_data = get_global_general_data()
     # dump 全域資料
-    logger.debug("全域資料：")
-    logger.debug(json.dumps(global_data, ensure_ascii=False, indent=2))
+    #logger.debug("全域資料：")
+    #logger.debug(json.dumps(global_data, ensure_ascii=False, indent=2))
 
     # 2. 整理 tag type 的樣式資料
     tag_styles = global_data.get("tag_styles", {})
@@ -203,6 +204,9 @@ def scan_folder():
             "color": style.get("color", "#000"),
             "bg_color": style.get("background", "#fff"),
         }
+
+    # 3. dump all data 資料
+    dump_all_data()
 
     logger.debug(
         f"掃描完成。總計處理 {len(thumbnails)} 個檔案，成功載入 {loaded_character_count} 個角色數據。"

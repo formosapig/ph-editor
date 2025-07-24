@@ -78,7 +78,7 @@ class CharacterFileEntry:
             story = self.character_data.parsed_data.get("story", {})
             scenario = story.get("scenario")
             if isinstance(scenario, dict):
-                return profile
+                return scenario
         return {}
         
     def update_tag_id(self):

@@ -155,33 +155,25 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/**
-   * 更新 ID 為 'main-content' 的元素，顯示 globalParsedData 中特定路徑的 JSON 字串。
-   * 這個方法依賴於 app.data.globalParsedData。
-   *
-   * @param {string} mainTab - globalParsedData 的主要索引鍵。
-   * @param {string} subTab - mainTab 下的次要索引鍵。
-   */
-function updateMainContent(mainTab, subTab, autoSave = false) {
+function updateMainContent(strJson, autoSave = false) {
   const mainContent = document.getElementById('main-content');
 
   if (!mainContent) {
     console.error(`找不到 ID 為 "main-content" 的元素。`);
     return;
   }
-
-  // 使用 this.data 訪問 globalParsedData
-  if (!this.data.globalParsedData || !this.data.globalParsedData[mainTab] || !this.data.globalParsedData[mainTab][subTab]) {
-    console.warn(`globalParsedData 或指定的路徑 [${mainTab}][${subTab}] 無效。`);
-    mainContent.textContent = '資料無效或找不到。';
-    return;
+  
+  try {
+    mainContent.textContent = JSON.stringify(
+      strJson,
+      (key, value) => key.startsWith('!') ? undefined : value,
+      2
+    );
+  } catch (e) {
+	  console.error(`處理資料並轉換為字串時發生錯誤：`, e);
+	  mainContent.textContent = '';
+	  return;
   }
-
-  mainContent.textContent = JSON.stringify(
-    this.data.globalParsedData[mainTab][subTab],
-    (key, value) => key.startsWith('!') ? undefined : value,
-    2
-  );
   
   if (autoSave) {
     // 觸發自動儲存（如果需要）
@@ -273,15 +265,7 @@ function renderSubTabContent(mainTabKey, subTabKey) {
     globalParsedData[mainTabKey] &&
     globalParsedData[mainTabKey][subTabKey] !== undefined
   ) {
-    mainContent.textContent = JSON.stringify(
-      globalParsedData[mainTabKey][subTabKey],
-      (key, value) => {
-        if (key.startsWith('!')) {
-          return undefined; // 會跳過這個 key
-        }
-        return value;
-      },
-      2);
+    updateMainContent(globalParsedData[mainTabKey][subTabKey], false);	  
     // 紀錄目前編輯的 tab key
     mainContent.dataset.mainTabKey = mainTabKey;
     mainContent.dataset.subTabKey = subTabKey;
@@ -652,7 +636,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
         console.log('Default Backstage 模板已填充到 globalParsedData (因為原數據為空):', globalParsedData[mainTab][subTab]);
 
         // 立即更新主內容顯示，以便用戶看到初始模板
-		updateMainContent(mainTab, subTab, true);
+		updateMainContent(globalParsedData[mainTab][subTab], true);
 
       } else if (result.defaultBackstage) { // 如果 defaultBackstage 存在但未填充（因為 globalParsedData 不為空）
         console.log('Default Backstage 模板存在，但未填充到 globalParsedData (因已存在數據)。');
@@ -762,7 +746,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
             .then(profileData => {
               if (globalParsedData && globalParsedData[mainTab]) {
                 globalParsedData[mainTab][subTab] = profileData;
-                updateMainContent(mainTab, subTab, true);	
+				updateMainContent(profileData, true);	
                 console.log('Profile 詳細資料已更新到 globalParsedData:', profileData);
               }
             })
@@ -781,7 +765,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
             .then(scenarioData => {
               if (globalParsedData && globalParsedData[mainTab]) {
                 globalParsedData[mainTab][subTab] = scenarioData;
-                updateMainContent(mainTab, subTab, true);	
+                updateMainContent(scenarioData, true);	
                 console.log('Scenario 詳細資料已更新到 globalParsedData:', scenarioData);
               }
             })
@@ -796,7 +780,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
 				globalParsedData[mainTab][subTab][dropdownConfig.labelKey] = selected.label;
 				
                 // 同步更新 main-content 顯示的 JSON
-				updateMainContent(mainTab, subTab, true);
+				updateMainContent(globalParsedData[mainTab][subTab], true);
                 console.log(`下拉選單值已更新到 globalParsedData: ${mainTab}/${subTab}/${dropdownConfig.dataKey} =`, selected); // 新增日誌
             } else {
                 console.warn('無法更新 globalParsedData，因為路徑不存在。'); // 新增日誌

@@ -3,7 +3,7 @@ import json
 import logging
 from io import BytesIO
 
-from utils.common_types import _read_bytes, _read_uint8, _read_uint32
+from utils.common_types import _read_bytes, _read_uint8, _read_uint32, _read_bytes_as_hex
 
 logger = logging.getLogger(__name__)
 logger.disabled = True
@@ -40,7 +40,8 @@ def parse_fixed_header(
         logger.debug(f"怪異: {fixed_header_data['strange']}")
 
         # 7 bytes 對齊
-        _read_bytes(stream, 7)
+        _data = _read_bytes_as_hex(stream, 7)
+        logger.debug(f"對齊: {_data}")
 
         # 版本號
         fixed_header_data["version"] = _read_uint32(stream)

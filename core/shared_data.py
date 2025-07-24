@@ -10,7 +10,7 @@ from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
 
 logger = logging.getLogger(__name__)
-logger.disabled = True
+#logger.disabled = True
 
 # 全域字典，儲存所有載入的角色檔案數據
 # Key: FILE_ID, 角色檔案的 ID (通常是檔名，不含路徑)
@@ -306,7 +306,7 @@ def add_or_update_character_with_path(scan_path: str, file_id: str):
 
         except Exception as e:
             # 若讀取或解析失敗，清理 characters_db 和對應映射
-            print(f"[錯誤] 處理角色 '{file_id}' 時發生例外：{e}")
+            logger.error(f"處理 FILE ID '{file_id}' 時發生例外：{e}")
 
 
 def get_character_file_entry(file_id: str) -> Optional[CharacterFileEntry]:
@@ -742,7 +742,7 @@ def update_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
         scenario_changed = True  # 預設為有改變
 
         if current_scenario is not None:
-            scenario_changed = is_data_changed_without_version(current_scenario, updated_profile)
+            scenario_changed = is_data_changed_without_version(current_scenario, updated_scenario)
 
             if not scenario_changed:
                 if current_scenario_id != updated_scenario_id:
@@ -863,3 +863,54 @@ def get_default_backstage() -> dict:
         backstage['shadow'] = ""
 
     return backstage
+
+
+def dump_all_data() -> None:
+    """
+    將當前作用域中的 global_general_data, profile_map, scenario_map
+    以格式化的 JSON 形式輸出到 debug log。
+    """
+    
+    logger.debug("\n--- Dumping All Data for Debug ---")
+
+    # 處理 global_general_data
+    if global_general_data is not None:
+        try:
+            logger.debug(
+                "\n"
+                + "Global General Data:\n"
+                + json.dumps(global_general_data, ensure_ascii=False, indent=2)
+            )
+        except TypeError as e:
+            logger.error(f"Error dumping global_general_data: {e}")
+    else:
+        logger.debug("Global General Data: None")
+
+    # 處理 profile_map
+    if profile_map is not None:
+        try:
+            logger.debug(
+                "\n"
+                + "Profile Map:\n"
+                + json.dumps(profile_map, ensure_ascii=False, indent=2)
+            )
+        except TypeError as e:
+            logger.error(f"Error dumping profile_map: {e}")
+    else:
+        logger.debug("Profile Map: None") # 實際上 profile_map 通常不會是 None 因為有預設值
+
+    # 處理 scenario_map
+    if scenario_map is not None:
+        try:
+            logger.debug(
+                "\n"
+                + "Scenario Map:\n"
+                + json.dumps(scenario_map, ensure_ascii=False, indent=2)
+            )
+        except TypeError as e:
+            logger.error(f"Error dumping scenario_map: {e}")
+    else:
+        logger.debug("Scenario Map: None") # 實際上 scenario_map 通常不會是 None 因為有預設值
+
+    logger.debug("\n--- Dump Complete ---")
+    
