@@ -24,6 +24,7 @@ from core.shared_data import (
     clear_characters_db,
     get_global_general_data,
     get_profile_name,
+    get_scenario_title,
     process_tag_info,
     dump_all_data,  # debug use.
 )
@@ -175,7 +176,10 @@ def scan_folder():
 
                 # 將資料整理好放進 character_list
                 profile_name = get_profile_name(file_id)
-                # logger.debug(f"prepare get profile name {file_id}")
+                logger.debug(f"PROFILE NAME = {profile_name}")
+                
+                scenario_title = get_scenario_title(file_id)
+                logger.debug(f"SCENARIO TITLE = {scenario_title}")
 
                 tag_style, tag_name = process_tag_info(file_id)
                 logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
@@ -184,7 +188,8 @@ def scan_folder():
                     {
                         "thumb": thumbnail_name,
                         "id": file_id,
-                        "profile_name": profile_name or "",  # 若無資料則為空字串
+                        "profile_name": profile_name,  # 若無資料則為空字串
+                        "scenario_title": scenario_title,  # 有可能為空字串
                         "tag_style": tag_style,  # 可能為 ""
                         "tag_name": tag_name,  # 可能為　""
                     }

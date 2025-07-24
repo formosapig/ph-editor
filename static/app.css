@@ -227,19 +227,18 @@ button.active {
 }
 .profile-badge {
   position: absolute;
-  bottom: 0; /* 卡在底部邊框上 */
-  left: 50%; /* 水平置中起點 */
-  transform: translateX(-50%) translateY(25%); /* 向左移動自身寬度的一半以實現真正置中 */
-  background-color: rgba(255, 222, 100, 0.8); /* 溫和亮黃 */
-  color: #3b2a00; /* 深棕文字，強對比 */
-  font-size: 16px;
+  top: 4px;
+  left: 4px;
+  background-color: rgba(255, 222, 150, 0.85); /* 溫和亮黃 */
+  color: #3b2a00;
+  font-size: 14px;
   font-weight: bold;
-  padding: 6px 12px;
-  border: 2px solid rgba(255, 250, 200, 0.85); /* 淺米色邊框 */
-  border-radius: 6px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); /* 加深對比，避免白底時消失 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);   /* 浮起來效果 */
-  pointer-events: none; /* 確保不會擋到點擊事件 */
+  padding: 2px 5px;
+  border: 2px solid rgba(170, 150, 100, 0.80);
+  border-radius: 5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
   z-index: 10;
   max-width: 90%;
   white-space: nowrap;
@@ -259,6 +258,27 @@ button.active {
     background-color: rgba(0, 0, 0, 0.6); /* 預設背景色 */
     /* 添加一個小小的陰影，讓它更突出但不搶眼 */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.scenario-badge {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(50%);
+  background-color: rgba(170, 210, 170, 0.85); /* 淡草綠，霧面感 */
+  color: #3b2a00; /* 深棕字體，統一風格 */
+  font-size: 15px;
+  font-weight: bold;
+  padding: 4px 6px; /* 不對稱 padding，較自然 */
+  border: 2px solid rgba(100, 140, 100, 0.8); /* 帶點青綠金屬感 */
+  border-radius: 12px 3px 12px 3px; /* 左上圓弧、右下切角 */
+  text-shadow: none;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  z-index: 9;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .filename-label {
   /* 關鍵：調整這個 margin-top 以確保與 profile-badge 不重疊 */

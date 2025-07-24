@@ -570,7 +570,7 @@ def get_profile(profile_id: int) -> Dict[str, Any]:
 def get_profile_name(file_id: str) -> str:
     entry = get_character_file_entry(file_id)
     if not entry:
-        raise ValueError(f"❌ 找不到角色檔案 ：{file_id}。")
+        raise ValueError(f"❌ 找不到角色檔案。 FILE ID = {file_id}")
 
     if entry.profile_id is None:
         return ""  # 沒綁定 profile 是正常的情況
@@ -579,14 +579,14 @@ def get_profile_name(file_id: str) -> str:
     if not profile:
         raise ValueError(
             f"❌ 找不到 profile："
-            f"profile_id = {entry.profile_id}, file id = {file_id}"
+            f"PROFILE ID = {entry.profile_id}, FILE ID = {file_id}"
         )
 
     name = profile.get("name")
     if not isinstance(name, str) or not name.strip():
         raise ValueError(
             f"❌ profile['name'] 無效或為空："
-            f"profile_id = {entry.profile_id}, file id = {file_id}"
+            f"PROFILE ID = {entry.profile_id}, FILE ID = {file_id}"
         )
 
     return name.strip()
@@ -776,6 +776,31 @@ def get_scenario(scenario_id: int) -> Dict[str, Any]:
     if scenario is None:
         raise ValueError(f"SCENARIO ID {scenario_id} 不存在。")
     return scenario
+    
+    
+def get_scenario_title(file_id: str) -> str:
+    entry = get_character_file_entry(file_id)
+    if not entry:
+        raise ValueError(f"❌ 找不到角色檔案。 FILE ID = {file_id}")
+
+    if entry.scenario_id is None:
+        return ""  # 沒綁定 scenario 是正常的情況
+
+    scenario = get_scenario(entry.scenario_id)
+    if not scenario:
+        raise ValueError(
+            f"❌ 找不到 scenario："
+            f"SCENARIO ID = {entry.scenario_id}, file id = {file_id}"
+        )
+
+    title = scenario.get("title")
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError(
+            f"❌ scenario['title'] 無效或為空："
+            f"SCENARIO ID = {entry.scenario_id}, FILE ID = {file_id}"
+        )
+
+    return title.strip()
     
     
 def process_tag_info(file_id: str) -> tuple[str, str]:

@@ -49,6 +49,7 @@
                :style="getTagStyle(item.tag_style)">
             {{ item.tag_name }}
           </div>
+		  <div v-if="item.scenario_title" class="scenario-badge">{{ item.scenario_title }}</div>
         </div>
         <div class="filename-label">{{ item.id }}</div>
       </div>
@@ -58,6 +59,7 @@
     <div v-if="showSortMenu" id="sortMenu" class="float-menu horizontal" @click.stop>
       <div class="option" :class="{ active: sortKey === 'id' }" @click="applySort('id')">📄 檔名</div>
       <div class="option" :class="{ active: sortKey === 'profile_name' }" @click="applySort('profile_name')">👤 人名</div>
+      <div class="option" :class="{ active: sortKey === 'scenario_title' }" @click="applySort('scenario_title')">🎬 場景</div>	  
       <div class="option" :class="{ active: sortKey === 'tag_name' }" @click="applySort('tag_name')">🏷️ 標籤</div>
       <div class="divider"></div>
       <div class="option" @click="toggleSortOrder">{{ sortAscending ? '⬆️ 昇序' : '⬇️ 降序' }}</div>
@@ -67,6 +69,7 @@
     <div v-if="showFilterMenu" class="float-menu horizontal" @click.stop>
       <div class="option" :class="{ active: filterKey === 'id' }" @click="applyFilter('id')">📄 檔名</div>
       <div class="option" :class="{ active: filterKey === 'profile_name' }" @click="applyFilter('profile_name')">👤 人名</div>
+      <div class="option" :class="{ active: filterKey === 'scenario_title' }" @click="applyFilter('scenario_title')">🎬 場景</div>
       <div class="option" :class="{ active: filterKey === 'tag_name' }" @click="applyFilter('tag_name')">🏷️ 標籤</div>
       <div class="option" :class="{ active: filterKey === '' }" @click="applyFilter('')">🧹 清除</div>
 	  <div class="divider"></div>
