@@ -6,7 +6,7 @@ import locale
 from flask import Blueprint, jsonify
 
 from config.dropdown_config import dropdown_config_map
-from core.shared_data import get_global_general_data, profile_map, get_default_scenario
+from core.shared_data import get_global_general_data, profile_map, scenario_map, get_default_backstage
 
 api_ui_config_bp = Blueprint("api_ui_config", __name__, url_prefix="/api/ui_config")
 
@@ -96,12 +96,69 @@ def get_profile_list():
             }
         )
 
-    return jsonify({"options": options})
+    dropdown_config = [{
+        "displayLabel": "角色選擇",
+        "dataKey": "!id",
+        "labelKey": "name",
+        "options": options,
+        "defaultValue": ""
+    }]
+
+    return jsonify({"dropdowns": dropdown_config})
 
 
-@api_ui_config_bp.route("/scenario_options", methods=["GET"])
-def get_scenario_options():
-    """提供 scenario 編輯所需的多組下拉選單"""
+@api_ui_config_bp.route("/scenarios", methods=["GET"])
+def get_scenario_list():
+    """提供給下拉選單使用的簡易列表"""
+    options = []
+
+    # 提前取出 id=0 的 scenario（若存在）
+    zero_scenario = scenario_map.get(0)
+
+    # 除去 0 的 scenario
+    other_scenarios = {k: v for k, v in scenario_map.items() if k != 0}
+
+    locale.setlocale(locale.LC_COLLATE, "zh_TW.UTF-8")
+    # 將其轉為 options 並根據 name 中文排序
+    sorted_scenarios = sorted(
+        other_scenarios.values(), key=lambda p: locale.strxfrm(p.get("title", ""))
+    )
+
+    # 初始選項
+    options.append({"label": "請選擇", "value": ""})
+
+    # 第二順位是 id = 0 的 scenario（若有）
+    if zero_scenario:
+        options.append(
+            {
+                "label": zero_scenario.get("title", f"id:{zero_scenario.get('!id', '')}"),
+                "value": zero_scenario.get("!id", ""),
+            }
+        )
+
+    # 加入剩下排序後的 options
+    for scenario in sorted_scenarios:
+        options.append(
+            {
+                "label": scenario.get("title", f"id:{scenario.get('!id', '')}"),
+                "value": scenario.get("!id", ""),
+            }
+        )
+
+    dropdown_config = [{
+        "displayLabel": "場景選擇",
+        "dataKey": "!id",
+        "labelKey": "title",
+        "options": options,
+        "defaultValue": ""
+    }]
+
+    return jsonify({"dropdowns": dropdown_config})
+
+
+@api_ui_config_bp.route("/backstage_options", methods=["GET"])
+def get_backstage_options():
+    """提供 backstage 編輯所需的多組下拉選單"""
     dropdowns = []
     general_data = get_global_general_data()
 
@@ -171,9 +228,9 @@ def get_scenario_options():
     )
 
     # 取得預設情境模板
-    default_scenario_data = get_default_scenario()
+    default_backstage_data = get_default_backstage()
 
     return jsonify({
         "dropdowns": dropdowns ,
-        "defaultScenario" : default_scenario_data
+        "defaultBackstage" : default_backstage_data
     })

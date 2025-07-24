@@ -8,7 +8,7 @@ from io import BytesIO
 def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
     """
     解析其他零碎數據或處理無意義數據。
-    若讀到資料尾端，回傳包含 general、character、scenario 的空字典。
+    若讀到資料尾端，回傳包含 general、character、scenario、 backstage 的空字典。
     否則，讀取剩餘資料，使用 zlib 解壓縮，解析為 JSON 並轉為 dict。
 
     Args:
@@ -26,7 +26,7 @@ def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
     if current_pos >= end_pos:
         if debug_mode:
             print(f"    [偏移: {current_pos}] 已達資料尾端，回傳空白 story 結構。")
-        return {"general": {}, "profile": {}, "scenario": {}}
+        return {"general": {}, "profile": {}, "scenario": {}, "backstage": {}}
         # ✅ 修改：當讀到資料尾端，回傳一個空的字典，明確表示沒有解析到任何 Story 數據。
         # return {}
 
@@ -43,7 +43,7 @@ def parse_story_data(stream: BytesIO, debug_mode: bool = False) -> dict:
         raise ValueError(f"    解壓縮或 JSON 解析失敗: {e}")
 
     # 確保三個主要 key 存在
-    for key in ["general", "profile", "scenario"]:
+    for key in ["general", "profile", "scenario", "backstage"]:
         if key not in story_data:
             story_data[key] = {}
 

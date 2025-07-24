@@ -14,6 +14,7 @@ from PIL import Image
 
 from api.character import api_character_bp
 from api.profile import api_profile_bp
+from api.scenario import api_scenario_bp
 from api.ui_config import api_ui_config_bp
 from config.logging_setup import setup_logging
 
@@ -42,6 +43,7 @@ app.register_blueprint(edit_bp)
 app.register_blueprint(general_bp)
 app.register_blueprint(api_character_bp)
 app.register_blueprint(api_profile_bp)
+app.register_blueprint(api_scenario_bp)
 app.register_blueprint(api_ui_config_bp)
 
 # 設定快取路徑
@@ -113,17 +115,17 @@ def scan_folder():
 
     thumbnails = []  # 儲存生成或更新的縮圖檔案名
     loaded_character_count = 0
-    character_list = []  # 儲存 thumbnail, character_id, profile_name
+    character_list = []  # 儲存 thumbnail, file_id, profile_name
 
     logger.debug(f"開始掃描資料夾 '{folder_path}'...")
     for root, _, files in os.walk(folder_path):
         for file_name_with_ext in files:
             if file_name_with_ext.lower().endswith(".png"):
                 file_path = os.path.join(root, file_name_with_ext)
-                character_id = os.path.splitext(file_name_with_ext)[0]
+                file_id = os.path.splitext(file_name_with_ext)[0]
 
                 # --- 縮圖生成邏輯 ---
-                thumbnail_name = f"thumb_{character_id}.jpg"
+                thumbnail_name = f"thumb_{file_id}.jpg"
                 thumbnail_path = os.path.join(CACHE_DIR, thumbnail_name)
 
                 try:
@@ -162,7 +164,7 @@ def scan_folder():
 
                 # --- 角色數據載入邏輯 ---
                 try:
-                    add_or_update_character_with_path(folder_path, character_id)
+                    add_or_update_character_with_path(folder_path, file_id)
                     loaded_character_count += 1
                 except Exception as e:
                     logger.error(
@@ -171,16 +173,16 @@ def scan_folder():
                     continue  # 繼續處理下一個檔案
 
                 # 將資料整理好放進 character_list
-                profile_name = get_profile_name(character_id)
-                # logger.debug(f"prepare get profile name {character_id}")
+                profile_name = get_profile_name(file_id)
+                # logger.debug(f"prepare get profile name {file_id}")
 
-                tag_style, tag_name = process_tag_info(character_id)
+                tag_style, tag_name = process_tag_info(file_id)
                 logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
 
                 character_list.append(
                     {
                         "thumb": thumbnail_name,
-                        "id": character_id,
+                        "id": file_id,
                         "profile_name": profile_name or "",  # 若無資料則為空字串
                         "tag_style": tag_style,  # 可能為 ""
                         "tag_name": tag_name,  # 可能為　""

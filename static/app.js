@@ -125,7 +125,6 @@ window.app = {
     this.filterKey = key;
     const kw = this.filterKeyword.trim().toLowerCase();
 
-console.log("filterKey = " + this.filterKey);
     if (!kw || !this.filterKey) {
       this.displayedImages = [...this.allImages];
       return;
@@ -141,24 +140,12 @@ console.log("filterKey = " + this.filterKey);
     this.filterKeyword = '';
     this.displayedImages = [...this.allImages];
   },
-
-  filterImages() {
-    const keyword = prompt('請輸入篩選關鍵字（空白顯示全部）：', '');
-    if (keyword === null) return;
-    
-    const trimmed = keyword.trim().toLowerCase();
-    this.displayedImages = trimmed 
-      ? this.allImages.filter(item => 
-          (item.id.toLowerCase().includes(trimmed) || 
-          (item.profile_name && item.profile_name.toLowerCase().includes(trimmed))))
-      : [...this.allImages];
-  },
   
   editSelected() {
     if (this.selectedSet.length === 1) {
-      const characterId = this.selectedSet[0];
-      const windowName = `edit_character_${characterId}`;
-      window.open(`/edit?character_id=${encodeURIComponent(characterId)}`, windowName);
+      const fileId = this.selectedSet[0];
+      const windowName = `edit_file_${fileId}`;
+      window.open(`/edit?file_id=${encodeURIComponent(fileId)}`, windowName);
     }
   },
   

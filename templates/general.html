@@ -297,7 +297,7 @@
 
       const dataToSend = {
         color_traits: filteredColorTraits,
-        tag_type_setting: filteredTagTypeSettings,
+        tag_styles: filteredTagTypeSettings,
         tag_list: finalFilteredTags 
       };
       
@@ -317,8 +317,8 @@
       })
       .then(data => {
         this.showMessage('送出成功，正在儲存資料...', 'info');
-        // 加入 pingPongSave 流程
-        return this.pingPongSave();  // 確保是 this 上的函式
+        // 加入 pingPongSync 流程
+        return this.pingPongSync();  // 確保是 this 上的函式
       })
       .catch(err => {
         // 使用自定義的訊息框代替 alert
@@ -372,13 +372,14 @@
         messageBox.addEventListener('transitionend', () => messageBox.remove());
       }, 3000); // 3 秒後自動消失
     },
-	pingPongSave() {
+	
+	pingPongSync() {
       let savedCount = 0;
       const self = this;
 
       async function saveNext() {
         try {
-          const response = await fetch('/api/character/ping_pong_save', {
+          const response = await fetch('/api/character/ping_pong_sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -391,9 +392,9 @@
 
           const data = await response.json();
 
-          if (data.character_id) {  
+          if (data.file_id) {  
             savedCount++;
-            //self.showMessage(`成功儲存檔案: ${data.character_id}。繼續儲存...`, 'info');
+            //self.showMessage(`成功儲存檔案: ${data.file_id}。繼續儲存...`, 'info');
             await saveNext();
           } else {
             self.showMessage(`✅ 所有資料 (${savedCount} 筆) 已成功儲存！`, 'success');

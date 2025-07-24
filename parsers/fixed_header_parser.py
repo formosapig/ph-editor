@@ -1,9 +1,12 @@
 # ph-editor/parsers/fixed_header_parser.py
-
-import json  # <-- 新增：引入 json 模組
+import json
+import logging
 from io import BytesIO
 
 from utils.common_types import _read_bytes, _read_uint8, _read_uint32
+
+logger = logging.getLogger(__name__)
+logger.disabled = True
 
 
 def parse_fixed_header(
@@ -29,20 +32,19 @@ def parse_fixed_header(
         # 讀取 PlayHome_Female
         mark_bytes = _read_bytes(stream, 15)
         fixed_header_data["mark"] = mark_bytes.decode("ascii")
-        if debug_mode:
-            print(f"      標記: {fixed_header_data['mark']}")
+        logger.debug(f"標記: {fixed_header_data['mark']}")
 
         # 讀取 怪異符號 4 bytes
         strange_bytes = _read_bytes(stream, 4)
         fixed_header_data["strange"] = strange_bytes.decode("utf-8")
-        if debug_mode:
-            print(f"      怪異: {fixed_header_data['strange']}")
+        logger.debug(f"怪異: {fixed_header_data['strange']}")
 
         # 7 bytes 對齊
         _read_bytes(stream, 7)
 
         # 版本號
         fixed_header_data["version"] = _read_uint32(stream)
+        logger.debug(f"版本: {fixed_header_data['version']}")
 
     except EOFError as e:
         if debug_mode:

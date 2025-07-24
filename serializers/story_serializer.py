@@ -18,7 +18,7 @@ def serialize_story_data(story_data: dict, stream: BytesIO, debug_mode: bool = F
     # print(f"    [偏移: {current_pos}] 開始序列化故事資料。")
 
     # 檢查是否為空內容（全部三個主鍵皆為空）
-    if not any(story_data.get(key) for key in ["general", "profile", "scenario"]):
+    if not any(story_data.get(key) for key in ["general", "profile", "scenario", "backstage"]):
         # if debug_mode:
         # print("    所有主鍵皆為空，略過寫入。")
         return  # 不寫入任何資料

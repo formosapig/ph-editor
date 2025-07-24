@@ -6,7 +6,7 @@ from .character_data import CharacterData
 from .file_constants import PLAYHOME_MARKER
 
 logger = logging.getLogger(__name__)
-logger.disabled = True
+#logger.disabled = True
 
 
 class CharacterFileEntry:
@@ -15,7 +15,7 @@ class CharacterFileEntry:
     """
 
     def __init__(
-        self, character_id: str, scan_path: str, character_data: CharacterData
+        self, file_id: str, scan_path: str, character_data: CharacterData
     ):
         # 取得 int 小函式
         def _get_int(data, *keys):
@@ -28,9 +28,9 @@ class CharacterFileEntry:
         if not isinstance(character_data, CharacterData):
             raise TypeError("character_data 必須是 CharacterData 類型的實例。")
 
-        self.character_id: str = character_id
+        self.file_id: str = file_id
         self.filename: str = os.path.join(
-            scan_path, character_id + ".png"
+            scan_path, file_id + ".png"
         )  # 組成完整檔案路徑
         self.character_data: CharacterData = character_data
         self.save_flag: bool = False  # 預設不需儲存
@@ -39,11 +39,12 @@ class CharacterFileEntry:
         if isinstance(character_data.parsed_data, dict):
             story = character_data.parsed_data.get("story", {})
             self.general_version = _get_int(story, "general", "!version")
-            self.profile_version = _get_int(story, "profile", "!version")
             self.profile_id = _get_int(story, "profile", "!id")
-            self.tag_id = _get_int(story, "scenario", "!tag_id")
-
-        self.display_name = "測試中"
+            self.profile_version = _get_int(story, "profile", "!version")
+            self.scenario_id = _get_int(story, "scenario", "!id")
+            self.scenario_version = _get_int(story, "scenario", "!version")
+            self.tag_id = _get_int(story, "backstage", "!tag_id")
+        
         logger.debug("\n" + repr(self))
 
     def set_sync_flag(self, value: bool = True):
@@ -71,11 +72,19 @@ class CharacterFileEntry:
             if isinstance(profile, dict):
                 return profile
         return {}
+
+    def get_scenario(self) -> dict:
+        if isinstance(self.character_data.parsed_data, dict):
+            story = self.character_data.parsed_data.get("story", {})
+            scenario = story.get("scenario")
+            if isinstance(scenario, dict):
+                return profile
+        return {}
         
     def update_tag_id(self):
         tag_id_value = None
         try:
-            tag_id_value = self.character_data.parsed_data['story']['scenario'].get('!tag_id')
+            tag_id_value = self.character_data.parsed_data['story']['backstage'].get('!tag_id')
 
             if tag_id_value is not None:
                 temp_tag_id = int(tag_id_value)
@@ -86,14 +95,16 @@ class CharacterFileEntry:
 
     def __repr__(self):
         lines = [
-            f"{'Character ID':>12}: {self.character_id}",
-            f"{'Filename':>12}: {self.filename}",
-            f"{'Save Flag':>12}: {self.save_flag}",
-            f"{'Sync Flag':>12}: {self.sync_flag}",
-            f"{'General Ver.':>12}: {self.general_version}",
-            f"{'Profile Ver.':>12}: {self.profile_version}",
-            f"{'Profile ID':>12}: {self.profile_id}",
-            f"{'Tag ID':>12}: {self.tag_id}",
+            f"{'File ID':>14}: {self.file_id}",
+            f"{'Filename':>14}: {self.filename}",
+            f"{'Save Flag':>14}: {self.save_flag}",
+            f"{'Sync Flag':>14}: {self.sync_flag}",
+            f"{'General Ver.':>14}: {self.general_version}",
+            f"{'Profile ID':>14}: {self.profile_id}",
+            f"{'Profile Ver.':>14}: {self.profile_version}",
+            f"{'Scenario ID':>14}: {self.scenario_id}",
+            f"{'Scenario Ver.':>14}: {self.scenario_version}",
+            f"{'Tag ID':>14}: {self.tag_id}",
         ]
         return "\n".join(lines)
 
@@ -126,11 +137,11 @@ class CharacterFileEntry:
             self.sync_flag = False
 
     @classmethod
-    def load(cls, scan_path: str, character_id: str) -> "CharacterFileEntry":
+    def load(cls, scan_path: str, file_id: str) -> "CharacterFileEntry":
         """
         從檔案讀取角色資料，建立並回傳 CharacterFileEntry 實例。
         """
-        file_name_with_ext = character_id + ".png"
+        file_name_with_ext = file_id + ".png"
         file_path = os.path.join(scan_path, file_name_with_ext)
 
         try:
@@ -152,62 +163,4 @@ class CharacterFileEntry:
         except Exception as e:
             raise ValueError(f"無法解析角色資料：{file_path} -> {e}")
 
-        return cls(character_id, scan_path, character_data_obj)
-
-
-# 範例用法 (僅供測試參考，實際應用會在後端框架中調用)
-if __name__ == "__main__":
-    # 假設您有一個 CharacterData 類別的簡易實現，用於測試
-    class MockCharacterData:
-        def __init__(self, global_version: str, display_name: str):
-            self.global_data = {"general_version": global_version}
-            self.metadata = {"display_name": display_name}
-
-        # 假設 CharacterData 還有其他方法，例如解析器和序列化器會用到 BytesIO
-        # 為簡化範例，這裡省略具體實現
-
-    logger.info("--- 測試 CharacterFileEntry ---")
-
-    # 創建一個 CharacterData 實例
-    mock_data_1 = MockCharacterData(global_version="1.0.0", display_name="勇者艾倫")
-
-    # 創建 CharacterFileEntry
-    entry1 = CharacterFileEntry("character_001.bin", mock_data_1)
-    print(f"初始化 entry1: {entry1}")
-    print(f"entry1.needs_saving(): {entry1.needs_saving()}")
-    print(f"entry1.general_version: {entry1.general_version}")
-    print(f"entry1.display_name: {entry1.display_name}")
-
-    entry1.set_save_flag(True)
-    print(f"設定 save_flag 後 entry1.needs_saving(): {entry1.needs_saving()}")
-
-    print("\n--- 測試另一個 CharacterFileEntry ---")
-    mock_data_2 = MockCharacterData(global_version="1.0.1", display_name="魔法師莉莉")
-    entry2 = CharacterFileEntry("character_002.bin", mock_data_2)
-    print(f"初始化 entry2: {entry2}")
-    print(f"entry2.needs_saving(): {entry2.needs_saving()}")
-    print(f"entry2.general_version: {entry2.general_version}")
-    print(f"entry2.display_name: {entry2.display_name}")
-
-    # 測試缺少某些數據的 CharacterData
-    class IncompleteMockCharacterData:
-        def __init__(self):
-            self.global_data = {}  # 缺少 general_version
-            self.metadata = {}  # 缺少 display_name
-
-    print("\n--- 測試不完整數據的 CharacterFileEntry ---")
-    incomplete_data = IncompleteMockCharacterData()
-    incomplete_entry = CharacterFileEntry("incomplete.bin", incomplete_data)
-    print(f"初始化 incomplete_entry: {incomplete_entry}")
-    print(
-        f"incomplete_entry.general_version: {incomplete_entry.general_version}"
-    )  # 應該是 None
-    print(
-        f"incomplete_entry.display_name: {incomplete_entry.display_name}"
-    )  # 應該是 None
-
-    # 測試傳入非 CharacterData 類型的錯誤
-    try:
-        CharacterFileEntry("wrong_type.bin", "這不是CharacterData")
-    except TypeError as e:
-        print(f"\n捕獲到預期的錯誤: {e}")
+        return cls(file_id, scan_path, character_data_obj)

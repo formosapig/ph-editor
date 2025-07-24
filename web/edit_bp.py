@@ -18,6 +18,7 @@ from core.shared_data import (
     get_character_file_entry,
     get_global_general_data,
     get_profile,
+    get_scenario,
 )
 
 edit_bp = Blueprint("edit_bp", __name__)
@@ -78,21 +79,54 @@ def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
         character_entry.set_sync_flag(True)
 
 
-def reload_character_data(scan_path: str, character_id: str) -> [Dict[str, Any], tuple]:
+def ensure_scenario_data_updated(character_entry: CharacterFileEntry) -> None:
+    if character_entry.scenario_id is None:
+        return
+
+    global_scenario_data = get_scenario(character_entry.scenario_id)
+    global_scenario_version = global_scenario_data.get("!version", -1)
+
+    character_data = character_entry.get_character_data()
+    character_scenario_data = character_data.get_value(["story", "scenario"])
+    character_scenario_version = character_entry.scenario_version
+
+    if (
+        not isinstance(character_scenario_data, dict)
+        or character_scenario_version < global_scenario_version
+    ):
+        data = character_data.get_data()
+
+        # 確保 "story" 存在
+        if "story" not in data:
+            data["story"] = {}
+
+        # 直接更新 profile 區塊（不透過 set_value）
+        data["story"]["scenario"] = global_scenario_data.copy()
+
+        # 更新 character_entry 的 scenario 狀態
+        character_entry.scenario_id = global_scenario_data.get(
+            "!id", character_entry.scenario_id
+        )
+        character_entry.scenario_version = global_scenario_version
+
+        character_entry.set_sync_flag(True)
+        
+        
+def reload_character_data(scan_path: str, file_id: str) -> [Dict[str, Any], tuple]:
     """
     重新讀取角色圖檔並解析，更新共享資料庫，並確保 general 資料是最新。
     成功回傳 character_data.get_data()。
     發生錯誤時回傳 (jsonify響應, status_code) tuple。
     """
     try:
-        add_or_update_character_with_path(scan_path, character_id)
+        add_or_update_character_with_path(scan_path, file_id)
 
-        character_file_entry_obj = get_character_file_entry(character_id)
+        character_file_entry_obj = get_character_file_entry(file_id)
         if not character_file_entry_obj:
             return (
                 jsonify(
                     {
-                        "error": f"雖然成功讀取檔案，但解析後仍無法取得角色數據: {character_id}。"
+                        "error": f"雖然成功讀取檔案，但解析後仍無法取得角色數據: {file_id}。"
                     }
                 ),
                 500,
@@ -100,6 +134,7 @@ def reload_character_data(scan_path: str, character_id: str) -> [Dict[str, Any],
 
         ensure_general_data_updated(character_file_entry_obj)
         ensure_profile_data_updated(character_file_entry_obj)
+        ensure_scenario_data_updated(character_file_entry_obj)
 
         character_data_obj = character_file_entry_obj.get_character_data()
         return character_data_obj.get_data()
@@ -112,26 +147,26 @@ def reload_character_data(scan_path: str, character_id: str) -> [Dict[str, Any],
 
 @edit_bp.route("/edit")
 def edit():
-    character_id = request.args.get("character_id")
-    if not character_id:
-        return "缺少角色 ID。", 400
+    file_id = request.args.get("file_id")
+    if not file_id:
+        return "缺少角色檔案 ID。", 400
 
     try:
-        character_file_entry_obj = get_character_file_entry(character_id)
+        character_file_entry_obj = get_character_file_entry(file_id)
 
         if not character_file_entry_obj:
-            print(f"ℹ️ 共享資料庫中未找到 '{character_id}'，嘗試從檔案讀取並處理。")
+            print(f"ℹ️ 共享資料庫中未找到 '{file_id}'，嘗試從檔案讀取並處理。")
             scan_path = current_app.config["SCAN_PATH"]
-            processed_result = reload_character_data(scan_path, character_id)
+            processed_result = reload_character_data(scan_path, file_id)
 
             if isinstance(processed_result, tuple) and len(processed_result) == 2:
                 # 錯誤 jsonify 響應
                 return processed_result
 
-            character_file_entry_obj = get_character_file_entry(character_id)
+            character_file_entry_obj = get_character_file_entry(file_id)
             if not character_file_entry_obj:
                 return (
-                    f"處理檔案成功，但未能從數據庫獲取 CharacterFileEntry: {character_id}。",
+                    f"處理檔案成功，但未能從數據庫獲取 CharacterFileEntry: {file_id}。",
                     500,
                 )
 
@@ -140,10 +175,9 @@ def edit():
         ensure_profile_data_updated(character_file_entry_obj)
 
         content_for_frontend = character_file_entry_obj.get_character_data().get_data()
-        session["current_edit_character_id"] = character_id
         return render_template(
             "edit.html",
-            character_id=character_id,
+            file_id=file_id,
             data=json.dumps(content_for_frontend),
         )
 

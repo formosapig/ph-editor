@@ -64,7 +64,8 @@ const subTabs = {
   story: [
     { key: 'general', label: '全域' },
     { key: 'profile', label: '簡介' },
-    { key: 'scenario', label: '情境' },
+    { key: 'scenario', label: '場景' },
+    { key: 'backstage', label: '幕後' }
   ]
 };
 
@@ -153,6 +154,43 @@ window.addEventListener('DOMContentLoaded', () => {
     } 
   });
 });
+
+/**
+   * 更新 ID 為 'main-content' 的元素，顯示 globalParsedData 中特定路徑的 JSON 字串。
+   * 這個方法依賴於 app.data.globalParsedData。
+   *
+   * @param {string} mainTab - globalParsedData 的主要索引鍵。
+   * @param {string} subTab - mainTab 下的次要索引鍵。
+   */
+function updateMainContent(mainTab, subTab, autoSave = false) {
+  const mainContent = document.getElementById('main-content');
+
+  if (!mainContent) {
+    console.error(`找不到 ID 為 "main-content" 的元素。`);
+    return;
+  }
+
+  // 使用 this.data 訪問 globalParsedData
+  if (!this.data.globalParsedData || !this.data.globalParsedData[mainTab] || !this.data.globalParsedData[mainTab][subTab]) {
+    console.warn(`globalParsedData 或指定的路徑 [${mainTab}][${subTab}] 無效。`);
+    mainContent.textContent = '資料無效或找不到。';
+    return;
+  }
+
+  mainContent.textContent = JSON.stringify(
+    this.data.globalParsedData[mainTab][subTab],
+    (key, value) => key.startsWith('!') ? undefined : value,
+    2
+  );
+  
+  if (autoSave) {
+    // 觸發自動儲存（如果需要）
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+      autoSaveData();
+    }, 500);
+  }
+}
 
 /**
  * 從後端獲取資料並更新
@@ -301,7 +339,10 @@ function autoSaveData() {
   fetch(`/api/character/update/${encodeURIComponent(mainTabKey)}/${encodeURIComponent(subTabKey)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: newData })
+    body: JSON.stringify({
+      file_id: fileId,
+      data: newData
+    })
   })
   .then(response => {
     if (!response.ok) {
@@ -320,7 +361,9 @@ function autoSaveData() {
 	// ✅ 如果後端有給新的 profile ID，先更新到 newData 上
     if (result.new_profile_id) {
       newData["!id"] = result.new_profile_id;
-    }
+    } else if (result.new_scenario_id) {
+      newData["!id"] = result.new_scenario_id;
+	}
     
 	if (globalParsedData && globalParsedData[mainTabKey]) {
       globalParsedData[mainTabKey][subTabKey] = newData;
@@ -328,7 +371,9 @@ function autoSaveData() {
 	
     if (result.need_update_profile_dropdown) {
 	  fetchAndRenderDropdowns("story", "profile");
-    }
+    } else if (result.need_update_scenario_dropdown) {
+      fetchAndRenderDropdowns("story", "scenario");
+	}
 	
 	// 當檔案需要儲存, 但是不是 general / profile 時...
 	if (result.need_save) {
@@ -357,7 +402,7 @@ function reloadFile() {
   showMessage('正在重新載入檔案數據...');
   //hexDisplay.textContent = '正在重新載入檔案數據...';
 
-  fetch('/api/character/reload')
+  fetch(`/api/character/reload?file_id=${encodeURIComponent(fileId)}`)
     .then(response => {
       if (!response.ok) {
         return response.json().then(errData => {
@@ -411,29 +456,33 @@ function saveFile() {
   //hexDisplay.textContent = '正在儲存資料...';
 
   fetch('/api/character/save', {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      file_id: fileId
+    })
   })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(err => {
-          throw new Error(err.error || '儲存失敗');
-        }).catch(() => {
-          throw new Error('無法解析伺服器回應');
-        });
-      }
-      return response.json();
-    })
-    .then(result => {
-      showMessage(result.message || '儲存成功！');
-	  //hexDisplay.textContent = result.message || '儲存成功！';
-      console.log('saveFile: 儲存成功。', result); // 新增日誌
-	  document.getElementById('saveButton').disabled = true;
-    })
-    .catch(error => {
-	  showMessage('儲存失敗：' + error.message, 'error');
-      //hexDisplay.textContent = '儲存失敗：' + error.message;
-      console.error('saveFile: 儲存失敗。', error); // 新增日誌
-    });
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(err => {
+        throw new Error(err.error || '儲存失敗');
+      }).catch(() => {
+        throw new Error('無法解析伺服器回應');
+      });
+    }
+    return response.json();
+  })
+  .then(result => {
+    showMessage(result.message || '儲存成功！');
+	//hexDisplay.textContent = result.message || '儲存成功！';
+    console.log('saveFile: 儲存成功。', result); // 新增日誌
+    document.getElementById('saveButton').disabled = true;
+  })
+  .catch(error => {
+    showMessage('儲存失敗：' + error.message, 'error');
+    //hexDisplay.textContent = '儲存失敗：' + error.message;
+    console.error('saveFile: 儲存失敗。', error); // 新增日誌
+  });
 }
 
 /**
@@ -459,9 +508,9 @@ async function pingPongSync() {
 
             const data = await response.json();
 
-            if (data.character_id) {
+            if (data.file_id) {
                 savedCount++;
-                showMessage(`成功同步檔案: ${data.character_id}。繼續檢查...`);
+                showMessage(`成功同步檔案: ${data.file_id}。繼續檢查...`);
                 await saveNext(); // 繼續處理下一個
             } else {
                 // 沒有更多檔案要存了
@@ -557,10 +606,14 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
   let apiUrl = `/api/ui_config/options/${mainTab}/${subTab}`;
   const isProfileDropdown = (mainTab === 'story' && subTab === 'profile');
   const isScenarioDropdown = (mainTab === 'story' && subTab === 'scenario');
+  const isBackstageDropdown = (mainTab === 'story' && subTab === 'backstage');
+
   if (isProfileDropdown) {
-	  apiUrl = `/api/ui_config/profiles`;
-  } else if (isScenarioDropdown) {
-	  apiUrl = `/api/ui_config/scenario_options`;
+    apiUrl = `/api/ui_config/profiles`;
+  } else if (isScenarioDropdown) {	  
+    apiUrl = `/api/ui_config/scenarios`;
+  } else if (isBackstageDropdown) {
+    apiUrl = `/api/ui_config/backstage_options`;
   }
   
   console.log(`執行 fetchAndRenderDropdowns 函數，請求: ${apiUrl}`);
@@ -589,101 +642,72 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
 
     let dropdownsToRender = [];
 
-	if (isProfileDropdown) {
-            if (result.options && Array.isArray(result.options)) {
-                dropdownsToRender = [{
-                    displayLabel: '角色列表',
-                    dataKey: '!id',
-                    labelKey: 'name',
-                    options: result.options,
-                    defaultValue: ""
-                }];
-            } else {
-                showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "options" 陣列)。`, 'warning');
-                console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "options" 鍵。`, result);
-                return;
-            }
-        } else if (isScenarioDropdown) { // <-- 修改區塊從這裡開始
-            // 新增: 處理 defaultScenario 模板
-            // **修改開始**
-            // 只有當 globalParsedData[mainTab][subTab] 不存在或為空物件時，才使用 defaultScenario 填充
-            if (result.defaultScenario && (!globalParsedData[mainTab] || !globalParsedData[mainTab][subTab] || Object.keys(globalParsedData[mainTab][subTab]).length === 0)) {
-                if (!globalParsedData[mainTab]) {
-                    globalParsedData[mainTab] = {};
-                }
-                // 將後端傳來的 defaultScenario 模板深層複製到 globalParsedData 對應位置
-                globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultScenario));
-                console.log('Default Scenario 模板已填充到 globalParsedData (因為原數據為空):', globalParsedData[mainTab][subTab]);
-
-                // 立即更新主內容顯示，以便用戶看到初始模板
-                const mainContent = document.getElementById('main-content');
-                mainContent.textContent = JSON.stringify(
-                    globalParsedData[mainTab][subTab],
-                    (key, value) => key.startsWith('!') ? undefined : value,
-                    2
-                );
-
-                // 觸發自動儲存（如果需要）
-                if (autoSaveTimer) clearTimeout(autoSaveTimer);
-                autoSaveTimer = setTimeout(() => {
-                    autoSaveData();
-                }, 500);
-
-            } else if (result.defaultScenario) { // 如果 defaultScenario 存在但未填充（因為 globalParsedData 不為空）
-                console.log('Default Scenario 模板存在，但未填充到 globalParsedData (因已存在數據)。');
-            } else { // 如果 result.defaultScenario 不存在
-                showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "defaultScenario" 鍵)。`, 'warning');
-                console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "defaultScenario" 鍵。`, result);
-            }
-            // **修改結束**
-
-            if (result.dropdowns && Array.isArray(result.dropdowns)) {
-                dropdownsToRender = result.dropdowns;
-                console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`);
-            } else {
-                if (result.dropdowns === undefined) {
-                    showMessage(`後端 API /api/ui_config/scenario_options 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
-                    console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result);
-                } else if (!Array.isArray(result.dropdowns)) {
-                    showMessage(`後端 API /api/ui_config/scenario_options 回傳的 "dropdowns" 不是陣列。`, 'warning');
-                    console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result);
-                } else {
-                    showMessage(`後端 API /api/ui_config/scenario_options 回傳格式未知錯誤。`, 'warning');
-                    console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result);
-                }
-                // 如果沒有 dropdowns，但有 defaultScenario，我們可能仍會繼續
-                // 這裡的 return 語句會阻止後續渲染，請根據你的具體需求決定是否保留
-                if (!result.defaultScenario) return; // 如果既沒有 defaultScenario 也沒有 dropdowns 才返回
-            }
-        } else {
-            // ... (unchanged code for other cases)
-            if (result.dropdowns && Array.isArray(result.dropdowns)) {
-                dropdownsToRender = result.dropdowns;
-                console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`); // 新增日誌
-            } else {
-                // START: 調整錯誤訊息
-                if (result.dropdowns === undefined) {
-                    showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
-                    //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
-                    console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
-                } else if (!Array.isArray(result.dropdowns)) {
-                    showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
-                    //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
-                    console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
-                } else {
-                    showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
-                    //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
-                    console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
-                }
-                // END: 調整錯誤訊息
-                return;
-            }
+    if (isBackstageDropdown) {
+      if (result.defaultScenario && (!globalParsedData[mainTab] || !globalParsedData[mainTab][subTab] || Object.keys(globalParsedData[mainTab][subTab]).length === 0)) {
+        if (!globalParsedData[mainTab]) {
+          globalParsedData[mainTab] = {};
         }
+        // 將後端傳來的 defaultBackstage 模板深層複製到 globalParsedData 對應位置
+        globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultScenario));
+        console.log('Default Backstage 模板已填充到 globalParsedData (因為原數據為空):', globalParsedData[mainTab][subTab]);
+
+        // 立即更新主內容顯示，以便用戶看到初始模板
+		updateMainContent(mainTab, subTab, true);
+
+      } else if (result.defaultBackstage) { // 如果 defaultBackstage 存在但未填充（因為 globalParsedData 不為空）
+        console.log('Default Backstage 模板存在，但未填充到 globalParsedData (因已存在數據)。');
+      } else { // 如果 result.defaultScenario 不存在
+        showMessage(`後端 API ${apiUrl} 回傳格式不符合預期 (缺少 "defaultBackstage" 鍵)。`, 'warning');
+        console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "defaultBackstage" 鍵。`, result);
+      }
+	  
+      if (result.dropdowns && Array.isArray(result.dropdowns)) {
+        dropdownsToRender = result.dropdowns;
+        console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`);
+      } else {
+        if (result.dropdowns === undefined) {
+          showMessage(`後端 API /api/ui_config/scenario_options 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
+          console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result);
+        } else if (!Array.isArray(result.dropdowns)) {
+          showMessage(`後端 API /api/ui_config/scenario_options 回傳的 "dropdowns" 不是陣列。`, 'warning');
+          console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result);
+        } else {
+          showMessage(`後端 API /api/ui_config/scenario_options 回傳格式未知錯誤。`, 'warning');
+          console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result);
+        }
+        
+		// 如果沒有 dropdowns，但有 defaultScenario，我們可能仍會繼續
+        // 這裡的 return 語句會阻止後續渲染，請根據你的具體需求決定是否保留
+        if (!result.defaultScenario) return; // 如果既沒有 defaultScenario 也沒有 dropdowns 才返回
+      }
+    } else {
+      // ... (unchanged code for other cases)
+      if (result.dropdowns && Array.isArray(result.dropdowns)) {
+        dropdownsToRender = result.dropdowns;
+        console.log(`後端回傳 ${dropdownsToRender.length} 個下拉選單配置。`); // 新增日誌
+      } else {
+        // START: 調整錯誤訊息
+        if (result.dropdowns === undefined) {
+          showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`, 'warning');
+          //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式不符合預期 (缺少 "dropdowns" 鍵)。`;
+          console.warn(`fetchAndRenderDropdowns: 後端回應缺少 "dropdowns" 鍵。`, result); // 新增日誌
+        } else if (!Array.isArray(result.dropdowns)) {
+          showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`, 'warning');
+          //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳的 "dropdowns" 不是陣列。`;
+          console.warn(`fetchAndRenderDropdowns: 後端回應的 "dropdowns" 不是陣列。`, result); // 新增日誌
+        } else {
+          showMessage(`後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`, 'warning');
+          //hexDisplay.textContent = `後端 API /api/ui_config/options/${mainTab}/${subTab} 回傳格式未知錯誤。`;
+          console.warn(`fetchAndRenderDropdowns: 後端回應格式未知錯誤。`, result); // 新增日誌
+        }
+        // END: 調整錯誤訊息
+        return;
+      }
+    }
 
     // 如果 dropdownsToRender 陣列為空
     if (!dropdownsToRender || dropdownsToRender.length === 0) {
       showMessage(`無 ${mainTab}/${subTab} 的下拉選單選項。`, 'error');
-	  //hexDisplay.textContent = `無 ${mainTab}/${subTab} 的下拉選單選項。`; // 這就是您看到的訊息
       console.log(`fetchAndRenderDropdowns: 後端回傳的下拉選單配置為空。`); // 新增日誌
       return;
     }
@@ -727,62 +751,58 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
         dropdownConfig.options,
         currentDataForDropdown || dropdownConfig.defaultValue, // 優先使用當前資料，否則使用後端提供的預設值
         selected => {
-          if (!isProfileDropdown) { 
+          if (isProfileDropdown) {
+            if (selected.value === "") return; // 使用者還沒有選到真實的東西.
+            // profile 路由：呼叫後端拉詳細資料更新整個 JSON
+            fetch(`/api/profile/detail/${selected.value}`)
+            .then(res => {
+              if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
+                return res.json();
+            })
+            .then(profileData => {
+              if (globalParsedData && globalParsedData[mainTab]) {
+                globalParsedData[mainTab][subTab] = profileData;
+                updateMainContent(mainTab, subTab, true);	
+                console.log('Profile 詳細資料已更新到 globalParsedData:', profileData);
+              }
+            })
+            .catch(err => {
+              showMessage(`載入 Profile 詳細資料失敗：${err.message}`, 'error');
+              console.error('載入 Profile 詳細資料失敗', err);
+            });
+		  } else if (isScenarioDropdown) {
+            if (selected.value === "") return; // 使用者還沒有選到真實的東西.
+            // scenario 路由：呼叫後端拉詳細資料更新整個 JSON
+            fetch(`/api/scenario/detail/${selected.value}`)
+            .then(res => {
+              if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
+                return res.json();
+            })
+            .then(scenarioData => {
+              if (globalParsedData && globalParsedData[mainTab]) {
+                globalParsedData[mainTab][subTab] = scenarioData;
+                updateMainContent(mainTab, subTab, true);	
+                console.log('Scenario 詳細資料已更新到 globalParsedData:', scenarioData);
+              }
+            })
+            .catch(err => {
+              showMessage(`載入 Scenario 詳細資料失敗：${err.message}`, 'error');
+              console.error('載入 Scenario 詳細資料失敗', err);
+            });
+		  } else {
             // 更新 globalParsedData 中對應的值
             if (globalParsedData && globalParsedData[mainTab] && globalParsedData[mainTab][subTab]) {
                 globalParsedData[mainTab][subTab][dropdownConfig.dataKey] = selected.value;
 				globalParsedData[mainTab][subTab][dropdownConfig.labelKey] = selected.label;
 				
                 // 同步更新 main-content 顯示的 JSON
-                const mainContent = document.getElementById('main-content');
-                mainContent.textContent = JSON.stringify(
-                    globalParsedData[mainTab][subTab],
-                    (key, value) => key.startsWith('!') ? undefined : value,
-                    2
-                );
-                // 觸發自動儲存
-                if (autoSaveTimer) clearTimeout(autoSaveTimer);
-                autoSaveTimer = setTimeout(() => {
-                    autoSaveData();
-                }, 500);
+				updateMainContent(mainTab, subTab, true);
                 console.log(`下拉選單值已更新到 globalParsedData: ${mainTab}/${subTab}/${dropdownConfig.dataKey} =`, selected); // 新增日誌
             } else {
                 console.warn('無法更新 globalParsedData，因為路徑不存在。'); // 新增日誌
             }
-		  } else {
-            if (selected.value === "") return; // 使用者還沒有選到真實的東西.
-            // profile 路由：呼叫後端拉詳細資料更新整個 JSON
-			fetch(`/api/profile/detail/${selected.value}`)
-              .then(res => {
-                if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
-                return res.json();
-              })
-			  .then(profileData => {
-                if (globalParsedData && globalParsedData[mainTab]) {
-                  globalParsedData[mainTab][subTab] = profileData;
-
-                  const mainContent = document.getElementById('main-content');
-                  mainContent.textContent = JSON.stringify(
-                    profileData,
-                    (key, value) => key.startsWith('!') ? undefined : value,
-                    2
-                  );
-
-                  // 可以加自動儲存等其他行為
-                  if (autoSaveTimer) clearTimeout(autoSaveTimer);
-                  autoSaveTimer = setTimeout(() => {
-                    autoSaveData();
-                  }, 500);
-
-                  console.log('Profile 詳細資料已更新到 globalParsedData:', profileData);
-                }
-              })
-			  .catch(err => {
-                showMessage(`載入 Profile 詳細資料失敗：${err.message}`, 'error');
-                console.error('載入 Profile 詳細資料失敗', err);
-              });
-          }
-        }
+		  }
+		}
       );
 
       slot.appendChild(label);
