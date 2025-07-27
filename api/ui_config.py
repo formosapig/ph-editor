@@ -219,7 +219,7 @@ def get_backstage_options():
 
     dropdowns.append(
         {
-            "displayLabel": "內在特質(陰影)",
+            "displayLabel": "內隱特質(陰影)",
             "dataKey": "!shadow_code",
             "labelKey": "shadow",
             "options": color_options,

@@ -210,15 +210,15 @@ button.active {
 /* 勾選框 */
 .checkmark {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 2px;
+  left: 2px;
   font-size: 28px;
   color: transparent;
   text-shadow: 0 0 0 rgba(0,0,0,0);
   user-select: none;
   transition: color 0.15s ease;
   pointer-events: none;
-  z-index: 6; /* 加上這行！ */
+  z-index: 12; /* 加上這行！ */
 }
 .thumb-container.selected .checkmark {
   color: #2ecc71; /* 綠色 */
@@ -227,14 +227,14 @@ button.active {
 }
 .profile-badge {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  bottom: 3px;
+  left: 3px;
   background-color: rgba(255, 222, 150, 0.85); /* 溫和亮黃 */
   color: #3b2a00;
   font-size: 14px;
   font-weight: bold;
-  padding: 2px 5px;
-  border: 2px solid rgba(170, 150, 100, 0.80);
+  padding: 3px 6px;
+  border: 2px solid rgba(60, 40, 0, 0.80);
   border-radius: 5px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -247,7 +247,7 @@ button.active {
 }
 .tag-label {
     position: absolute;
-    top: 4px; /* 保持距離頂部 */
+    bottom: 4px; /* 保持距離頂部 */
     right: 4px; /* 調整為 4px，稍微與左邊界對齊 */
     padding: 2px 5px; /* 稍微縮小 padding */
     border-radius: 4px;
@@ -261,16 +261,16 @@ button.active {
 }
 .scenario-badge {
   position: absolute;
-  bottom: 0;
+  top: -4px;
   left: 50%;
-  transform: translateX(-50%) translateY(50%);
-  background-color: rgba(170, 210, 170, 0.85); /* 淡草綠，霧面感 */
+  transform: translateX(-50%);
+  background-color: rgba(175, 215, 175, 0.85); /* 淡草綠，霧面感 */
   color: #3b2a00; /* 深棕字體，統一風格 */
   font-size: 15px;
   font-weight: bold;
-  padding: 4px 6px; /* 不對稱 padding，較自然 */
-  border: 2px solid rgba(100, 140, 100, 0.8); /* 帶點青綠金屬感 */
-  border-radius: 12px 3px 12px 3px; /* 左上圓弧、右下切角 */
+  padding: 4px 8px; /* 不對稱 padding，較自然 */
+  border: 2px solid rgba(110, 150, 110, 0.8); /* 帶點青綠金屬感 */
+  border-radius: 0px 0px 0px 0px; /* 左上圓弧、右下切角 */
   text-shadow: none;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.25);
   pointer-events: none;

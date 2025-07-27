@@ -9,9 +9,9 @@ from flask import (
 )
 
 # get_character_data 會處理延遲解析邏輯
-from core.shared_data import update_global_general_data  # 新增這個 function
 from core.shared_data import (
     get_global_general_data,
+    update_global_general_data,
 )
 
 general_bp = Blueprint("general_bp", __name__)

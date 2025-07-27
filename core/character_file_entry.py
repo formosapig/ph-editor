@@ -1,6 +1,7 @@
 # ph-editor/core/character_file_entry.py
 import logging
 import os
+import hashlib
 
 from .character_data import CharacterData
 from .file_constants import PLAYHOME_MARKER
@@ -13,6 +14,7 @@ class CharacterFileEntry:
     """
     封裝單一角色檔案資訊，包含角色 ID、完整檔案路徑、角色資料，以及快取的元數據。
     """
+    #_sha256_map = {}
 
     def __init__(
         self, file_id: str, scan_path: str, character_data: CharacterData
@@ -45,7 +47,8 @@ class CharacterFileEntry:
             self.scenario_version = _get_int(story, "scenario", "!version")
             self.tag_id = _get_int(story, "backstage", "!tag_id")
         
-        logger.debug("\n" + repr(self))
+        #if not self.scenario_id is None:
+        #logger.debug("\n" + repr(self))
 
     def set_sync_flag(self, value: bool = True):
         self.sync_flag = value
@@ -157,6 +160,23 @@ class CharacterFileEntry:
             raise ValueError(f"檔案中未找到 PlayHome 標記：{file_path}")
 
         raw_data_with_marker = full_png_data[marker_start_pos:]
+
+        # 1. 對 raw_data_with_marker 做 sha256
+        #sha256_hash = hashlib.sha256(raw_data_with_marker).hexdigest()
+
+        # 2. 對一個 map 檢查 sha256，若存在時，dump 對應的 file_id
+        #if sha256_hash in cls._sha256_map:
+        #    existing_file_id = cls._sha256_map[sha256_hash]
+        #    logger.debug(f"{file_id} duplicate with {existing_file_id}")
+            # 你可以選擇在這裡拋出異常、跳過或返回現有的實例，
+            # 這裡只是打印消息並繼續處理，讓調用者決定如何應對重複。
+            # 如果你希望重複時直接停止或返回現有對象，請修改這裡。
+            # 例如：raise ValueError(f"檔案 {file_id} 與 {existing_file_id} 重複！")
+            # 或者：return cls._sha256_map[sha256_hash] # 如果你的map存的是CharacterFileEntry實例
+
+        #else:
+            # 3. 若沒有重複，將 (file_id, sha256) 存入 map
+        #    cls._sha256_map[sha256_hash] = file_id
 
         try:
             character_data_obj = CharacterData(raw_data_with_marker)

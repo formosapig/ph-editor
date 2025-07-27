@@ -152,7 +152,7 @@ window.app = {
   compareSelected() {
     if (this.selectedSet.length >= 2) {
       const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
-      window.location.href = `/compare?files=${files}`;
+      window.open(`/compare?files=${files}`, 'CompareSelectedFile');
     }
   },
   
@@ -171,13 +171,31 @@ window.app = {
       const data = await res.json();
       const results = data.results || [];
       
+      // 收集成功刪除的檔案 ID，以便後續更新響應式資料
+      const successfullyDeletedIds = [];
+
+      // 遍歷後端回傳的每個刪除結果
       results.forEach(r => {
+        // 如果刪除狀態是 'success'
         if (r.status === 'success') {
-          this.selectedSet.delete(r.filename.replace('.png', ''));
-          this.allImages = this.allImages.filter(img => img.id !== r.filename.replace('.png', ''));
-          this.displayedImages = this.displayedImages.filter(img => img.id !== r.filename.replace('.png', ''));
+          const deletedId = r.filename.replace('.png', ''); // 取得被刪除的檔案 ID
+          successfullyDeletedIds.push(deletedId); // 將成功刪除的 ID 加入列表
+        } else {
+          // 如果刪除失敗，可以考慮在這裡給使用者一些提示
+          console.warn(`檔案 ${r.filename} 刪除失敗: ${r.message || '未知錯誤'}`);
         }
       });
+
+      // --- 更新響應式資料 ---
+      // 使用 filter 篩選掉所有已成功刪除的 ID
+      this.selectedSet = this.selectedSet.filter(id => !successfullyDeletedIds.includes(id));
+
+      // 更新 allImages：保留那些 ID 不在 successfullyDeletedIds 裡的圖片
+      this.allImages = this.allImages.filter(img => !successfullyDeletedIds.includes(img.id));
+
+      // 更新 displayedImages：保留那些 ID 不在 successfullyDeletedIds 裡的圖片
+      this.displayedImages = this.displayedImages.filter(img => !successfullyDeletedIds.includes(img.id));
+
     } catch (err) {
       alert('刪除失敗');
       console.error(err);
@@ -193,7 +211,6 @@ window.app = {
   },
   
   toggleSelect(id, event) {
-    event.stopPropagation();
     const index = this.selectedSet.indexOf(id);
     if (index !== -1) {
       this.selectedSet.splice(index, 1);
@@ -204,10 +221,12 @@ window.app = {
 
   
   handleGalleryClick(event) {
-    if (event.target === event.currentTarget || event.ctrlKey || event.metaKey) {
-      const shouldSelectAll = event.target !== event.currentTarget;
-      
-      if (shouldSelectAll) {
+    const isBlankClick = event.target === event.currentTarget;
+	const isCtrlPressed = event.ctrlKey || event.metaKey;
+	if (isCtrlPressed || isBlankClick) {
+	  const shouldSelectAll = !isBlankClick;
+
+	  if (shouldSelectAll) {
         this.displayedImages.forEach(item => {
           if (!this.selectedSet.includes(item.id)) {
             this.selectedSet.push(item.id);
@@ -216,7 +235,7 @@ window.app = {
       } else {
         this.selectedSet = [];
       }
-    }
+	}
   },
   
   getTagStyle(tagStyleKey) {

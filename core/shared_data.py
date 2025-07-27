@@ -10,7 +10,7 @@ from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
 
 logger = logging.getLogger(__name__)
-#logger.disabled = True
+logger.disabled = True
 
 # 全域字典，儲存所有載入的角色檔案數據
 # Key: FILE_ID, 角色檔案的 ID (通常是檔名，不含路徑)
@@ -353,6 +353,9 @@ def is_data_changed_without_version(
     # 去除 !version 欄位
     def strip_version(data: Dict[str, Any]) -> Dict[str, Any]:
         return {k: v for k, v in data.items() if k != "!version"}
+
+    logger.debug(f"current: {strip_version(current_data)}")
+    logger.debug(f"updated: {strip_version(updated_data)}")
 
     # 比較是否相同
     if strip_version(current_data) != strip_version(updated_data):
@@ -757,13 +760,13 @@ def update_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
                     return False
 
         # 更新 scenario_map 並升級版本
-        updated = updated_profile.copy()
+        updated = updated_scenario.copy()
         current_version = current_scenario.get("!version", 0) if current_scenario else 0
         updated["!version"] = current_version + 1
         scenario_map[updated_scenario_id] = updated
 
         # 設定角色的 profile_version
-        character_file_entry_obj.profile_version = updated["!version"]
+        character_file_entry_obj.scenario_version = updated["!version"]
 
     # 執行同步邏輯（放 lock 外）
     sync_scenario_to_characters(updated_scenario_id, updated)

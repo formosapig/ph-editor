@@ -29,6 +29,7 @@ from core.shared_data import (
     dump_all_data,  # debug use.
 )
 from core.user_config_manager import UserConfigManager
+from web.compare_bp import compare_bp
 from web.edit_bp import edit_bp
 from web.general_bp import general_bp
 
@@ -41,6 +42,7 @@ app = Flask(__name__, template_folder='templates')
 app.jinja_env.variable_start_string = '[['
 app.jinja_env.variable_end_string = ']]'
 
+app.register_blueprint(compare_bp)
 app.register_blueprint(edit_bp)
 app.register_blueprint(general_bp)
 app.register_blueprint(api_character_bp)
@@ -176,13 +178,13 @@ def scan_folder():
 
                 # 將資料整理好放進 character_list
                 profile_name = get_profile_name(file_id)
-                logger.debug(f"PROFILE NAME = {profile_name}")
+                #logger.debug(f"PROFILE NAME = {profile_name}")
                 
                 scenario_title = get_scenario_title(file_id)
-                logger.debug(f"SCENARIO TITLE = {scenario_title}")
+                #logger.debug(f"SCENARIO TITLE = {scenario_title}")
 
                 tag_style, tag_name = process_tag_info(file_id)
-                logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
+                #logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
 
                 character_list.append(
                     {
@@ -211,7 +213,7 @@ def scan_folder():
         }
 
     # 3. dump all data 資料
-    dump_all_data()
+    # dump_all_data()
 
     logger.debug(
         f"掃描完成。總計處理 {len(thumbnails)} 個檔案，成功載入 {loaded_character_count} 個角色數據。"
@@ -260,6 +262,7 @@ def delete_files():
     results = []
     for filename_to_delete in filenames_to_delete:
         full_path_original = os.path.join(scan_path, filename_to_delete)
+        logger.debug(f"Delete {full_path_original}")
         try:
             if os.path.exists(full_path_original):
                 os.remove(full_path_original)
