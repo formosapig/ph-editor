@@ -93,14 +93,14 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
                 "main_color": _format_color_for_json(_read_color(stream)),
                 # 主色光澤
                 "main_shine": _format_color_for_json(_read_color(stream)),
-                "main_shine_strength": _format_float_to_percentage(_read_float(stream)),
-                "main_shine_texture": _format_float_to_percentage(_read_float(stream)),
+                "main_strength": _format_float_to_percentage(_read_float(stream)),
+                "main_texture": _format_float_to_percentage(_read_float(stream)),
                 # 輔色
                 "sub_color": _format_color_for_json(_read_color(stream)),
                 # 輔色光澤
-                "sub_shine_color": _format_color_for_json(_read_color(stream)),
-                "sub_shine_strength": _format_float_to_percentage(_read_float(stream)),
-                "sub_shine_texture": _format_float_to_percentage(_read_float(stream)),
+                "sub_shine": _format_color_for_json(_read_color(stream)),
+                "sub_strength": _format_float_to_percentage(_read_float(stream)),
+                "sub_texture": _format_float_to_percentage(_read_float(stream)),
             }
         )
 

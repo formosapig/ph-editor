@@ -61,13 +61,13 @@ def serialize_clothing_item(
             print(f"        [Offset: {stream.tell()}] Serializing color data.")
         stream.write(_pack_color(item_data.get("main_color", "(0, 0, 0, 255)")))
         stream.write(_pack_color(item_data.get("main_shine", "(0, 0, 0, 0)")))
-        stream.write(_parse_and_pack_float(item_data.get("main_shine_strength", 0)))
-        stream.write(_parse_and_pack_float(item_data.get("main_shine_texture", 0)))
+        stream.write(_parse_and_pack_float(item_data.get("main_strength", 0)))
+        stream.write(_parse_and_pack_float(item_data.get("main_texture", 0)))
 
         stream.write(_pack_color(item_data.get("sub_color", "(0, 0, 0, 255)")))
-        stream.write(_pack_color(item_data.get("sub_shine_color", "(0, 0, 0, 0)")))
-        stream.write(_parse_and_pack_float(item_data.get("sub_shine_strength", 0)))
-        stream.write(_parse_and_pack_float(item_data.get("sub_shine_texture", 0)))
+        stream.write(_pack_color(item_data.get("sub_shine", "(0, 0, 0, 0)")))
+        stream.write(_parse_and_pack_float(item_data.get("sub_strength", 0)))
+        stream.write(_parse_and_pack_float(item_data.get("sub_texture", 0)))
 
     # 泳裝的 option flags 在 parse 時會加入，序列化時不需要特別處理，因為它們會從後面的 1 byte 讀取
 
