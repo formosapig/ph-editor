@@ -40,6 +40,12 @@ from compare.clothing import (
     flatten_clothing_data,
 )
 
+from compare.accessory import (
+    ACCESSORY_KEY_NAME_MAP,
+    ACCESSORY_KEY_BLOCK_MAP,
+    flatten_accessory_data,
+)
+
 import random
 import string
 import json
@@ -88,6 +94,7 @@ def compare():
                 final_flat_data.update(flatten_face_data(raw_character_data))
                 final_flat_data.update(flatten_body_data(raw_character_data))
                 final_flat_data.update(flatten_clothing_data(raw_character_data))
+                final_flat_data.update(flatten_accessory_data(raw_character_data))
 
                 selected_characters_processed.append(final_flat_data)
 
@@ -104,6 +111,7 @@ def compare():
     ALL_KEY_NAME_MAP.update(FACE_KEY_NAME_MAP)
     ALL_KEY_NAME_MAP.update(BODY_KEY_NAME_MAP)
     ALL_KEY_NAME_MAP.update(CLOTHING_KEY_NAME_MAP)
+    ALL_KEY_NAME_MAP.update(ACCESSORY_KEY_NAME_MAP)
     
     ALL_KEY_BLOCK_MAP = {}
     ALL_KEY_BLOCK_MAP.update(BASIC_KEY_BLOCK_MAP)
@@ -111,6 +119,7 @@ def compare():
     ALL_KEY_BLOCK_MAP.update(FACE_KEY_BLOCK_MAP)
     ALL_KEY_BLOCK_MAP.update(BODY_KEY_BLOCK_MAP)
     ALL_KEY_BLOCK_MAP.update(CLOTHING_KEY_BLOCK_MAP)
+    ALL_KEY_BLOCK_MAP.update(ACCESSORY_KEY_BLOCK_MAP)
         
     attributes_list = list(ALL_KEY_NAME_MAP.keys())
 
