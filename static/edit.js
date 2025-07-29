@@ -536,9 +536,17 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
   options.forEach(opt => {
     const option = document.createElement('option');
     // 將 value 序列化為 JSON 字串，以便在 option.value 中儲存複雜物件
+    // 如果 opt.value 已經是簡單值 (string, number)，則不需要 JSON.stringify
+    // 這裡假設 opt.value 可能會是物件，所以保留 JSON.stringify
     option.value = JSON.stringify(opt.value);
     option.textContent = opt.label;
-    
+
+    // *** 新增的 disabled 邏輯 ***
+    // 檢查 opt 物件中是否有 disabled 屬性且其值為 true
+    if (opt.disabled === true) {
+        option.disabled = true;
+    }
+
     // 比較 defaultValue 和 opt.value，如果相同則選中
     // 處理 defaultValue 可能是物件或簡單值的情況
     if (typeof defaultValue === 'object' && defaultValue !== null) {
@@ -546,8 +554,10 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
             option.selected = true;
         }
     } else {
-        if (opt.value === defaultValue) {
-            option.selected = true;
+        // 當 opt.value 是物件時，即使 defaultValue 是簡單值，也需要比較其序列化後的結果
+        // 假設 defaultValue 也是簡單值，或者 opt.value 會被正確轉換
+        if (JSON.stringify(opt.value) === JSON.stringify(defaultValue)) {
+             option.selected = true;
         }
     }
     select.appendChild(option);

@@ -166,16 +166,33 @@ def get_backstage_options():
     tag_list = general_data.get("tag_list", [])
     tag_type_map = general_data.get("tag_styles", {})
 
+    default_tag_id = tag_list[0].get("id") if tag_list and tag_list[0].get("id") is not None else ""
+
     tag_options = []
+    processed_tag_types = set() # 用來追蹤已經處理過的 tag_type，避免重複添加標題
+
     for tag in tag_list:
         tag_type = tag.get("type", "")
         tag_type_name = (
             tag_type_map.get(tag_type, {}).get("name", {}).get("zh", tag_type)
         )
         tag_name = tag.get("name", {}).get("zh", f"id:{tag.get('id')}")
-        label = f"{tag_type_name}-{tag_name}"
 
-        tag_options.append({"label": label, "value": tag.get("id")})
+        # 1. 檢查是否已經添加過該 tag_type 的標題
+        if tag_type not in processed_tag_types:
+            # 添加 tag_type_name 作為一個不可選的選項 (標題)
+            tag_options.append({
+                "label": f"🗃️️{tag_type_name}",
+                "value": "",
+                "disabled": True
+            })
+            processed_tag_types.add(tag_type)
+
+        # 2. 添加 tag_name 作為可選選項
+        tag_options.append({
+            "label": tag_name,
+            "value": tag.get("id")
+        })
 
     dropdowns.append(
         {
@@ -183,7 +200,7 @@ def get_backstage_options():
             "dataKey": "!tag_id",
             "labelKey": "tag",
             "options": tag_options,
-            "defaultValue": "",
+            "defaultValue": default_tag_id,
         }
     )
 
