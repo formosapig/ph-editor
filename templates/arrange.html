@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色屬性一覽表</title>
+    <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Noto+Sans+TC:wght@100..900&display=swap');
+	table {
+    border-collapse: collapse;
+    table-layout: auto; /* 使用 auto，讓表格根據內容自動調整寬度 */
+	font-family: "Fira Code", "Noto Sans TC", verdana;
+}
+
+/* 給標題 (thead) 的底部加粗邊框 */
+thead {
+    border-bottom: 3px solid #999; /* 3px 粗的實線，顏色為深灰色 */
+}
+
+th, td {
+    border: 1px solid #999;
+    padding: 2px 8px;
+    text-align: center; /* **改動：所有內容置中** */
+    white-space: nowrap; /* 確保內容不換行，這是產生水平捲軸的關鍵之一 */
+    min-width: 40px; /* 給予每個欄位一個最小寬度，防止內容過度壓縮 */
+	/* 垂直佈局時使用 */
+	/*max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;*/
+	
+}
+
+th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-weight: bold; /* **改動：欄位標題粗體** */
+	font-size: 16px;
+}
+
+td { /* **新增或修改：為 td 單獨設定字體大小** */
+    font-size: 14px; /* **改動：內容字體大小設定為 12px (比 14px 更小)** */
+}
+
+.file-id-col {
+    position: sticky;
+    left: 0;
+    background-color: #d9d9d9; /* **確保背景色，避免捲動時內容透出** */
+    z-index: 15; /* **改動：增加 z-index，確保固定欄位在捲動內容之上** */
+    min-width: 120px; /* 固定欄位可以給予一個更明確的最小寬度 */
+    font-weight: bold; /* **改動：第一欄所有列的資料粗體** */
+    text-align: center; /* **改動：第一欄的資料置中 (如果其他欄也置中，這個可以省略)** */
+}
+
+/* 調整整個 file-id-col 讓內容垂直居中 */
+.file-id-col {
+    text-align: left;
+    white-space: nowrap; /* 防止縮圖和文字換行 */
+    padding: 4px 8px; /* 調整內邊距，為縮圖留空間 */
+    /* ... 之前設定的背景色、邊框等 ... */
+	position: sticky;
+    left: 0;
+    background-color: #d9d9d9; /* **確保背景色，避免捲動時內容透出** */
+    z-index: 15; /* **改動：增加 z-index，確保固定欄位在捲動內容之上** */
+    min-width: 120px; /* 固定欄位可以給予一個更明確的最小寬度 */
+    font-weight: bold; /* **改動：第一欄所有列的資料粗體** */
+    text-align: center; /* **改動：第一欄的資料置中 (如果其他欄也置中，這個可以省略)** */
+}
+
+/* 讓連結內的內容能 Flex 排列，方便縮圖和文字對齊 */
+.file-id-link-content {
+    display: flex; /* 使用 Flexbox 布局 */
+    align-items: center; /* 垂直居中對齊 */
+    height: 100%; /* 讓 a 元素佔滿 td 的高度 */
+    text-decoration: none; /* 通常連結的底線會移掉，視覺上更乾淨 */
+    color: inherit; /* 繼承父元素的顏色，或者設定你想要的連結顏色 */
+}
+
+/* 縮圖樣式 */
+.file-id-thumbnail {
+    height: 22px; /* 固定縮圖高度，你可以根據你的表格行高調整 */
+    width: auto; /* 寬度自動調整，保持圖片比例 */
+    object-fit: contain; /* 確保圖片內容完整顯示在框內 */
+    border-radius: 4px; /* 輕微圓角效果 */
+    margin-right: 8px; /* 縮圖與文字之間的間距 */
+    border: 1px solid #eee; /* 給縮圖一個淺邊框，避免圖片與背景融為一體 */
+    flex-shrink: 0; /* 防止縮圖在空間不足時被壓縮 */
+}
+
+/* 截斷文字樣式 (可選，但讓截斷的文字更清晰) */
+.truncated-file-id {
+    font-family: monospace; /* 可選：使用等寬字體讓 file_id 更清晰 */
+    /* overflow: hidden; */ /* 這些已經由 JavaScript 截斷處理，CSS 負責顯示 */
+    /* text-overflow: ellipsis; */
+    /* white-space: nowrap; */
+}
+
+/* 如果圖片載入失敗，可以顯示一個佔位符或者隱藏它 */
+.file-id-thumbnail[src=""] { /* 圖片 src 為空 */
+    display: none;
+}
+.file-id-thumbnail:not([src]):before { /* 圖片沒有 src 屬性時 */
+    content: '無圖'; /* 顯示文字提示 */
+    display: block;
+    width: 22px;
+    height: 22px;
+    background-color: #f0f0f0;
+    text-align: center;
+    line-height: 32px;
+    font-size: 0.8em;
+    color: #999;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+.color-box {
+    display: inline-block; /* 讓 <span> 可以設定寬高，並與文字在同一行 */
+    width: 20px;          /* 色塊的寬度 */
+    height: 20px;         /* 色塊的高度 */
+    border: 1px solid #ccc; /* 淺灰色邊框，讓色塊更明顯 */
+    vertical-align: middle; /* 讓色塊與旁邊的文字垂直居中對齊 */
+    margin-right: 5px;    /* 色塊與文字之間的間距 */
+    box-sizing: border-box; /* 確保 padding 和 border 不會增加總寬高 */
+    flex-shrink: 0;       /* 在 flex 容器中防止被壓縮 */
+}
+
+.table-container {
+    max-height: 90vh; /* 容器最大高度，啟用垂直捲軸 */
+    overflow-y: auto; /* 啟用垂直捲軸 */
+    overflow-x: auto; /* 啟用水平捲軸 */
+    width: 100%; /* 容器寬度佔滿父容器 */
+	margin-top: 40px;
+}
+
+.basic-data-cell {
+  background-color: #ead1dc; /* 淺紅 */
+  background-color: #d9ead3; /* 綠 */
+  background-color: #d9d2e9; /* 淺紫 */
+}
+
+.hair-data-cell {
+  background-color: #c9daf8; /* 淺藍 */
+}
+
+.face-data-cell {
+  background-color: #f4cccc; /* 淺紅 */
+}
+
+.body-data-cell {
+  background-color: #fce5cd; /* 淺黃 */
+}
+
+.clothing-data-cell {
+  background-color: #d9ead3; /* 淺綠 */
+}
+
+.accessory-data-cell {
+  background-color: #d0e0e3;
+}
+
+[v-cloak] {
+  display: none;
+}
+</style>
+</head>
+<body>
+    <script>
+  window.compareData = {
+    characters: [[ characters | tojson ]],
+    attributes: [[ attributes | tojson ]],
+    attrNameMap: [[ attribute_name_map | tojson ]],
+	attrBlockMap: [[ attribute_block_map | tojson ]],
+	// 新增一個計算屬性或直接過濾
+    get displayAttributes() {
+      return this.attributes.filter(attr => attr !== 'file_id');
+    },
+	// **新增的函式：用於開啟編輯視窗**
+    openEditWindow(fileId) {
+        const windowName = `edit_file_${fileId}`;
+        // 使用 window.open 開啟新視窗，並傳遞 file_id
+        window.open(`/edit?file_id=${encodeURIComponent(fileId)}`, windowName);
+    },
+	// **新增：獲取屬性區塊 class 的函式**
+    getAttributeBlockClass(attr) {
+        const blockType = this.attrBlockMap[attr];
+        if (blockType) {
+            return `${blockType}-data-cell`; // 返回對應的 class 名稱
+        }
+        return ''; // 如果沒有定義，返回空字串
+    },
+	// 檢查色塊,只接受 #RRGGBBAA
+	isCssColor(value) {
+      if (typeof value !== 'string' || value.trim() === '') {
+        return false; // 不是字串或空字串，直接返回 false
+      }
+        
+      const trimmedValue = value.trim();
+
+      // **僅檢查 #RRGGBBAA 格式的正規表達式**
+      // ^# : 匹配字串開頭的 '#'
+      // [0-9A-Fa-f]{8} : 匹配 8 個十六進位字元 (0-9, A-F, a-f)
+      // $ : 匹配字串的結尾
+      if (/^#[0-9A-Fa-f]{8}$/.test(trimmedValue)) {
+        return true;
+      }
+
+      return false; // 不符合 #RRGGBBAA 格式
+	},
+	// 縮檔名
+	truncateFileId(fileId) {
+        const maxLength = 16; // 設定你希望顯示的最大長度
+        if (!fileId || typeof fileId !== 'string') {
+            return '-'; // 如果 fileId 無效或不是字串，顯示 '-'
+        }
+        if (fileId.length > maxLength) {
+            return fileId.substring(0, maxLength) + '...'; // 截斷並加上省略號
+        }
+        return fileId; // 不足長度則完整顯示
+    },
+  };
+</script>
+
+<script defer>
+  window.addEventListener('DOMContentLoaded', () => {
+    PetiteVue.createApp(window.compareData).mount('[v-scope]');
+  });
+</script>
+
+<div class="table-container" v-scope v-cloak>
+  <table>
+    <thead>
+      <tr>
+        <th class="file-id-col">{{ attrNameMap['file_id'] || 'file_id' }}</th>
+        <th v-for="attr in displayAttributes" :key="attr"
+		  :class="getAttributeBlockClass(attr)">
+          {{ attrNameMap[attr] || attr }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="char in characters" :key="char.file_id">
+        <td class="file-id-col">
+		  <a :href="`/edit?file_id=${encodeURIComponent(char.file_id)}`" 
+             :target="`edit_file_${char.file_id}`"
+             @click.prevent="openEditWindow(char.file_id)"
+             class="file-id-link-content">
+            <img :src="`/cache/thumb_${char.file_id}.jpg`" alt="角色縮圖"
+			     class="file-id-thumbnail"
+                 draggable="false">
+            <span class="truncated-file-id">  
+              {{ truncateFileId(char.file_id) }}
+			</span>  	
+          </a>
+		</td>
+        <td v-for="attr in displayAttributes" :key="attr"
+		  :class="getAttributeBlockClass(attr)">
+		  <template v-if="isCssColor(char[attr])">
+		    <span class="color-box" :style="{ backgroundColor: char[attr] }"></span>
+          </template>
+		  <template v-else>
+            {{ char[attr] != null ? char[attr] : '-' }}
+          </template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!--
+<div class="table-container" v-scope v-cloak>
+  <table>
+    <thead>
+      <tr>
+        <th>屬性名稱</th>
+        <th v-for="char in characters" :key="char.file_id"
+            class="file-id-col">
+          <a :href="`/edit?file_id=${encodeURIComponent(char.file_id)}`"
+             :target="`edit_file_${char.file_id}`"
+             @click.prevent="openEditWindow(char.file_id)"
+             class="file-id-link-content">
+            <img :src="`/cache/thumb_${char.file_id}.jpg`"
+                 class="file-id-thumbnail" alt="角色縮圖" draggable="false">
+            <span class="truncated-file-id">{{ truncateFileId(char.file_id) }}</span>
+          </a>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="attr in displayAttributes" :key="attr">
+        <td :class="getAttributeBlockClass(attr)">
+          {{ attrNameMap[attr] || attr }}
+        </td>
+        <td v-for="char in characters" :key="char.file_id"
+            :class="getAttributeBlockClass(attr)">
+          <template v-if="isCssColor(char[attr])">
+            <span class="color-box" :style="{ backgroundColor: char[attr] }"></span>
+          </template>
+          <template v-else>
+            {{ char[attr] != null ? char[attr] : '-' }}
+          </template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+-->
+</body>
+</html>

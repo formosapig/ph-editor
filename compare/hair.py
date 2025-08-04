@@ -4,24 +4,14 @@ from typing import Dict, Any
 from utils.utils import get_nested_value, convert_rgba_to_hex_aa
 
 HAIR_KEY_NAME_MAP = {
-    
-    # 共同資料段...
     # back_hair
-    "bh_name": "後髮",
+    "bh_name": "🏷️後髮",
     # front_hair
-    "fh_name": "前髮",
+    "fh_name": "🏷️前髮",
     # side_hair
-    "sh_name": "側髮",
+    "sh_name": "🏷️側髮",
     # hair main color
     "h_color": "髮色",
-    # hair shine color 1
-    "h_shine1": "光澤1",
-    # back_hair.shine1_effect
-    "h_effect1": "絞",
-    # hair shine color 2
-    "h_shine2": "光澤2",
-    # back_hari.shine2_effect
-    "h_effect2": "絞",
 }
 
 HAIR_KEY_BLOCK_MAP = {key: 'hair' for key in HAIR_KEY_NAME_MAP}
@@ -38,25 +28,17 @@ def flatten_hair_data(d: Dict[str, Any]) -> Dict[str, Any]:
     # side_hair
     result["sh_name"] = get_nested_value(d, "hair.side_hair.#name", "")
 
-    # hair main color
-    result["h_color"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "hair.back_hair.color", "")
+    temp_results = {
+        "h_color": convert_rgba_to_hex_aa(get_nested_value(d, "hair.back_hair.color", "")),
+        "h_shine1": convert_rgba_to_hex_aa(get_nested_value(d, "hair.back_hair.shine1_color", "")),
+        "h_effect1": get_nested_value(d, "hair.back_hair.shine1_effect", 0),
+        "h_shine2": convert_rgba_to_hex_aa(get_nested_value(d, "hair.back_hair.shine2_color", "")),
+        "h_effect2": get_nested_value(d, "hair.back_hair.shine2_effect", 0)
+    }
+
+    result["h_color"] = (
+        f"{temp_results['h_color']} {temp_results['h_shine1']} {temp_results['h_effect1']} "
+        f"{temp_results['h_shine2']} {temp_results['h_effect2']}"
     )
-
-    # hair shine color 1
-    result["h_shine1"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "hair.back_hair.shine1_color", "")
-    )
-
-    # back_hair.shine1_effect
-    result["h_effect1"] = get_nested_value(d, "hair.back_hair.shine1_effect", 0)
-
-    # hair shine color 2
-    result["h_shine2"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "hair.back_hair.shine2_color", "")
-    )
-
-    # back_hari.shine2_effect
-    result["h_effect2"] = get_nested_value(d, "hair.back_hair.shine2_effect", 0)
-
+    
     return result

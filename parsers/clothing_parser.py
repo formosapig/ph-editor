@@ -58,7 +58,7 @@ def parse_clothing_item(stream: BytesIO, slot: str, debug_mode: bool = False) ->
     # 讀取 ID 跟 extra, 並且取得名稱
     slotIdx = _read_int32(stream)
     item_id = _read_int32(stream)
-    color_flag = _read_int32(stream)
+    color_flag = _read_int32(stream) # 只有 0 / 3 3 的時候附加顏色設定...但不一定有效.
 
     global disable_dict
 

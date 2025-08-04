@@ -29,6 +29,7 @@ from core.shared_data import (
     dump_all_data,  # debug use.
 )
 from core.user_config_manager import UserConfigManager
+from web.arrange_bp import arrange_bp
 from web.compare_bp import compare_bp
 from web.edit_bp import edit_bp
 from web.general_bp import general_bp
@@ -42,6 +43,7 @@ app = Flask(__name__, template_folder='templates')
 app.jinja_env.variable_start_string = '[['
 app.jinja_env.variable_end_string = ']]'
 
+app.register_blueprint(arrange_bp)
 app.register_blueprint(compare_bp)
 app.register_blueprint(edit_bp)
 app.register_blueprint(general_bp)

@@ -1,0 +1,133 @@
+table {
+  border-collapse: collapse;
+  table-layout: auto;
+  font-family: verdana;
+  user-select: none;
+  cursor: default;
+}
+
+thead {
+  border-bottom: 3px solid #999;
+}
+
+th, td {
+  border: 1px solid #999;
+  padding: 2px 8px;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 40px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px;
+}
+
+th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.file-id-col {
+  position: sticky;
+  left: 0;
+  background-color: #d9d9d9;
+  z-index: 15;
+  min-width: 120px;
+  font-weight: bold;
+  text-align: center;
+  white-space:nowrap;
+  padding: 4px 8px;
+}
+
+.file-id-link-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.file-id-thumbnail {
+    height: 66px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    margin-right: 8px;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.file-id-thumbnail[src=""] {
+    display: none;
+}
+
+.truncated-file-id {
+    font-family: monospace;
+	white-space: normal;
+	word-break: break-all;
+}
+
+.color-box {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ccc;
+  vertical-align: middle;
+  margin-right: 5px;
+  margin-left: 5px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.content-container {
+  display: flex; /* 使用 Flexbox */
+  justify-content: center; /* 水平置中 */
+  align-items: center; /* 垂直置中 */
+}
+
+.text-different {
+  outline: 1px solid red;     /* 明顯紅框 */
+  outline-offset: -3px;       /* 往內縮，不會撐大欄位 */
+}
+
+.table-container {
+  max-height: 90vh; /* 容器最大高度，啟用垂直捲軸 */
+  overflow-y: auto; /* 啟用垂直捲軸 */
+  overflow-x: auto; /* 啟用水平捲軸 */
+  width: 100%; /* 容器寬度佔滿父容器 */
+  margin-top: 40px;
+}
+
+.basic-data-cell {
+  background-color: #ead1dc; /* 淺紅 */
+  background-color: #d9ead3; /* 綠 */
+  background-color: #d9d2e9; /* 淺紫 */
+}
+
+.hair-data-cell {
+  background-color: #c9daf8; /* 淺藍 */
+}
+
+.face-data-cell {
+  background-color: #f4cccc; /* 淺紅 */
+}
+
+.body-data-cell {
+  background-color: #fce5cd; /* 淺黃 */
+}
+
+.clothing-data-cell {
+  background-color: #d9ead3; /* 淺綠 */
+}
+
+.accessory-data-cell {
+  background-color: #d0e0e3;
+}
+
+[v-cloak] {
+  display: none;
+}

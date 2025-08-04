@@ -5,7 +5,6 @@ from utils.utils import (
     get_nested_value,
     convert_rgba_to_hex_aa,
     format_attributes_to_string,
-    join_numbers_with_commas,
 )
 
 FACE_KEY_NAME_MAP = {
@@ -18,6 +17,8 @@ FACE_KEY_NAME_MAP = {
     "f_muscle": "肌肉",
     # 皺紋 wrinkle
     "f_wrinkle": "皺紋",
+    # 深度 overall.wrinkle_depth
+    "f_wri_dep": "深",
     
     # 耳朵 (ears.size, ears.angle_y, ears.angle_z, ears.upper_shape, ears.lower_shape)
     "f_ears": "🏷️耳朵",
@@ -98,7 +99,7 @@ def flatten_face_data(d: Dict[str, Any]) -> Dict[str, Any]:
     result = {}
     
     # 全體 (overall.over_width, upper_parth_depth, upper_part.height, lower_part_depth, lower_part_width)
-    result["f_overall"] = join_numbers_with_commas(
+    result["f_overall"] = format_attributes_to_string(
         get_nested_value(d, "face.overall.overall_width", -1),
         get_nested_value(d, "face.overall.upper_part_depth", -1),
         get_nested_value(d, "face.overall.upper_part_height", -1),
@@ -110,10 +111,9 @@ def flatten_face_data(d: Dict[str, Any]) -> Dict[str, Any]:
     # 肌肉 muscle
     result["f_muscle"] = get_nested_value(d, "face.overall.#muscle_name", "")
     # 皺紋 wrinkle
-    result["f_wrinkle"] = (
-        f"{get_nested_value(d, 'face.overall.#wrinkle_name', '')} "
-        f"{get_nested_value(d, 'face.overall.wrinkle_depth', -1)}"
-        )
+    result["f_wrinkle"] = get_nested_value(d, "face.overall.#wrinkle_name", "")
+    # 深度 overall.wrinkle_depth
+    result["f_wri_dep"] = get_nested_value(d, "face.overall.wrinkle_depth", -1)
 
     # 耳朵 (ears.size, ears.angle_y, ears.angle_x, ears.upper_shape, ears.lower_shape)
     result["f_ears"] = format_attributes_to_string(

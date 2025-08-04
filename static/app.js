@@ -156,6 +156,13 @@ window.app = {
     }
   },
   
+  arrangeSelected() {
+    if (this.selectedSet.length >= 2) {
+      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+      window.open(`/arrange?files=${files}`, 'ArrangeSelectedFile');
+    }
+  },
+  
   async deleteSelected() {
     if (this.selectedSet.length === 0 || !confirm('確定要刪除選取的圖片？')) return;
     

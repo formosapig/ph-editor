@@ -2,6 +2,7 @@
 import re
 from typing import Dict, Any, Optional
 
+
 def get_nested_value(
     data: Dict[str, Any],
     keys: str,
@@ -84,8 +85,21 @@ def format_attributes_to_string(*args):
     
     return ".".join(formatted_parts)
 
+
+def join_numbers_with_commas(*args):
+    """
+    將任意數量的數字用逗號分隔，轉為字串。
+
+    範例：
+    >>> join_numbers_with_commas(1, 20, 300)
+    '1,20,300'
+    """
+    return " ".join(str(int(num)) for num in args)
+    
+    
 def format_hsv_to_string(h, s, v):
     return f"({h},{s},{v})"
+    
     
 def format_hsva_to_string(h, s, v, a):
     return f"({h},{s},{v},{a})"

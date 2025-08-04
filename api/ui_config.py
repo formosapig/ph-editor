@@ -182,7 +182,7 @@ def get_backstage_options():
         if tag_type not in processed_tag_types:
             # 添加 tag_type_name 作為一個不可選的選項 (標題)
             tag_options.append({
-                "label": f"🗃️️{tag_type_name}",
+                "label": f"🗂️{tag_type_name}",
                 "value": "",
                 "disabled": True
             })
