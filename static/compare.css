@@ -16,10 +16,10 @@ th, td {
   text-align: center;
   white-space: nowrap;
   min-width: 40px;
-  max-width: 200px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 th {
@@ -28,7 +28,7 @@ th {
   top: 0;
   z-index: 10;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .file-id-col {
@@ -52,7 +52,7 @@ th {
 }
 
 .file-id-thumbnail {
-    height: 66px;
+    height: 44px;
     width: auto;
     object-fit: contain;
     border-radius: 4px;

@@ -44,7 +44,7 @@ def parse_accessory_item(
     accessory_slot = _read_int32(stream)
 
     part = {
-        "#info": f"【{get_type_name(accessory_type)}:{get_accessory_by_id(accessory_type, accessory_id)}】 -> {get_slot_name(accessory_slot)}",
+        "#info": f"[{get_slot_name(accessory_slot)}]→{get_type_name(accessory_type)}:{get_accessory_by_id(accessory_type, accessory_id)}",
         "type": accessory_type,
         "id": accessory_id,
         "slot": accessory_slot,

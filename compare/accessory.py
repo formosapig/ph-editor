@@ -32,15 +32,18 @@ ACCESSORY_KEY_BLOCK_MAP = {key: 'accessory' for key in ACCESSORY_KEY_NAME_MAP}
 def flatten_accessory_data(d: Dict[str, Any]) -> Dict[str, Any]:
     result = {}
     
-    result["a_01"] = get_nested_value(d, "accessory.accessory_01.#info", "")
-    result["a_02"] = get_nested_value(d, "accessory.accessory_02.#info", "")    
-    result["a_03"] = get_nested_value(d, "accessory.accessory_03.#info", "")
-    result["a_04"] = get_nested_value(d, "accessory.accessory_04.#info", "")
-    result["a_05"] = get_nested_value(d, "accessory.accessory_05.#info", "")
-    result["a_06"] = get_nested_value(d, "accessory.accessory_06.#info", "")
-    result["a_07"] = get_nested_value(d, "accessory.accessory_07.#info", "")
-    result["a_08"] = get_nested_value(d, "accessory.accessory_08.#info", "")
-    result["a_09"] = get_nested_value(d, "accessory.accessory_09.#info", "")
-    result["a_10"] = get_nested_value(d, "accessory.accessory_10.#info", "")
+    for i in range(1, 11):
+        item_key = f"a_{i:02d}"
+        accessory_key = f"accessory_{i:02d}"
+        
+        # 檢查 type, id, slot 是否存在或有效
+        # 如果其中一個不存在，就將 result[item_key] 設為空字串
+        if (get_nested_value(d, f"accessory.{accessory_key}.type", -1) == -1 or
+            get_nested_value(d, f"accessory.{accessory_key}.id", -1) == -1 or
+            get_nested_value(d, f"accessory.{accessory_key}.slot", -1) == -1):
+            result[item_key] = ""
+        else:
+            # 預設賦值，使用 get_nested_value 取得 #info
+            result[item_key] = get_nested_value(d, f"accessory.{accessory_key}.#info", "")
     
     return result

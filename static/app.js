@@ -149,17 +149,87 @@ window.app = {
     }
   },
   
-  compareSelected() {
-    if (this.selectedSet.length >= 2) {
-      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
-      window.open(`/compare?files=${files}`, 'CompareSelectedFile');
+  async renameSelected() {
+    if (this.selectedSet.length !== 1) {
+      alert('請選擇一個檔案進行重新命名。');
+      return;
     }
-  },
-  
-  arrangeSelected() {
-    if (this.selectedSet.length >= 2) {
-      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
-      window.open(`/arrange?files=${files}`, 'ArrangeSelectedFile');
+
+    const fileId = this.selectedSet[0];
+    const oldFilename = `${fileId}.png`;
+
+    try {
+      // 1. 向後端請求建議檔名
+      const suggestionRes = await fetch('/suggest_filename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: fileId })
+      });
+
+      if (!suggestionRes.ok) {
+        const err = await suggestionRes.json();
+        alert('無法取得建議檔名: ' + (err.error || suggestionRes.statusText));
+        return;
+      }
+
+      const suggestionData = await suggestionRes.json();
+      const suggestedFilename = suggestionData.suggested_filename;
+      const newFilenameInput = prompt('請輸入新的檔名：', suggestedFilename);
+
+      // 如果使用者取消或輸入空白，則停止
+      if (!newFilenameInput || newFilenameInput.trim() === '') {
+        return;
+      }
+    
+      // 如果新檔名與舊檔名相同，也停止
+      if (newFilenameInput === suggestedFilename) {
+        return;
+      }
+
+      const newFilename = newFilenameInput.trim();
+
+      // 2. 向後端發送請求來執行重新命名
+      const renameRes = await fetch('/rename_file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_filename: oldFilename, new_filename: newFilename })
+      });
+
+      if (!renameRes.ok) {
+        const err = await renameRes.json();
+        alert('重新命名失敗: ' + (err.error || renameRes.statusText));
+        return;
+      }
+
+      const renameData = await renameRes.json();
+      const newId = renameData.new_id;
+
+      // 3. 成功後更新本地端的資料
+      // 更新 allImages 中的物件
+      const renamedImage = this.allImages.find(img => img.id === fileId);
+      if (renamedImage) {
+        renamedImage.id = newId;
+        renamedImage.filename = newFilename;
+      }
+
+      // 更新 displayedImages 中的物件
+      const renamedDisplayedImage = this.displayedImages.find(img => img.id === fileId);
+      if (renamedDisplayedImage) {
+        renamedDisplayedImage.id = newId;
+        renamedDisplayedImage.filename = newFilename;
+      }
+
+      // 更新選取集合中的 ID
+      const selectedIndex = this.selectedSet.indexOf(fileId);
+      if (selectedIndex !== -1) {
+        this.selectedSet.splice(selectedIndex, 1, newId);
+      }
+    
+      alert(`檔案已成功重新命名為：${newFilename}`);
+
+    } catch (e) {
+      alert('網路或伺服器錯誤');
+      console.error(e);
     }
   },
   
@@ -206,6 +276,20 @@ window.app = {
     } catch (err) {
       alert('刪除失敗');
       console.error(err);
+    }
+  },
+  
+  compareSelected() {
+    if (this.selectedSet.length >= 2) {
+      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+      window.open(`/compare?files=${files}`, 'CompareSelectedFile');
+    }
+  },
+  
+  arrangeSelected() {
+    if (this.selectedSet.length >= 2) {
+      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+      window.open(`/arrange?files=${files}`, 'ArrangeSelectedFile');
     }
   },
   

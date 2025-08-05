@@ -27,6 +27,7 @@ from core.shared_data import (
     get_scenario_title,
     process_tag_info,
     dump_all_data,  # debug use.
+    get_suggest_file_name,
 )
 from core.user_config_manager import UserConfigManager
 from web.arrange_bp import arrange_bp
@@ -228,6 +229,20 @@ def scan_folder():
             "message": f"成功掃描 {len(thumbnails)} 個檔案並載入 {loaded_character_count} 個角色數據。",
         }
     )
+
+
+@app.route("/suggest_filename", methods=["POST"])
+def suggest_filename():
+    data = request.get_json()
+    file_id = data.get("fileId")
+
+    logger.debug(f"rename {file_id}")
+    
+    suggest_filename = get_suggest_file_name(file_id)
+    
+    logger.debug(f"suggest file name : {suggest_filename}")
+
+    return jsonify({"success": True, "suggested_filename": suggest_filename})
 
 
 @app.route("/rename", methods=["POST"])

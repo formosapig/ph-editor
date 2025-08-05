@@ -10,7 +10,7 @@ from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
 
 logger = logging.getLogger(__name__)
-logger.disabled = True
+#logger.disabled = True
 
 # 全域字典，儲存所有載入的角色檔案數據
 # Key: FILE_ID, 角色檔案的 ID (通常是檔名，不含路徑)
@@ -942,3 +942,76 @@ def dump_all_data() -> None:
 
     logger.debug("\n--- Dump Complete ---")
     
+
+def get_suggest_file_name(file_id: str) -> str:
+    """
+    根據角色、情境或標籤資料，生成一個建議的檔案名稱。
+    
+    Args:
+        file_id (str): 檔案的唯一 ID。
+        
+    Returns:
+        str: 包含 '.png' 副檔名的建議檔名。
+    """
+    # 1. 取得檔案條目並檢查其有效性
+    file_entry = get_character_file_entry(file_id)
+    if not file_entry:
+        return "未知.png"
+
+    # 2. 判斷是否有 profile ID
+    if file_entry.profile_id is None:
+        return "未知.png"
+    
+    # 3. 取得 Profile 資料並檢查其有效性
+    profile_data = get_profile(file_entry.profile_id)
+    if not profile_data:
+        return "未知.png"
+        
+    # 4. 根據 file_entry.scenario_id 是否為 None 來分流處理
+    if file_entry.scenario_id is None:
+        # 4a. 如果沒有 Scenario，則嘗試使用 Tag 資料
+        tag_type, tag_name = process_tag_info(file_id)
+        
+        if not tag_name:
+            return "未知.png"
+        
+        profile_name = profile_data.get("name", "")
+        suggested_name = f"{tag_name}{profile_name}.png"
+        return suggested_name.strip()
+        
+    else:
+        # 4b. 如果有 Scenario ID，則取得情境資料並組合檔名
+        scenario_data = get_scenario(file_entry.scenario_id)
+        
+        # 再次檢查情境資料是否成功取得
+        if not scenario_data:
+            # 即使有 ID，如果資料本身不存在，也回到沒有情境的邏輯
+            tag_type, tag_name = get_tag_info(file_id)
+            if not tag_name:
+                return "未知.png"
+            
+            profile_name = profile_data.get("name", "")
+            suggested_name = f"{tag_name}{profile_name}.png"
+            return suggested_name.strip()
+
+        # 取得年份資料
+        born_year = profile_data.get("born")
+        scenario_year = scenario_data.get("year")
+        
+        age_str = ""
+        if born_year and scenario_year and isinstance(born_year, (int, str)) and isinstance(scenario_year, (int, str)):
+            try:
+                age = int(scenario_year) - int(born_year)
+                age_str = f"({age})"
+            except (ValueError, TypeError):
+                pass
+
+        profile_name = profile_data.get("name", "")
+        scenario_title = scenario_data.get("title", "")
+        
+        suggested_name = f"{profile_name}{age_str}【{scenario_title}】.png"
+        
+        if not profile_name and not scenario_title:
+             return "未知.png"
+        
+        return suggested_name.strip()

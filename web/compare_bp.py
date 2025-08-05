@@ -53,6 +53,7 @@ import logging
 from collections import defaultdict 
 
 logger = logging.getLogger(__name__)
+logger.disabled = True
 
 compare_bp = Blueprint("compare_bp", __name__)
 

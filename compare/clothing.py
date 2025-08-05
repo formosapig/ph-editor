@@ -13,6 +13,8 @@ from game_data.clothing_data import is_colorful, is_nashi
 
 CLOTHING_KEY_NAME_MAP = {
 
+    # clothing set...
+    "c_set": "️種類",
     # 上衣 clothing.top.#name
     "c_top": "🏷️上衣",
     # 主色
@@ -98,64 +100,81 @@ CLOTHING_KEY_BLOCK_MAP = {key: 'clothing' for key in CLOTHING_KEY_NAME_MAP}
 def flatten_clothing_data(d: Dict[str, Any]) -> Dict[str, Any]:
     result = {}
     
+    # 根據 clothing_set 決定要處理哪些項目
+    clothing_type = get_nested_value(d, "clothing.clothing_set", "")
+    result["c_set"] = clothing_type
+
+    # 宣告所有可能的服裝項目
     all_array = ['top', 'bottom', 'bra', 'panty', 'swimsuit', 'swimsuit_top', 'swimsuit_bottom', 'gloves', 'pantyhose', 'socks', 'shoes']
 
+    # 根據 clothing_type 篩選出要處理的項目列表
+    if clothing_type == "通常":
+        # 處理通常服裝
+        items_to_process = ['top', 'bottom', 'bra', 'panty', 'gloves', 'pantyhose', 'socks', 'shoes']
+    elif clothing_type == "水著":
+        # 處理水著
+        items_to_process = ['swimsuit', 'swimsuit_top', 'swimsuit_bottom', 'gloves', 'pantyhose', 'socks', 'shoes']
+    else:
+        # 處理其他情況，例如 clothing_set 為空或未知
+        items_to_process = []
+
+    # 遍歷所有可能的項目，並根據 clothing_type 進行處理
     for item in all_array:
-        # 1. 取得基本資訊
-        # 使用 f-string 動態建立鍵名，更清晰易讀
-        result[f"c_{item}"] = get_nested_value(d, f"clothing.{item}.#name", "")
-        
-        # 2. 取得所有顏色和強度相關的值
-        # 建立一個臨時字典來儲存，避免重複呼叫 get_nested_value
-        temp = {
-            "main_color": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.main_color", "")),
-            "main_shine": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.main_shine", "")),
-            "main_strength": get_nested_value(d, f"clothing.{item}.main_strength", -1),
-            "main_texture": get_nested_value(d, f"clothing.{item}.main_texture", -1),
-            "sub_color": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.sub_color", "")),
-            "sub_shine": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.sub_shine", "")),
-            "sub_strength": get_nested_value(d, f"clothing.{item}.sub_strength", -1),
-            "sub_texture": get_nested_value(d, f"clothing.{item}.sub_texture", -1)
-        }
+        if item in items_to_process:
+            # 1. 取得基本資訊
+            result[f"c_{item}"] = get_nested_value(d, f"clothing.{item}.#name", "")
+            
+            # 2. 取得所有顏色和強度相關的值
+            temp = {
+                "main_color": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.main_color", "")),
+                "main_shine": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.main_shine", "")),
+                "main_strength": get_nested_value(d, f"clothing.{item}.main_strength", -1),
+                "main_texture": get_nested_value(d, f"clothing.{item}.main_texture", -1),
+                "sub_color": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.sub_color", "")),
+                "sub_shine": convert_rgba_to_hex_aa(get_nested_value(d, f"clothing.{item}.sub_shine", "")),
+                "sub_strength": get_nested_value(d, f"clothing.{item}.sub_strength", -1),
+                "sub_texture": get_nested_value(d, f"clothing.{item}.sub_texture", -1)
+            }
 
-        # 3. 根據 color_type 動態組合字串
-        item_id = get_nested_value(d, f"clothing.{item}.id", -1)
-        color_type = is_colorful(item, item_id)
+            # 3. 根據 color_type 動態組合字串
+            item_id = get_nested_value(d, f"clothing.{item}.id", -1)
+            color_type = is_colorful(item, item_id)
 
-        color_main_parts = []
-        color_sub_parts = []
+            color_main_parts = []
+            color_sub_parts = []
 
-        # 首先檢查是否有 'nashi' 旗標
-        if is_nashi(item, item_id):
-            result[f"c_{item}"] = ""
-            pass
+            if is_nashi(item, item_id):
+                result[f"c_{item}"] = ""
+                # pass
+            else:
+                if color_type == 1:
+                    color_main_parts = [
+                        temp["main_color"],
+                        temp["main_shine"],
+                        temp["main_strength"],
+                        temp["main_texture"]
+                    ]
+                elif color_type in [2, 3]:
+                    color_main_parts = [
+                        temp["main_color"],
+                        temp["main_shine"],
+                        temp["main_strength"],
+                        temp["main_texture"]
+                    ]
+                    color_sub_parts = [
+                        temp["sub_color"],
+                        temp["sub_shine"],
+                        temp["sub_strength"],
+                        temp["sub_texture"]
+                    ]
+
+            # 4. 使用 join() 優化字串組合
+            result[f"c_{item}_main"] = " ".join(map(str, color_main_parts))
+            result[f"c_{item}_sub"] = " ".join(map(str, color_sub_parts))
         else:
-            # 只有在沒有 nashi 旗標時，才進行顏色類型判斷
-            if color_type == 1:
-                color_main_parts = [
-                    temp["main_color"],
-                    temp["main_shine"],
-                    temp["main_strength"],
-                    temp["main_texture"]
-                ]
-            elif color_type in [2, 3]:
-                # 當 color_type 為 2 或 3 時，main_parts 和 sub_parts 都需要設定
-                color_main_parts = [
-                    temp["main_color"],
-                    temp["main_shine"],
-                    temp["main_strength"],
-                    temp["main_texture"]
-                ]
-                color_sub_parts = [
-                    temp["sub_color"],
-                    temp["sub_shine"],
-                    temp["sub_strength"],
-                    temp["sub_texture"]
-                ]
-
-        # 4. 使用 join() 優化字串組合，並處理可能為空的情況
-        # 當 color_main_parts 或 color_sub_parts 為空列表時，join() 會返回空字串
-        result[f"c_{item}_main"] = " ".join(map(str, color_main_parts))
-        result[f"c_{item}_sub"] = " ".join(map(str, color_sub_parts))
+            # 如果項目不在要處理的清單中，將所有相關資料設為空字串
+            result[f"c_{item}"] = ""
+            result[f"c_{item}_main"] = ""
+            result[f"c_{item}_sub"] = ""
 
     return result
