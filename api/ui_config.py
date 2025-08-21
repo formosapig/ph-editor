@@ -1,12 +1,19 @@
 # ph-editor/api/ui_config.py
-
 import importlib
 import locale
+import logging
 
 from flask import Blueprint, jsonify
 
 from config.dropdown_config import dropdown_config_map
-from core.shared_data import get_global_general_data, profile_map, scenario_map, get_default_backstage
+from core.shared_data import (
+    get_general_data,
+    get_profile_map,
+    get_scenario_map,
+    get_default_backstage,
+)
+
+logger = logging.getLogger(__name__)
 
 api_ui_config_bp = Blueprint("api_ui_config", __name__, url_prefix="/api/ui_config")
 
@@ -60,7 +67,8 @@ def get_dropdown_options(tab, subTab):
 
 @api_ui_config_bp.route("/profiles", methods=["GET"])
 def get_profile_list():
-    """提供給下拉選單使用的簡易列表"""
+    profile_map = get_profile_map()
+    
     options = []
 
     # 提前取出 id=0 的 profile（若存在）
@@ -109,9 +117,10 @@ def get_profile_list():
 
 @api_ui_config_bp.route("/scenarios", methods=["GET"])
 def get_scenario_list():
-    """提供給下拉選單使用的簡易列表"""
+    scenario_map = get_scenario_map()
+    
     options = []
-
+    
     # 提前取出 id=0 的 scenario（若存在）
     zero_scenario = scenario_map.get(0)
 
@@ -160,7 +169,7 @@ def get_scenario_list():
 def get_backstage_options():
     """提供 backstage 編輯所需的多組下拉選單"""
     dropdowns = []
-    general_data = get_global_general_data()
+    general_data = get_general_data()
 
     # ===== 第一組 dropdown：Tag 下拉選單 =====
     tag_list = general_data.get("tag_list", [])

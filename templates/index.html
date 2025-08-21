@@ -15,11 +15,11 @@
           <button @click="changeFolder" title="修改掃描資料夾" :disabled="isAnyMenuOpen">📁</button>
 		  <button @click="toggleSort" ref="sortButton" :class="{ active: showSortMenu }" title="排序">🔃</button>
 		  <button @click="toggleFilter" :class="{ active: showFilterMenu }" title="篩選">🔍</button>
+          <button @click="compareSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="比較">📊️</button>
+          <button @click="arrangeSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="排列">📋️</button>		  
           <button @click="editSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="編輯">✏️</button>
           <button @click="renameSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="改名">🅰️</button>
           <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
-          <button @click="compareSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="比較">📊️</button>
-          <button @click="arrangeSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="排列">📋️</button>		  
         </div>
         <div class="right-button">
           <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📋️</button>

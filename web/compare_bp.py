@@ -79,23 +79,24 @@ def compare():
                     logger.debug(f"檔案 ID: {file_id} 的 character_entry 沒有 'character_data' 屬性，跳過轉換。")
                     continue
 
-                if not isinstance(character_entry.character_data.parsed_data, dict):
-                    logger.debug(f"檔案 ID: {file_id} 的 character_data.parsed_data 不是字典類型，而是 {type(character_entry.character_data.parsed_data).__name__}，跳過轉換。")
+                full_character_data = character_entry.get_character_data()
+
+                if not isinstance(full_character_data, dict):
+                    logger.debug(f"檔案 ID: {file_id} 的 character_data 不是字典類型，而是 {type(full_character_data).__name__}，跳過轉換。")
                     continue
 
                 logger.debug(f"檔案 ID: {file_id} 的所有資料檢查通過，開始進行轉換處理。")
 
-                raw_character_data = character_entry.character_data.parsed_data
                 final_flat_data = {}
                 final_flat_data['file_id'] = file_id
                 
                 # 依次合併
-                final_flat_data.update(flatten_basic_data(raw_character_data))
-                final_flat_data.update(flatten_hair_data(raw_character_data))
-                final_flat_data.update(flatten_face_data(raw_character_data))
-                final_flat_data.update(flatten_body_data(raw_character_data))
-                final_flat_data.update(flatten_clothing_data(raw_character_data))
-                final_flat_data.update(flatten_accessory_data(raw_character_data))
+                final_flat_data.update(flatten_basic_data(full_character_data))
+                final_flat_data.update(flatten_hair_data(full_character_data))
+                final_flat_data.update(flatten_face_data(full_character_data))
+                final_flat_data.update(flatten_body_data(full_character_data))
+                final_flat_data.update(flatten_clothing_data(full_character_data))
+                final_flat_data.update(flatten_accessory_data(full_character_data))
 
                 selected_characters_processed.append(final_flat_data)
 

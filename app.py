@@ -22,12 +22,13 @@ from config.logging_setup import setup_logging
 from core.shared_data import (
     add_or_update_character_with_path,
     clear_characters_db,
-    get_global_general_data,
-    get_profile_name,
-    get_scenario_title,
+    
+    
     process_tag_info,
-    dump_all_data,  # debug use.
+    #dump_all_data,  # debug use.
     get_suggest_file_name,
+    initialize_extra_data,
+    get_general_data,
 )
 from core.user_config_manager import UserConfigManager
 from web.arrange_bp import arrange_bp
@@ -58,14 +59,18 @@ CACHE_DIR = UserConfigManager.get_cache_dir()
 # 設定掃描路徑
 scan_path = UserConfigManager.load_scan_path()
 app.config["SCAN_PATH"] = scan_path if scan_path else ""
-# 設定 session key
-app.config["SECRET_KEY"] = "sadflkfsdflksdf"  # 替換這裡
 
 # 在應用程式啟動時，先設定日誌
 setup_logging()
 
 # 取得這個模組的日誌器
 logger = logging.getLogger(__name__)
+
+
+# ✅ 新增：在應用程式啟動時載入 general.json 資料
+#logger.info("應用程式啟動，正在載入全域 general 資料...")
+initialize_extra_data()
+#logger.info("全域 general 資料載入完成。")
 
 
 def clean_old_thumbnails(cache_dir, max_remove=3):
@@ -170,8 +175,11 @@ def scan_folder():
                 # --- 縮圖生成邏輯結束 ---
 
                 # --- 角色數據載入邏輯 ---
+                
                 try:
-                    add_or_update_character_with_path(folder_path, file_id)
+                    character_file_obj = (
+                        add_or_update_character_with_path(folder_path, file_id)
+                    )
                     loaded_character_count += 1
                 except Exception as e:
                     logger.error(
@@ -180,10 +188,10 @@ def scan_folder():
                     continue  # 繼續處理下一個檔案
 
                 # 將資料整理好放進 character_list
-                profile_name = get_profile_name(file_id)
+                profile_name = character_file_obj.get_profile_name()
                 #logger.debug(f"PROFILE NAME = {profile_name}")
                 
-                scenario_title = get_scenario_title(file_id)
+                scenario_title = character_file_obj.get_scenario_title()
                 #logger.debug(f"SCENARIO TITLE = {scenario_title}")
 
                 tag_style, tag_name = process_tag_info(file_id)
@@ -201,7 +209,7 @@ def scan_folder():
                 )
 
     # 1. 掃描完成後, 才有確定的 tag 資料
-    global_data = get_global_general_data()
+    global_data = get_general_data()
     # dump 全域資料
     #logger.debug("全域資料：")
     #logger.debug(json.dumps(global_data, ensure_ascii=False, indent=2))
@@ -245,23 +253,56 @@ def suggest_filename():
     return jsonify({"success": True, "suggested_filename": suggest_filename})
 
 
-@app.route("/rename", methods=["POST"])
-def rename():
+@app.route("/rename_file", methods=["POST"])
+def rename_file():
+    """
+    接收舊檔名和新檔名，並重新命名檔案。
+    """
     data = request.get_json()
-    old_path = data.get("old_name")
-    new_path = data.get("new_name")
+    if not data:
+        return jsonify({"success": False, "error": "請求的 JSON 資料無效"}), 400
 
-    if not old_path or not new_path:
+    # 1. 取得並檢查必要的參數
+    old_name = data.get("old_filename")
+    new_name = data.get("new_filename")
+
+    if not old_name or not new_name:
         return jsonify({"success": False, "error": "缺少舊檔名或新檔名"}), 400
 
-    if not os.path.isfile(old_path):
-        return jsonify({"success": False, "error": "舊檔案不存在"}), 400
+    # 2. 取得掃描路徑並安全地組合完整路徑
+    if not scan_path:
+        return jsonify({"success": False, "error": "掃描路徑未設定"}), 500
 
+    # 使用 os.path.join 組合路徑，避免路徑拼接錯誤
+    old_path_full = os.path.join(scan_path, old_name)
+    new_path_full = os.path.join(scan_path, new_name)
+
+    logger.debug(f"{old_path_full} -> {new_path_full}")
+
+    # 3. 增加安全性檢查，防止路徑遍歷攻擊
+    # 確保新舊路徑都在掃描目錄下
+    if not old_path_full.startswith(scan_path) or not new_path_full.startswith(scan_path):
+        return jsonify({"success": False, "error": "不允許的操作：路徑超出掃描目錄範圍"}), 403
+
+    # 4. 進行檔案存在性檢查
+    if not os.path.isfile(old_path_full):
+        # 紀錄錯誤訊息，以便偵錯
+        logger.error(f"檔案不存在：{old_path_full}")
+        return jsonify({"success": False, "error": "舊檔案不存在"}), 404
+
+    # 5. 執行重新命名操作並處理潛在錯誤
     try:
-        os.rename(old_path, new_path)
+        os.rename(old_path_full, new_path_full)
+        logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
         return jsonify({"success": True})
+    except FileExistsError:
+        # 如果新檔名已存在
+        logger.error(f"重新命名失敗：新檔案已存在：{new_path_full}")
+        return jsonify({"success": False, "error": "新檔名已存在"}), 409
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        # 捕捉其他可能的錯誤，例如權限問題等
+        logger.error(f"重新命名時發生錯誤：{e}")
+        return jsonify({"success": False, "error": f"重新命名失敗：{str(e)}"}), 500
 
 
 @app.route("/delete_files", methods=["POST"])
@@ -296,4 +337,4 @@ def delete_files():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, threaded=True)
+    app.run(debug = True, threaded = False) #單執行緒

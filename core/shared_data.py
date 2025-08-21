@@ -3,11 +3,14 @@ import copy
 import json
 import threading
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # 假設這些是從其他模組引入的
 from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
+
+'''from .story_data import get_global_general_data'''
+from .extra_data_manager import ExtraDataManager
 
 logger = logging.getLogger(__name__)
 #logger.disabled = True
@@ -22,57 +25,7 @@ characters_db: Dict[str, CharacterFileEntry] = {}
 # 特別是針對 characters_db 字典本身的修改、sync_flag 的檢查和設置
 characters_db_lock = threading.RLock()
 
-# ----- general -----
-DEFAULT_GENERAL_TEMPLATE = {
-    "!version": 1,
-    "color_traits": [
-        {"code": "#FF0000", "name": {"en": "Red", "zh": "紅"}, "trait": {"zh": "熱情"}},
-        {
-            "code": "#0000FF",
-            "name": {"en": "Blue", "zh": "藍"},
-            "trait": {"zh": "冷靜"},
-        },
-    ],
-    "tag_styles": {
-        "setting": {
-            "name": {"zh": "設定"},
-            "order": 1,
-            "color": "#808080",
-            "background": "#000000",
-        },
-        "occupation": {
-            "name": {"zh": "身份"},
-            "order": 2,
-            "color": "#0000FF",
-            "background": "#00AAAA",
-        },
-    },
-    "tag_list": [
-        {
-            "id": 1,
-            "type": "setting",
-            "name": {"zh": "virgin"},
-            "desc": {"zh": "virgin"},
-            "snapshot": {"zh": "拍照"},
-            "marks": {"zh": "特徵"},
-            "clothing": {"zh": "穿著"},
-        },
-        {
-            "id": 2,
-            "type": "opccupation",
-            "name": {"zh": "學生"},
-            "desc": {"zh": "一名學生"},
-            "snapshot": {"zh": "拍照"},
-            "marks": {"zh": "特徵"},
-            "clothing": {"zh": "穿著"},
-        },
-    ],
-    # NOTE: 簡化版模板。
-}
-
-# 全域 general 資料快取
-global_general_data: Optional[Dict[str, Any]] = None
-
+'''
 # ----- profile -----
 DEFAULT_PROFILE_TEMPLATE = {
     "!id": 0,  # profile id, 0 為特殊佔用, 創建新角色用
@@ -117,196 +70,61 @@ DEFAULT_BACKSTAGE_TEMPLATE = {
     "shadow": "熱情",
     # NOTE: 簡化版模板，會讀取設定資料。
 }
+'''
 
+_extra_data_manager: Optional[ExtraDataManager] = None
 
-def _is_valid_general_data(data: Dict[str, Any]) -> bool:
+def initialize_extra_data():
     """
-    基礎格式驗證：確認必要欄位存在且格式正確
+    初始化並載入所有額外數據（general, profile, scenario, extra），
+    並在完成後將數據輸出到日誌。
     """
-    return True
-    required_keys = ["!version", "color_traits", "tag_styles", "tag_list"]
-    for key in required_keys:
-        if key not in data:
-            logger.debug(f"key fail {key}")
-            return False
-
-    if not isinstance(data["!version"], int):
-        logger.debug("version is not int")
-        return False
-    if not isinstance(data["color_traits"], list):
-        logger.debug("color_traits is not list")
-        return False
-    if not isinstance(data["tag_styles"], dict):
-        logger.debug("tag_styles is not dict")
-        return False
-    if not isinstance(data["tag_list"], list):
-        logger.debug("tag_list is not list")
-        return False
-    return True
+    global _extra_data_manager
+    if _extra_data_manager is None:
+        _extra_data_manager = ExtraDataManager()
+        _extra_data_manager.initialize_data()
+        #_extra_data_manager.dump_all_data()
 
 
-def sync_global_general_to_characters(global_data: Dict[str, Any], global_version: int):
-    """
-    同步全域 general 資料到所有角色檔案：
-    - 若角色 general 版本低於 global_version，更新其 general 節點資料
-    - 並將該角色的 sync_flag 設為 True，等待儲存
-    """
-    from core.shared_data import characters_db, characters_db_lock
-
-    logger.debug("準備同步全域資料")
-    with characters_db_lock:
-        for file_id, entry in characters_db.items():
-            logger.debug(f"同步 {file_id}")
-            character_data = entry.get_character_data()
-            if not character_data:
-                continue
-
-            character_general = character_data.get_value(["story", "general"])
-            character_version = -1
-            if isinstance(character_general, dict):
-                character_version = character_general.get("!version", -1)
-            logger.debug(f"{file_id} : {character_version} vs {global_version}")
-
-            if character_version < global_version:
-                # 更新角色 general 節點資料
-                data = character_data.get_data()
-                if "story" not in data:
-                    data["story"] = {}
-
-                data["story"]["general"] = global_data
-                # 設定角色物件屬性方便存檔
-                entry.general_version = global_version
-                entry.set_sync_flag(True)
+def get_general_data() -> Dict[str, Any]:
+    return _extra_data_manager.get_general_data()
 
 
-def update_global_general_data(
-    new_data: Dict[str, Any], increment_version: bool = False
-):
-    """
-    更新全域 general 資料快取。
-    這個函數本身不執行持久化。
+def update_general_data(new_data: Dict[str, Any]):
+    _extra_data_manager.update_general_data(new_data)
 
-    Args:
-        new_data (Dict[str, Any]): 新的 general 資料字典（前端可能沒帶 '!version'）。
-        increment_version (bool): 是否要將版本號加一，預設為 False。
-    """
-    global global_general_data
+
+def get_profile_map() -> Dict[int, Dict[str, Any]]:
+    return _extra_data_manager.get_profile_map()
     
-    logger.debug("enter update_global_general_data")
-    
-    # 僅當資料不合法且不要求版本更新時才略過更新
-    if not increment_version and not _is_valid_general_data(new_data):
-        return
-    # print(new_data)
 
-    if increment_version:
-        logger.debug("更新版本號")
-        # 從舊資料讀取版本號，預設 -1 表示沒版本
-        original_version = (
-            global_general_data.get("!version", -1) if global_general_data else -1
+def get_scenario_map() -> Dict[int, Dict[str, Any]]:
+    return _extra_data_manager.get_scenario_map()
+
+
+def get_default_backstage() -> dict:    
+    return _extra_data_manager.get_default_backstage()
+    
+
+# ---- 其他的唷~~~ -----
+def add_or_update_character_with_path(scan_path: str, file_id: str) -> Optional[CharacterFileEntry]:
+    try:
+        # 嘗試透過 CharacterFileEntry 讀取檔案並解析
+        character_file_entry_obj = (
+            CharacterFileEntry.load(scan_path, file_id, _extra_data_manager)
         )
-        if isinstance(original_version, int) and original_version >= 0:
-            new_version = original_version + 1
-        else:
-            new_version = 1
-        # 把版本號寫入 new_data 裡
-        new_data["!version"] = new_version
-        logger.debug(f"新版本號 : {new_version}")
-        sync_global_general_to_characters(new_data, new_version)
+            
+        # 將新的 CharacterFileEntry 存入或更新 characters_db
+        characters_db[file_id] = character_file_entry_obj
 
-    global_general_data = new_data
-    
-    # 再次確認全域資料
-    #current_global_general_data = get_global_general_data()
-    #current_global_version = current_global_general_data.get("!version", -1)
-    #logger.debug(f"after update global general data : {current_global_version}")
+        #logger.debug(character_file_entry_obj)
 
+        return character_file_entry_obj
 
-def get_global_general_data() -> dict:
-    """
-    獲取當前的全域 general 資料。
-    如果快取為空，則使用預設模板初始化。
-    不執行本地持久化載入。
-    """
-    global global_general_data
-
-    if global_general_data is None:
-        global_general_data = DEFAULT_GENERAL_TEMPLATE
-
-    return global_general_data
-
-
-def add_or_update_character_with_path(scan_path: str, file_id: str):
-    """
-    從 scan_path + file_id 載入角色資料，解析後存入 characters_db。
-    若角色資料中的 general 版本高於全域 general 資料快取，則更新全域資料。
-    """
-    with characters_db_lock:
-        try:
-            # 嘗試透過 CharacterFileEntry 讀取檔案並解析
-            character_file_entry_obj = CharacterFileEntry.load(scan_path, file_id)
-            character_data_obj = character_file_entry_obj.character_data
-
-            # 將新的 CharacterFileEntry 存入或更新 characters_db
-            characters_db[file_id] = character_file_entry_obj
-
-            # 比較並更新全域 general 資料（如果角色版本較新）
-            char_ver = character_file_entry_obj.general_version or -1
-            global_data = get_global_general_data()
-            global_ver = global_data.get("!version", -1)
-            if char_ver > global_ver:
-                general_data = character_data_obj.get_value(["story", "general"])
-                update_global_general_data(general_data)
-
-            # 假設 profile_map: Dict[int, Dict[str, Any]]
-            profile_id = character_file_entry_obj.profile_id
-            profile_version = character_file_entry_obj.profile_version
-            file_id = character_file_entry_obj.file_id
-
-            if profile_id is not None:
-                new_profile_data = character_file_entry_obj.get_profile()
-
-                if profile_id in profile_map:
-                    current_version = profile_map[profile_id].get("!version", -1)
-                    if (
-                        isinstance(profile_version, int)
-                        and profile_version > current_version
-                    ):
-                        profile_map[profile_id] = new_profile_data  # 更新資料
-                else:
-                    profile_map[profile_id] = new_profile_data  # 新增資料
-
-                # ✅ 縮排到這層：無論是否有更新 profile_map 都會同步對應
-                if profile_id not in profile_file_ids:
-                    profile_file_ids[profile_id] = set()
-                profile_file_ids[profile_id].add(file_id)
-
-            # 假設 scenario_map: Dict[int, Dict[str, Any]]
-            scenario_id = character_file_entry_obj.scenario_id
-            scenario_version = character_file_entry_obj.scenario_version
-            file_id = character_file_entry_obj.file_id
-
-            if scenario_id is not None:
-                new_scenario_data = character_file_entry_obj.get_scenario()
-
-                if scenario_id in scenario_map:
-                    current_version = scenario_map[scenario_id].get("!version", -1)
-                    if (
-                        isinstance(scenario_version, int)
-                        and scenario_version > current_version
-                    ):
-                        scenario_map[scenario_id] = new_scenario_data  # 更新資料
-                else:
-                    scenario_map[scenario_id] = new_scenario_data  # 新增資料
-
-                # ✅ 縮排到這層：無論是否有更新 scenario_map 都會同步對應
-                if scenario_id not in scenario_file_ids:
-                    scenario_file_ids[scenario_id] = set()
-                scenario_file_ids[scenario_id].add(file_id)
-
-        except Exception as e:
-            # 若讀取或解析失敗，清理 characters_db 和對應映射
-            logger.error(f"處理 FILE ID '{file_id}' 時發生例外：{e}")
+    except Exception as e:
+        # 若讀取或解析失敗，清理 characters_db 和對應映射
+        logger.error(f"處理 FILE ID '{file_id}' 時發生例外：{e}")
+        return None # 失敗時明確回傳 None
 
 
 def get_character_file_entry(file_id: str) -> Optional[CharacterFileEntry]:
@@ -324,21 +142,10 @@ def get_character_data(file_id: str) -> Optional[CharacterData]:
 
 
 def clear_characters_db():
-    """
-    清空 characters_db 數據庫和 character_file_map。
-    此操作會修改共享數據，因此必須在鎖的保護下進行。
-    """
-    with characters_db_lock:
-        characters_db.clear()
-        profile_map.clear()
-        profile_file_ids.clear()
-        # 恢復 profile_map 的初始設定
-        profile_map[0] = DEFAULT_PROFILE_TEMPLATE
-        scenario_map.clear()
-        scenario_file_ids.clear()
-        # 恢復 scenario_map 的初始設定
-        scenario_map[0] = DEFAULT_SCENARIO_TEMPLATE
-        logger.debug("角色數據庫已全部清空。")
+    characters_db.clear()
+    logger.info("角色數據庫已全部清空。")
+    _extra_data_manager.reload()
+    logger.info("額外資料已重讀。")
 
 
 def is_data_changed_without_version(
@@ -366,9 +173,39 @@ def is_data_changed_without_version(
     return False
 
 
-def add_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
+def process_profile_data(
+    file_id: str, updated_profile: Dict[str, Any]
+) -> Tuple[bool, Optional[int]]:
+    profile_id = updated_profile.get("!id")
+    success = False
+    new_profile_id = None
+        
+    if profile_id == 0:
+        success = _extra_data_manager.add_profile(updated_profile)
+        new_profile_id = updated_profile.get("!id", None) if success else None
+    else:
+        success = _extra_data_manager.update_profile(updated_profile)
+        # 更新時, 不參考前端的 !version , updated_profile 也不會更新 !version
+
+    if success: # 成功時,才更新 character_file_entry 的資料...
+        character_file_entry_obj = get_character_file_entry(file_id)
+        if character_file_entry_obj is None:
+            print(
+                f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry"
+            )
+            return False, None
+        updated_profile_id = updated_profile.get("!id")
+        logger.debug(f"PROFILE_ID: ${updated_profile_id}")
+        character_file_entry_obj.update_profile_id(updated_profile_id)
+            
+    return success, new_profile_id
+
+'''def add_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
     # 若跟預設 id 一模一樣,則不更新
-    if not is_data_changed_without_version(profile_map[0], updated_profile):
+    if not is_data_changed_without_version(
+        _extra_data_manager.get_default_profile(),
+        updated_profile
+    ):
         return False
 
     # 要更新時, 要改 id, 版號預設為 1
@@ -384,7 +221,7 @@ def add_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
             print(
                 f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry"
             )
-            return
+            return False
         character_file_entry_obj.profile_id = new_id
         character_file_entry_obj.profile_version = updated_profile.get("!version", 0)
         character_file_entry_obj.sync_flag = True
@@ -400,10 +237,10 @@ def add_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
 
     else:
         print(f"[add_profile] Invalid profile id: {updated_profile.get('!id')}")
-        return False
+        return False'''
 
 
-def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any]):
+'''def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any]):
     """
     將指定 profile_id 的更新，同步到所有相關角色的 character_data。
     更新角色的 profile_version、profile 資料，並將 sync_flag 設為 True。
@@ -454,10 +291,10 @@ def sync_profile_to_characters(profile_id: int, updated_profile: Dict[str, Any])
 
         updated_character_ids.append(file_id)
 
-    print(f"[INFO] 更新完成，以下角色的資料被修改了: {updated_character_ids}")
+    print(f"[INFO] 更新完成，以下角色的資料被修改了: {updated_character_ids}")'''
 
 
-def update_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
+'''def update_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
     """
     更新指定 character 的 profile，如果 profile_id 有改變，
     需調整 profile_file_ids 的對應關係。
@@ -560,7 +397,7 @@ def update_profile(file_id: str, updated_profile: Dict[str, Any]) -> bool:
     # 執行同步邏輯（放 lock 外）
     sync_profile_to_characters(updated_profile_id, updated)
 
-    return True
+    return True'''
 
 
 def get_profile(profile_id: int) -> Dict[str, Any]:
@@ -595,7 +432,35 @@ def get_profile_name(file_id: str) -> str:
     return name.strip()
 
 
-def add_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
+def process_scenario_data(
+    file_id: str, updated_scenario: Dict[str, Any]
+) -> Tuple[bool, Optional[int]]:
+    scenario_id = updated_scenario.get("!id")
+    success = False
+    new_scenario_id = None
+        
+    if scenario_id == 0:
+        success = _extra_data_manager.add_scenario(updated_scenario)
+        new_scenario_id = updated_scenario.get("!id", None) if success else None
+    else:
+        success = _extra_data_manager.update_scenario(updated_scenario)
+        # 更新時, 不參考前端的 !version , updated_profile 也不會更新 !version
+
+    if success: # 成功時,才更新 character_file_entry 的資料...
+        character_file_entry_obj = get_character_file_entry(file_id)
+        if character_file_entry_obj is None:
+            print(
+                f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry"
+            )
+            return False, None
+        updated_scenario_id = updated_scenario.get("!id")
+        logger.debug(f"SCENARIO_ID: ${updated_scenario_id}")
+        character_file_entry_obj.update_scenario_id(updated_scenario_id)
+            
+    return success, new_scenario_id
+    
+    
+"""def add_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
     # 若跟預設 id 一模一樣,則不更新
     if not is_data_changed_without_version(scenario_map[0], updated_scenario):
         logger.debug("預設模板不需要更新。")
@@ -628,10 +493,10 @@ def add_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
 
     else:
         logger.warning(f"不是新場景不能走新增流程 : {updated_scenario.get('!id')}")
-        return False
+        return False"""
 
 
-def sync_scenario_to_characters(scenario_id: int, updated_scenario: Dict[str, Any]):
+"""def sync_scenario_to_characters(scenario_id: int, updated_scenario: Dict[str, Any]):
     if scenario_id not in scenario_file_ids:
         logger.warning(f"SCENARIO ID {scenario_id} 沒有對應任何檔案，跳過同步。")
         return
@@ -674,10 +539,10 @@ def sync_scenario_to_characters(scenario_id: int, updated_scenario: Dict[str, An
 
         updated_file_ids.append(file_id)
 
-    logger.debug(f"場景同步完成，以下檔案被修改了: {updated_file_ids}")
+    logger.debug(f"場景同步完成，以下檔案被修改了: {updated_file_ids}")"""
     
 
-def update_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
+"""def update_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
     updated_scenario_id = updated_scenario.get("!id")
     if updated_scenario_id is None:
         logger.error("updated_scenario 中缺少 '!id'")
@@ -771,7 +636,7 @@ def update_scenario(file_id: str, updated_scenario: Dict[str, Any]) -> bool:
     # 執行同步邏輯（放 lock 外）
     sync_scenario_to_characters(updated_scenario_id, updated)
 
-    return True
+    return True"""
     
     
 def get_scenario(scenario_id: int) -> Dict[str, Any]:
@@ -806,6 +671,21 @@ def get_scenario_title(file_id: str) -> str:
     return title.strip()
     
     
+def update_backstage_data(
+    file_id: str, updated_backstage: Dict[str, Any]
+) -> bool:
+    success = _extra_data_manager.update_backstage(file_id, updated_backstage)
+        
+    if success:
+        character_file_entry_obj = get_character_file_entry(file_id)
+        if character_file_entry_obj is None:
+            raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
+        if '!tag_id' in updated_backstage:
+            character_file_entry_obj.update_tag_id(updated_backstage['!tag_id'])
+            
+    return success
+    
+    
 def process_tag_info(file_id: str) -> tuple[str, str]:
     tag_style = ""
     tag_name = ""
@@ -819,7 +699,8 @@ def process_tag_info(file_id: str) -> tuple[str, str]:
     if tag_id is None:
         return tag_style, tag_name
 
-    all_tags_list = global_general_data.get('tag_list', [])
+    general_data = _extra_data_manager.get_general_data()
+    all_tags_list = general_data.get('tag_list', [])
 
     # 遍歷列表尋找匹配的 tag_id
     found_tag_data = None
@@ -839,7 +720,7 @@ def process_tag_info(file_id: str) -> tuple[str, str]:
 
     return tag_style, tag_name
 
-
+'''
 def get_default_backstage() -> dict:
     general_data = get_global_general_data()
 
@@ -891,7 +772,7 @@ def get_default_backstage() -> dict:
         backstage['shadow'] = ""
 
     return backstage
-
+'''
 
 def dump_all_data() -> None:
     """
@@ -1015,3 +896,6 @@ def get_suggest_file_name(file_id: str) -> str:
              return "未知.png"
         
         return suggested_name.strip()
+
+def dump_profile_id():
+    logger.debug(f"shared_data.py: profile_map 的 ID: {id(profile_map)}")    

@@ -3,7 +3,7 @@ import json
 
 from flask import Blueprint, Response
 
-from core.shared_data import profile_map
+from core.shared_data import get_profile_map
 
 api_profile_bp = Blueprint("api_profile", __name__, url_prefix="/api/profile")
 
@@ -11,6 +11,7 @@ api_profile_bp = Blueprint("api_profile", __name__, url_prefix="/api/profile")
 @api_profile_bp.route("/detail/<int:profile_id>", methods=["GET"])
 def get_profile_detail(profile_id):
     """提供完整 profile 詳細內容"""
+    profile_map = get_profile_map()
     profile = profile_map.get(profile_id)
     if profile:
         return Response(

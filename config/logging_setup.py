@@ -51,4 +51,4 @@ def setup_logging():
     # 304 訊息屬於 INFO 級別，所以設定為 WARNING 或 ERROR 就不會顯示了
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
-    logging.info("日誌系統設定完成。")
+    #logging.info("日誌系統設定完成。")

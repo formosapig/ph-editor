@@ -7,19 +7,18 @@ from flask import (
     render_template,
     request,
 )
-
-# get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
-    get_global_general_data,
-    update_global_general_data,
+    get_general_data,
+    update_general_data,
 )
+
 
 general_bp = Blueprint("general_bp", __name__)
 
 
 @general_bp.route("/general")
 def general():
-    general_data = get_global_general_data()
+    general_data = get_general_data()
     color_traits_data = general_data["color_traits"]
     tag_styles_data = general_data["tag_styles"]
     tag_list_data = general_data["tag_list"]
@@ -62,7 +61,7 @@ def update_general_settings():
             )
 
         # 取得目前的 general_data
-        current_general_data = get_global_general_data()
+        current_general_data = get_general_data()
 
         # 更新 general_data 的相關欄位
         current_general_data["color_traits"] = color_traits
@@ -72,7 +71,7 @@ def update_general_settings():
         # 呼叫 function 來更新全域設定資料
         # 假設 update_global_general_data 負責將資料寫入檔案或資料庫
         # 視為新增版本
-        update_global_general_data(current_general_data, True)
+        update_general_data(current_general_data)
 
         return jsonify({"message": "全域設定更新成功！"}), 200
 

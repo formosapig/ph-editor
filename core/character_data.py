@@ -169,6 +169,29 @@ class CharacterData:
                     return False
         return False  # 理論上不會執行到這裡
 
+    def update_data(self, main_key: str, sub_key: str, data: any):
+        """
+        更新巢狀字典中的特定資料。
+
+        Args:
+            main_key (str): 外部字典的鍵。
+            sub_key (str): 內部字典的鍵。
+            data (any): 要更新的值，型別可以是 dict, str, int 等。
+        """
+        # 檢查 main_key 是否存在於 parsed_data 中
+        if main_key not in self.parsed_data:
+            raise KeyError(f"Main key '{main_key}' not found in parsed_data.")
+        
+        # 取得對應的資料區塊
+        data_section = self.parsed_data[main_key]
+
+        # 檢查 sub_key 是否存在於資料區塊中
+        if sub_key not in data_section:
+            raise KeyError(f"Sub key '{sub_key}' not found in data section '{main_key}'.")
+        
+        # 更新資料
+        data_section[sub_key] = data
+
     def to_raw_data(self) -> bytes:
         """
         將目前解析後的資料（parsed_data）序列化回原始位元組資料。

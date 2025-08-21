@@ -3,7 +3,7 @@ import json
 
 from flask import Blueprint, Response
 
-from core.shared_data import scenario_map
+from core.shared_data import get_scenario_map
 
 api_scenario_bp = Blueprint("api_scenario", __name__, url_prefix="/api/scenario")
 
@@ -11,6 +11,7 @@ api_scenario_bp = Blueprint("api_scenario", __name__, url_prefix="/api/scenario"
 @api_scenario_bp.route("/detail/<int:scenario_id>", methods=["GET"])
 def get_scenario_detail(scenario_id):
     """提供完整 scenario 詳細內容"""
+    scenario_map = get_scenario_map()
     scenario = scenario_map.get(scenario_id)
     if scenario:
         return Response(

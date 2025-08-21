@@ -141,6 +141,20 @@ window.app = {
     this.displayedImages = [...this.allImages];
   },
   
+  compareSelected() {
+    if (this.selectedSet.length >= 2) {
+      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+      window.open(`/compare?files=${files}`, 'CompareSelectedFile');
+    }
+  },
+  
+  arrangeSelected() {
+    if (this.selectedSet.length >= 2) {
+      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+      window.open(`/arrange?files=${files}`, 'ArrangeSelectedFile');
+    }
+  },
+  
   editSelected() {
     if (this.selectedSet.length === 1) {
       const fileId = this.selectedSet[0];
@@ -178,15 +192,19 @@ window.app = {
 
       // 如果使用者取消或輸入空白，則停止
       if (!newFilenameInput || newFilenameInput.trim() === '') {
+        console.log("取消或空白");
         return;
       }
     
       // 如果新檔名與舊檔名相同，也停止
-      if (newFilenameInput === suggestedFilename) {
+      if (newFilenameInput === oldFilename) {
+        console.log("新舊同名.");
         return;
       }
 
       const newFilename = newFilenameInput.trim();
+
+	  console.log("do rename.");
 
       // 2. 向後端發送請求來執行重新命名
       const renameRes = await fetch('/rename_file', {
@@ -226,6 +244,8 @@ window.app = {
       }
     
       alert(`檔案已成功重新命名為：${newFilename}`);
+
+      this.scan(this.currentScanPath);
 
     } catch (e) {
       alert('網路或伺服器錯誤');
@@ -279,19 +299,7 @@ window.app = {
     }
   },
   
-  compareSelected() {
-    if (this.selectedSet.length >= 2) {
-      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
-      window.open(`/compare?files=${files}`, 'CompareSelectedFile');
-    }
-  },
   
-  arrangeSelected() {
-    if (this.selectedSet.length >= 2) {
-      const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
-      window.open(`/arrange?files=${files}`, 'ArrangeSelectedFile');
-    }
-  },
   
   openGeneral() {
     window.open('/general', 'EditGeneralSetting');
