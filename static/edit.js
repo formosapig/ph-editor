@@ -358,16 +358,6 @@ function autoSaveData() {
     } else if (result.need_update_scenario_dropdown) {
       fetchAndRenderDropdowns("story", "scenario");
 	}
-	
-	// 當檔案需要儲存, 但是不是 general / profile 時...
-	if (result.need_save) {
-		document.getElementById('saveButton').disabled = false;
-	}
-
-    //if (result.need_save_all) {
-	// 無腦走 pingPongSync() 應該沒關係...	
-    pingPongSync();
-    //}
   })
   .catch(error => {
     showMessage('儲存失敗：' + error.message, 'error');
@@ -468,48 +458,6 @@ function saveFile() {
     console.error('saveFile: 儲存失敗。', error); // 新增日誌
   });
 }
-
-/**
- * 觸發後端儲存待處理角色的函式。
- * 會持續呼叫後端路由，直到沒有待儲存的檔案為止。
- */
-async function pingPongSync() {
-    let savedCount = 0;
-
-    async function saveNext() {
-        try {
-            // 呼叫後端儲存待處理檔案的路由
-            const response = await fetch('/api/character/ping_pong_sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`伺服器回應錯誤: ${response.status} ${response.statusText} - ${errorText}`);
-            }
-
-            const data = await response.json();
-
-            if (data.file_id) {
-                savedCount++;
-                showMessage(`成功同步檔案: ${data.file_id}。繼續檢查...`);
-                await saveNext(); // 繼續處理下一個
-            } else {
-                // 沒有更多檔案要存了
-                showMessage(`所有待同步檔案 ${savedCount} 個已處理完畢。`);
-            }
-        } catch (err) {
-            console.error("同步失敗", err);
-            showMessage(`同步失敗: ${err.message}`, 'error');
-        }
-    }
-
-    showMessage("正在檢查並同步待處理檔案...");
-    await saveNext();
-}
-
 
 /**
  * 建立一個 <select> 元素及其選項。
@@ -863,7 +811,6 @@ function showMessage(text, type = 'success') {
 
 window.reloadFile = reloadFile;
 window.saveFile = saveFile;
-//window.pingPongSync = pingPoneSync;
 
 window.addEventListener('load', positionDropdown);
 window.addEventListener('resize', positionDropdown);

@@ -182,6 +182,7 @@ class CharacterFileEntry:
 
     def update_character_data(self, main_key: str, sub_key: str, data: any):
         self.character_data.update_data(main_key, sub_key, data)
+        self.save()
         
     def update_tag_id(self, tag_id: int):
         self.tag_id = tag_id
@@ -221,6 +222,8 @@ class CharacterFileEntry:
                 f.write(combined_data)
         except Exception as e:
             raise IOError(f"寫入檔案失敗：{self.filename} -> {e}")
+
+        logger.info(f"儲存 {self.filename} 成功")
 
         self.save_flag = False
         if not individual_only:

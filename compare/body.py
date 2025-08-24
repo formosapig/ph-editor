@@ -8,7 +8,7 @@ from utils.utils import (
     format_hsv_to_string,
     format_hsva_to_string,
 )
-
+from game_data.body_data import is_nashi
 
 def calculate_value_by_height(height: int) -> Optional[int]:
     base_value = 50
@@ -58,28 +58,20 @@ BODY_KEY_NAME_MAP = {
     # 身高設定 story.profile.height
     "b_pro_hei": "身高設定",
     # 全部 (body.overall.height, body.overall.head_size)
-    "b_overall": "🏷️全体",
+    "b_overall": "🏷️全体(頭圍)",
     # body.overall.#skin_name
-    "b_ove_skin": "肌膚",
-    # body.overall.flesh_strength
-    "b_ove_str": "肉感",
+    "b_ove_skin": "肌膚肉感",
     # body.overall.hue/body.overall.saturation/body.overall.valu
-    "b_ove_hsv": "色相",
-    # body.overall.gloss_strength, body.overall.gloss_texture
-    "b_ove_glo": "光澤",
+    "b_ove_hsv": "色相光澤",
     
     # 胸部設定 story.profile.cup
     "b_pro_cup": "胸圍設定",
     # 全部 body.breast.size ...
     "b_bre_all": "🏷️全体",
     # 乳頭 body.breast.nipples.#name
-    "b_bre_nip": "乳頭",
-    # 乳暈 body.breast.nipples.areola_size
-    "b_bre_nip_are": "乳暈",
+    "b_bre_nip": "乳頭乳暈",
     # 色相 body.breast.nipples.hue, saturation, value, alpha
-    "b_bre_nip_hsva": "色相",
-    # 光澤 body.breast.nipples.gloss
-    "b_bre_nip_glo": "光澤",
+    "b_bre_nip_hsva": "色相光澤",
     
     # 上半身
     "b_upp": "🏷️上半身",
@@ -95,27 +87,17 @@ BODY_KEY_NAME_MAP = {
     
     # 指甲 hsva
     "b_nai_hsva": "🏷️指甲色",
-    # 光澤
-    "b_nai_glo": "光澤",
     # 指甲油
     "b_nai_pol": "指甲油",
-    # 設定
-    "b_nai_pol_set": "設定",
     
     # 陰毛
     "b_pub": "🏷️陰毛",
-    # 顏色
-    "b_pub_col": "顏色",
     
     # 曬痕
     "b_tan": "🏷️曬痕",
-    # 色相
-    "b_tan_hsva": "色相",
     
     # 刺青
     "b_tat": "🏷️刺青",
-    # 顏色
-    "b_tat_col": "顏色"
 }
 
 
@@ -128,36 +110,45 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
     # 身高設定 story.profile.height
     val_origin_height = get_nested_value(d, "story.profile.height", -1)
     val_setting_height = calculate_value_by_height(val_origin_height)
+    val_game_height = get_nested_value(d, "body.overall.height", -1)
     # 如果 val_setting_height 不是 None，就格式化顯示；否則給空字串
-    result["b_pro_hei"] = f"{val_origin_height} cm ➡️ [{val_setting_height}]" if val_setting_height is not None else ""
-    # 全部 (body.overall.height, body.overall.head_size)
-    result["b_overall"] = format_attributes_to_string(
-        get_nested_value(d, "body.overall.height", -1),
-        get_nested_value(d, "body.overall.head_size", -1)
+    result["b_pro_hei"] = (
+        f"{'❌️' if val_setting_height != val_game_height else ''}"
+        f" {val_origin_height} cm {val_setting_height} → {val_game_height}"
+        if val_setting_height is not None else f"{val_game_height}"
     )
+    # 全部 (body.overall.height, body.overall.head_size)
+    result["b_overall"] = get_nested_value(d, "body.overall.head_size", -1)
     # body.overall.#skin_name
-    result["b_ove_skin"] = get_nested_value(d, "body.overall.#skin_name", "")
-    # body.overall.flesh_strength
-    result["b_ove_str"] = get_nested_value(d, "body.overall.flesh_strength", -1)
+    result["b_ove_skin"] = (
+        f"{get_nested_value(d, 'body.overall.#skin_name', '')}: "
+        f"{get_nested_value(d, 'body.overall.flesh_strength', -1)}"
+    )
     # body.overall.hue/body.overall.saturation/body.overall.value...
-    result["b_ove_hsv"] = format_hsv_to_string(
+    overall_hsv = format_hsv_to_string(
         get_nested_value(d, "body.overall.hue", -1),
         get_nested_value(d, "body.overall.saturation", -1),
         get_nested_value(d, "body.overall.value", -1)
     )
-    # body.overall.gloss_strength, body.overall.gloss_texture
-    result["b_ove_glo"] = format_attributes_to_string(
-        get_nested_value(d, "body.overall.gloss_strength", -1),
-        get_nested_value(d, "body.overall.gloss_texture", -1)
+    result["b_ove_hsv"] = (
+        f"{overall_hsv} "
+        f"({get_nested_value(d, 'body.overall.gloss_strength', -1)},"
+        f"{get_nested_value(d, 'body.overall.gloss_texture', -1)})"
     )
 
     # 胸部設定 story.profile.cup
     val_origin_cup = get_nested_value(d, "story.profile.cup", "")
     val_setting_cup = calculate_value_by_cup(val_origin_cup)
-    result["b_pro_cup"] = f"{val_origin_cup} ➡️ [{val_setting_cup}]" if val_setting_cup is not None else ""
+    val_game_cup = get_nested_value(d, "body.breast.size", -1)
+    
+    result["b_pro_cup"] = (
+        f"{'❌️' if val_setting_cup != val_game_cup else ''}"
+        f" {val_origin_cup} cup {val_setting_cup} → {val_game_cup}"
+        if val_setting_cup is not None else f"{val_game_cup}"
+    )
     # 全部 body.breast.size ...
     result["b_bre_all"] = format_attributes_to_string(
-        get_nested_value(d, "body.breast.size", -1),
+        #get_nested_value(d, "body.breast.size", -1),
         get_nested_value(d, "body.breast.vertical_position", -1),
         get_nested_value(d, "body.breast.horizontal_spread", -1),
         get_nested_value(d, "body.breast.horizontal_position", -1),
@@ -170,20 +161,21 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
         get_nested_value(d, "body.breast.weight", -1)
     )
     # 乳頭 body.breast.nipples.#name
-    result["b_bre_nip"] = get_nested_value(d, "body.breast.nipples.#name", "")
-    # 乳暈 body.breast.nipples.areola_size
-    result["b_bre_nip_are"] = get_nested_value(d, "body.breast.nipples.areola_size", -1)
+    result["b_bre_nip"] = (
+        f"{get_nested_value(d, 'body.breast.nipples.#name', '')}: "
+        f"{get_nested_value(d, 'body.breast.nipples.areola_size', -1)}"
+    )
     # 色相 body.breast.nipples.hue, saturation, value, alpha
-    result["b_bre_nip_hsva"] = format_hsva_to_string(
+    nipples_hsva = format_hsva_to_string(
         get_nested_value(d, "body.breast.nipples.hue", -1),
         get_nested_value(d, "body.breast.nipples.saturation", -1),
         get_nested_value(d, "body.breast.nipples.value", -1),
         get_nested_value(d, "body.breast.nipples.alpha", -1)
     )
-    # 光澤 body.breast.nipples.gloss
-    result["b_bre_nip_glo"] = format_attributes_to_string(
-        get_nested_value(d, "body.breast.nipples.gloss_strength", -1),
-        get_nested_value(d, "body.breast.nipples.gloss_texture", -1)
+    result["b_bre_nip_hsva"] = (
+        f"{nipples_hsva} "
+        f"({get_nested_value(d, 'body.breast.nipples.gloss_strength', -1)},"
+        f"{get_nested_value(d, 'body.breast.nipples.gloss_texture', -1)})"
     )
     
     # 上半身
@@ -225,49 +217,51 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
     )
 
     # 指甲 hsva
-    result["b_nai_hsva"] = format_hsva_to_string(
+    nails_hsva = format_hsva_to_string(
         get_nested_value(d, "body.nails.hue", -1),
         get_nested_value(d, "body.nails.saturation", -1),
         get_nested_value(d, "body.nails.value", -1),
         get_nested_value(d, "body.nails.alpha", -1)
     )
-    # 光澤
-    result["b_nai_glo"] = format_attributes_to_string(
-        get_nested_value(d, "body.nails.gloss_strength", -1),
-        get_nested_value(d, "body.nails.gloss_texture", -1)
+    result["b_nai_hsva"] = (
+        f"{nails_hsva} "
+        f"({get_nested_value(d, 'body.nails.gloss_strength', -1)},"
+        f"{get_nested_value(d, 'body.nails.gloss_texture', -1)})"
     )
-    # 指甲油
-    result["b_nai_pol"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "body.nails.polish.color", -1)
-    )
-    # 設定
-    result["b_nai_pol_set"] = format_attributes_to_string(
-        get_nested_value(d, "body.nails.polish.shine_strength", -1),
-        get_nested_value(d, "body.nails.polish.shine_texture", -1)
+    # 指甲油, Color Code 夾資料時, 只能用空白隔開資料
+    result["b_nai_pol"] = (
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'body.nails.polish.color', -1))} "
+        f"{get_nested_value(d, "body.nails.polish.shine_strength", -1)} "
+        f"{get_nested_value(d, "body.nails.polish.shine_texture", -1)}"
     )
     
     # 陰毛
-    result["b_pub"] = get_nested_value(d, "body.pubic_hair.#name", "")
-    # 顏色
-    result["b_pub_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "body.pubic_hair.color", -1)
+    result["b_pub"] = (
+        f"{get_nested_value(d, 'body.pubic_hair.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'body.pubic_hair.color', -1))}"
+        if not is_nashi('pubic_hair', get_nested_value(d, 'body.pubic_hair.id', -1)) else ""
     )
 
     # 曬痕
-    result["b_tan"] = get_nested_value(d, "body.tan_lines.#name", "")
-    # 色相
-    result["b_tan_hsva"] = format_hsva_to_string(
-        get_nested_value(d, "body.tan_lines.hue", -1),
-        get_nested_value(d, "body.tan_lines.saturation", -1),
-        get_nested_value(d, "body.tan_lines.value", -1),
-        get_nested_value(d, "body.tan_lines.intensity", -1)
-    )
+    if is_nashi('tan_lines', get_nested_value(d, "body.tan_lines.id", -1)):
+        result["b_tan"] = ""
+    else:    
+        tan_lines_hsva = format_hsva_to_string(
+            get_nested_value(d, "body.tan_lines.hue", -1),
+            get_nested_value(d, "body.tan_lines.saturation", -1),
+            get_nested_value(d, "body.tan_lines.value", -1),
+            get_nested_value(d, "body.tan_lines.intensity", -1)
+        )
+        result["b_tan"] = (
+            f"{get_nested_value(d, 'body.tan_lines.#name', '')} "
+            f"{tan_lines_hsva}"
+        )    
 
     # 刺青
-    result["b_tat"] = get_nested_value(d, "body.tattoo.#name", "")
-    # 顏色
-    result["b_tat_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "body.tattoo.color", -1)
+    result["b_tat"] = (
+        f"{get_nested_value(d, 'body.tattoo.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'body.tattoo.color', -1))}"
+        if not is_nashi('tattoo', get_nested_value(d, 'body.tattoo.id', -1)) else ""
     )
 
     return result

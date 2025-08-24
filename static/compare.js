@@ -59,6 +59,7 @@ window.addEventListener('DOMContentLoaded', () => {
     },
 	isDifferentFromFirst(index, attr) {
       if (!this.characters.length || index === 0) return false;
+	  if (this.attrBlockMap[attr] === 'basic') return false;
       const firstValue = this.characters[0][attr];
       const currentValue = this.characters[index][attr];
       return firstValue !== currentValue;

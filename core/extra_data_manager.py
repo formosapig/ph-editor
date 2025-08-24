@@ -237,7 +237,7 @@ class ExtraDataManager():
     def add_profile(self, updated_profile: Dict[str, Any]) -> bool:
         ''' 新增一個 profile data, 並返回是否新增成功 '''
         # 1. 檢查跟 default 是不是一樣, 一樣返回 false.
-        if not _is_data_changed_without_version(
+        if not self._is_data_changed_without_version(
             DEFAULT_PROFILE_TEMPLATE,
             updated_profile
         ):
@@ -247,8 +247,8 @@ class ExtraDataManager():
         if updated_profile.get("!id") == 0:
             new_id = max(self._profile_map.keys(), default = 0) + 1
             updated_profile["!id"] = new_id # 重要!!這邊更新 profile_id 成新的.
-            update = copy.deepcopy(updated_profile) # 注意,做一個深層複製來維持封裝性.
-            self._profile_map[new_id] = updated
+            copy_updated = copy.deepcopy(updated_profile) # 注意,做一個深層複製來維持封裝性.
+            self._profile_map[new_id] = copy_updated
             self._save_profile_data() # 永遠即時儲存
             return True
         else:
@@ -288,10 +288,10 @@ class ExtraDataManager():
         self._metadata_map[file_id] = metadata
         self._save_metadata_data()
         
-    def add_scenraio(self, updated_scenario: Dict[str, Any]) -> bool:
+    def add_scenario(self, updated_scenario: Dict[str, Any]) -> bool:
         ''' 新增一個 scenario data, 並返回是否新增成功 '''
         # 1. 檢查跟 default 是不是一樣, 一樣返回 false.
-        if not _is_data_changed_without_version(
+        if not self._is_data_changed_without_version(
             DEFAULT_SCENARIO_TEMPLATE,
             updated_scenario
         ):
@@ -301,8 +301,8 @@ class ExtraDataManager():
         if updated_scenario.get("!id") == 0:
             new_id = max(self._scenario_map.keys(), default = 0) + 1
             updated_scenario["!id"] = new_id # 重要!!這邊更新 profile_id 成新的.
-            update = copy.deepcopy(updated_scenario) # 注意,做一個深層複製來維持封裝性.
-            self._scenario_map[new_id] = updated
+            copy_updated = copy.deepcopy(updated_scenario) # 注意,做一個深層複製來維持封裝性.
+            self._scenario_map[new_id] = copy_updated
             self._save_scenario_data() # 永遠即時儲存
             return True
         else:

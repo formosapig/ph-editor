@@ -8,7 +8,6 @@ from core.shared_data import (
     add_or_update_character_with_path,
     
     characters_db,
-    characters_db_lock,
     get_character_data,
     get_character_file_entry,
     get_profile,
@@ -17,115 +16,15 @@ from core.shared_data import (
     process_profile_data,
     process_scenario_data,
     update_backstage_data,
+    update_character_data,
 )
 from utils.character_file_utils import reload_character_data
 
 
 logger = logging.getLogger(__name__)
 
+
 api_character_bp = Blueprint("api_character", __name__, url_prefix="/api/character")
-
-
-"""def ensure_profile_data_updated(character_entry: CharacterFileEntry) -> None:
-    if character_entry.profile_id is None:
-        return
-
-    global_profile_data = get_profile(character_entry.profile_id)
-    global_profile_version = global_profile_data.get("!version", -1)
-
-    character_data = character_entry.get_character_data()
-    character_profile_data = character_data.get_value(["story", "profile"])
-    character_profile_version = character_entry.profile_version
-
-    if (
-        not isinstance(character_profile_data, dict)
-        or character_profile_version < global_profile_version
-    ):
-        data = character_data.get_data()
-
-        # 確保 "story" 存在
-        if "story" not in data:
-            data["story"] = {}
-
-        # 直接更新 profile 區塊（不透過 set_value）
-        data["story"]["profile"] = global_profile_data.copy()
-
-        # 更新 character_entry 的 profile 狀態
-        character_entry.profile_id = global_profile_data.get(
-            "!id", character_entry.profile_id
-        )
-        character_entry.profile_version = global_profile_version
-
-        character_entry.set_sync_flag(True)"""
-
-
-"""def ensure_scenario_data_updated(character_entry: CharacterFileEntry) -> None:
-    if character_entry.scenario_id is None:
-        return
-
-    global_scenario_data = get_scenario(character_entry.scenario_id)
-    global_scenario_version = global_scenario_data.get("!version", -1)
-
-    character_data = character_entry.get_character_data()
-    character_scenario_data = character_data.get_value(["story", "scenario"])
-    character_scenario_version = character_entry.scenario_version
-
-    if (
-        not isinstance(character_scenario_data, dict)
-        or character_scenario_version < global_scenario_version
-    ):
-        data = character_data.get_data()
-
-        # 確保 "story" 存在
-        if "story" not in data:
-            data["story"] = {}
-
-        # 直接更新 profile 區塊（不透過 set_value）
-        data["story"]["scenario"] = global_scenario_data.copy()
-
-        # 更新 character_entry 的 scenario 狀態
-        character_entry.scenario_id = global_scenario_data.get(
-            "!id", character_entry.scenario_id
-        )
-        character_entry.scenario_version = global_scenario_version
-
-        character_entry.set_sync_flag(True)"""
-
-
-"""def reload_character_data(
-    scan_path: str, file_id: str
-) -> Union[Dict[str, Any], Tuple]:
-    
-    #重新讀取角色圖檔並解析，更新共享資料庫，並確保 general 資料是最新。
-    #成功回傳 character_data.get_data()。
-    #發生錯誤時回傳 (jsonify響應, status_code) tuple。
-    
-    try:
-        add_or_update_character_with_path(scan_path, file_id)
-
-        character_file_entry_obj = get_character_file_entry(file_id)
-        if not character_file_entry_obj:
-            return (
-                jsonify(
-                    {
-                        "error": f"雖然成功讀取檔案，但解析後仍無法取得角色數據: {file_id}。"
-                    }
-                ),
-                500,
-            )
-
-        logger.debug("add or update success.")
-
-        ensure_profile_data_updated(character_file_entry_obj)
-        ensure_scenario_data_updated(character_file_entry_obj)
-
-        character_data_obj = character_file_entry_obj.get_character_data()
-        return character_data_obj.get_data()
-
-    except FileNotFoundError:
-        return jsonify({"error": "檔案不存在。", "parsed_data_preview": "無"}), 404
-    except Exception as e:
-        return jsonify({"error": f"讀取角色檔案時發生錯誤: {e}"}), 500"""
 
 
 @api_character_bp.route("/reload", methods=["GET"])
@@ -181,6 +80,7 @@ def save_file():
         return jsonify({"error": f"發生未知錯誤：{str(e)}"}), 500
 
 
+'''
 @api_character_bp.route("/ping_pong_sync", methods=["POST"])
 def ping_pong_sync():
     """
@@ -228,7 +128,7 @@ def ping_pong_sync():
     except IOError as e:
         return jsonify({"error": f"寫入檔案失敗: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": f"發生未知錯誤: {str(e)}"}), 500
+        return jsonify({"error": f"發生未知錯誤: {str(e)}"}), 500'''
 
 
 @api_character_bp.route("/update/<main_tab>/<sub_tab>", methods=["PUT"])
@@ -273,7 +173,7 @@ def update_data(main_tab, sub_tab):
 
         # 全域資料檢查...
         if main_tab == "story" and sub_tab == "general":
-            update_global_general_data(new_data)
+            update_general_data(new_data)
             
         # 簡介資料檢查...
         if main_tab == "story" and sub_tab == "profile":
@@ -321,7 +221,7 @@ def update_data(main_tab, sub_tab):
 
         # 更新子節點
         if main_tab != "story":
-            character_data_obj.update_data(main_tab, sub_tab, new_data)
+            update_character_data(file_id, main_tab, sub_tab, new_data)
 
         response_data = {
             "success": True,
@@ -337,8 +237,6 @@ def update_data(main_tab, sub_tab):
             response_data["new_profile_id"] = new_profile_id
         if new_scenario_id is not None:
             response_data["new_scenario_id"] = new_scenario_id        
-        if need_save_all:
-            response_data["need_save_all"] = True
 
         # 若節點不是 'story' 'general' 或 'story' 'profile' 或 'story' 'scenario' 時，把 save_flag 設為 true
         #entry = get_character_file_entry(file_id)

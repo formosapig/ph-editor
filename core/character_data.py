@@ -1,5 +1,6 @@
 # ph-editor/core/character_data.py
 import logging
+import copy
 from io import BytesIO
 
 # 引入所有解析器模組
@@ -97,9 +98,9 @@ class CharacterData:
 
             # 7. 附加資料-故事設定
             # print(f"  [偏移: {self.data_stream.tell()}] 解析其他零碎數據/跳過無意義數據...")
-            self.parsed_data["story"] = story_parser.parse_story_data(
-                self.data_stream, debug_mode
-            )
+            #self.parsed_data["story"] = story_parser.parse_story_data(
+            #    self.data_stream, debug_mode
+            #)
 
         except EOFError as e:
             logger.error(f"--- 解析提前結束：資料流末尾意外終止。錯誤: {e} ---")
@@ -190,7 +191,7 @@ class CharacterData:
             raise KeyError(f"Sub key '{sub_key}' not found in data section '{main_key}'.")
         
         # 更新資料
-        data_section[sub_key] = data
+        data_section[sub_key] = copy.deepcopy(data)
 
     def to_raw_data(self) -> bytes:
         """
@@ -242,9 +243,9 @@ class CharacterData:
 
             # 7. 寫入附加資料-故事設定
             # print(f"  [偏移: {output_stream.tell()}] 序列化其他零碎數據/填充無意義數據...")
-            story_serializer.serialize_story_data(
-                self.parsed_data.get("story", {}), output_stream
-            )
+            #story_serializer.serialize_story_data(
+            #    self.parsed_data.get("story", {}), output_stream
+            #)
 
         except Exception as e:
             logger.error(f"--- 序列化過程中發生錯誤：{e} ---")

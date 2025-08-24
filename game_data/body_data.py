@@ -1,4 +1,4 @@
-# your_character_project/game_data/body_data.py
+# ph-editor/game_data/body_data.py
 
 BODY_DETAILS = {
     # 皮膚
@@ -135,3 +135,11 @@ def get_body_detail_type(category: str, item_id: int | tuple[int, int]) -> str:
     
     # 如果找不到對應的 ID，返回 None 或拋出錯誤
     return None
+
+def is_nashi(category: str, item_id: int) -> bool:
+    """
+    Checks if a given category and item ID combination is valid.
+    """
+    return (category == "pubic_hair" and item_id == 5) or \
+           (category == "tan_lines" and item_id == 0) or \
+           (category == "tattoo" and item_id == 0)

@@ -125,6 +125,9 @@ window.app = {
     this.filterKey = key;
     const kw = this.filterKeyword.trim().toLowerCase();
 
+    // 這裡是修改處：在執行新的篩選前，將所有選取的項目清空
+    this.selectedSet = []; 
+
     if (!kw || !this.filterKey) {
       this.displayedImages = [...this.allImages];
       return;
