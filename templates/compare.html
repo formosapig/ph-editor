@@ -15,7 +15,21 @@
   </script>
 </head>
 <body>
-<div class="table-container" v-scope v-cloak>
+
+<!-- 修改：新增控制區 -->
+<div v-scope v-cloak>
+
+<div class="controls">
+  <label><input type="checkbox" v-model="visibleBlocks" value="hair">髮型</label>
+  <label><input type="checkbox" v-model="visibleBlocks" value="face">臉龐</label>
+  <label><input type="checkbox" v-model="visibleBlocks" value="body">身體</label>
+  <label><input type="checkbox" v-model="visibleBlocks" value="clothing">服裝</label>
+  <label><input type="checkbox" v-model="visibleBlocks" value="accessory">配飾</label>
+  <button @click="reloadData">Reload 全部資料</button>
+</div>
+<!-- 修改結束 -->
+
+<div class="table-container">
   <table>
     <thead>
       <tr>
@@ -34,7 +48,8 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="attr in displayAttributes" :key="attr">
+      <tr v-for="attr in displayAttributes" :key="attr"
+          v-show="visibleBlocks.includes(attrBlockMap[attr])">
         <td :class="getAttributeBlockClass(attr)">
           {{ attrNameMap[attr] || attr }}
         </td>
@@ -47,6 +62,9 @@
     </tbody>
   </table>
 </div>
+
+</div>
+
 <script src="[[ url_for('static', filename='compare.js') ]]" defer></script>
 </body>
 </html>

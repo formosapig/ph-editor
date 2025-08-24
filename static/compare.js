@@ -134,6 +134,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     return html;
 },
+    // --- 修改開始：新增 checkbox 與 reload 功能 ---
+    visibleBlocks: ["hair", "face", "body", "clothing", "accessory"],
+
+    reloadData() {
+      this.characters = [...window.rawCompareData.characters];
+      this.attributes = [...window.rawCompareData.attributes];
+      this.visibleBlocks = ["hair", "face", "body", "clothing", "accessory"]; // reload 後預設全開
+    }
+    // --- 修改結束 ---
+
+
   };
 
   PetiteVue.createApp(compareData).mount('[v-scope]');

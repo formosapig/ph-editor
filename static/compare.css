@@ -1,3 +1,43 @@
+/* 修改：新增控制區樣式 */
+.controls {
+  margin: 10px;
+  padding: 10px 15px;              /* --- 修改：加大內距 --- */
+  border: 1px solid #ccc;
+  background: #ffffff;             /* --- 修改：改成白底 --- */
+  border-radius: 6px;              /* --- 修改：圓角 --- */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08); /* --- 修改：淡陰影 --- */
+  display: flex;                   /* --- 修改：橫向排列 --- */
+  flex-wrap: wrap;                 /* --- 修改：小螢幕自動換行 --- */
+  align-items: center;
+  gap: 12px;                       /* --- 修改：統一間距 --- */
+}
+
+.controls label {
+  margin-right: 0;                 /* --- 修改：靠 gap 控制，不再用 margin-right --- */
+  font-size: 14px;                 /* --- 修改：字體稍微小一點 --- */
+  cursor: pointer;                 /* --- 修改：可點擊感 --- */
+  user-select: none;
+}
+
+.controls input[type="checkbox"] {
+  margin-right: 4px;               /* --- 修改：checkbox 與文字間距 --- */
+}
+
+.controls button {
+  padding: 6px 14px;               /* --- 修改：按鈕尺寸調整 --- */
+  cursor: pointer;
+  border: none;                    /* --- 修改：去掉原本邊框 --- */
+  border-radius: 4px;              /* --- 修改：圓角 --- */
+  background-color: #4a90e2;       /* --- 修改：藍色按鈕 --- */
+  color: #fff;                     /* --- 修改：白字 --- */
+  font-size: 14px;
+  transition: background-color 0.2s ease; /* --- 修改：hover 動畫 --- */
+}
+
+.controls button:hover {
+  background-color: #357ab8;       /* --- 修改：hover 深藍 --- */
+}
+
 table {
   border-collapse: collapse;
   table-layout: auto;
