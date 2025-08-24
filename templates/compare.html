@@ -17,7 +17,7 @@
 <body>
 
 <!-- 修改：新增控制區 -->
-<div v-scope v-cloak>
+<div class="page-wrapper" v-scope v-cloak>
 
 <div class="controls">
   <label><input type="checkbox" v-model="visibleBlocks" value="hair">髮型</label>
@@ -33,7 +33,7 @@
   <table>
     <thead>
       <tr>
-        <th>屬性</th>
+        <th class="corner-cell">屬性</th>
         <th v-for="char in characters" :key="char.file_id"
             class="file-id-col">
           <a :href="`/edit?file_id=${encodeURIComponent(char.file_id)}`"
@@ -50,7 +50,7 @@
     <tbody>
       <tr v-for="attr in displayAttributes" :key="attr"
           v-show="visibleBlocks.includes(attrBlockMap[attr])">
-        <td :class="getAttributeBlockClass(attr)">
+        <td class="attr-name-col" :class="getAttributeBlockClass(attr)">
           {{ attrNameMap[attr] || attr }}
         </td>
         <td v-for="(char, index) in characters"
