@@ -380,12 +380,26 @@ def get_face_by_id(category: str, face_id: int | tuple[int, int], lang: str = 'j
         'zh': f'找不到臉部設定 ID {id_repr}',
     }
     return not_found_messages.get(lang, f'Face ID {id_repr} not found')
+
     
 # 輔助函數 (與 accessory_data.py 中的類似)
 def get_body_detail_name_by_id(category: str, item_id_tuple: tuple[int, int], lang: str = 'ja') -> str:
     # 實現查找邏輯
     pass
 
+
 def get_body_detail_type(category: str, item_id_tuple: tuple[int, int]) -> str:
     # 實現查找類型邏輯
-    pass            
+    pass
+
+
+def is_nashi(category: str, item_id: int) -> bool:
+    """
+    Checks if a given category and item ID combination is valid.
+    """
+    return (category == "wrinkle" and item_id == 0) or \
+           (category == "mole" and item_id == 0) or \
+           (category == "eyeshadow" and item_id == 0) or \
+           (category == "blush" and item_id == 0) or \
+           (category == "lipstick" and item_id == 0) or \
+           (category == "tattoo" and item_id == 0)    

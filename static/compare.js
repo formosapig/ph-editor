@@ -1,25 +1,23 @@
 window.addEventListener('DOMContentLoaded', () => {
-  // 1. 直接從全域變數中取得資料
   const { characters, attributes, attrNameMap, attrBlockMap } = window.rawCompareData;
 
-  // 2. 定義 Petite-Vue 應用程式的資料和方法
-  const compareData = {
+  // 🔧 使用 reactive 包裝資料與方法
+  const compareData = PetiteVue.reactive({
     characters,
     attributes,
     attrNameMap,
     attrBlockMap,
+	visibleBlocks: ["hair", "face", "body", "clothing", "accessory"],
 	
-	// 新增一個計算屬性或直接過濾
-    get displayAttributes() {
+	get displayAttributes() {
       return this.attributes.filter(attr => attr !== 'file_id');
     },
-	// **新增的函式：用於開啟編輯視窗**
+	
     openEditWindow(fileId) {
-        const windowName = `edit_file_${fileId}`;
-        // 使用 window.open 開啟新視窗，並傳遞 file_id
-        window.open(`/edit?file_id=${encodeURIComponent(fileId)}`, windowName);
+      const windowName = `edit_file_${fileId}`;
+      window.open(`/edit?file_id=${encodeURIComponent(fileId)}`, windowName);
     },
-	// **新增：獲取屬性區塊 class 的函式**
+	
     getAttributeBlockClass(attr) {
       const blockType = this.attrBlockMap[attr];
       if (blockType) {
@@ -65,7 +63,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return firstValue !== currentValue;
     },
     parseColorString(str) {
-      console.log("input = " + str);
+      //console.log("input = " + str);
 	  
   // 1. 處理無效輸入：null 或 undefined
   // 這些情況無法顯示，用 '-' 表示
@@ -134,18 +132,70 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     return html;
 },
-    // --- 修改開始：新增 checkbox 與 reload 功能 ---
-    visibleBlocks: ["hair", "face", "body", "clothing", "accessory"],
+    
 
     reloadData() {
-      this.characters = [...window.rawCompareData.characters];
-      this.attributes = [...window.rawCompareData.attributes];
-      this.visibleBlocks = ["hair", "face", "body", "clothing", "accessory"]; // reload 後預設全開
-    }
+      //this.characters = [...window.rawCompareData.characters];
+      //this.attributes = [...window.rawCompareData.attributes];
+      //this.visibleBlocks = ["hair", "face", "body", "clothing", "accessory"]; // reload 後預設全開
+	  //this.characters.slice(0, 1);
+	  this.characters.pop();
+	  this.renderKey++;
+    },
     // --- 修改結束 ---
 
+    // --- 修改開始：新增 reload 單個檔案函式 ---
+    reloadFile(fileId) {
+      fetch(`/compare/reload?file_id=${encodeURIComponent(fileId)}`)
+        .then(resp => resp.json())
+        .then(newData => {
+          const index = this.characters.findIndex(c => c.file_id === fileId);
+          if (index !== -1) {
+			  this.characters[index] = newData;
+			//console.log("try to add new Data ?!");
+            //this.characters.splice(index, 1, newData);
+			//const updated = [...this.characters];
+//updated[index] = newData;
+//this.characters = updated;
+//this.renderKey++;
+			//this.characters.pop();
 
-  };
+          } else {
+            // 如果不在現有陣列中，直接加入
+            this.characters.push(newData);
+          }
+		  //this.renderKey++;
+		  console.log("renderKey = " + this.renderKey);
+        })
+        .catch(err => {
+          console.error(`Reload file ${fileId} 失敗:`, err);
+        });
+    },
+    // --- 修改結束 ---
+
+  });
+
+  // --- 修改開始：加入 postMessage 監聽 ---
+  window.addEventListener("message", (event) => {
+    // 確認訊息來源安全
+    if (event.origin !== window.location.origin) return;
+
+    const { file_id, action } = event.data;
+    if (action === "updated") {
+      compareData.reloadFile(file_id);
+	  //window.location.reload();
+    }
+  });
+
 
   PetiteVue.createApp(compareData).mount('[v-scope]');
+
+  // -- what the fuck ?!
+  //document.addEventListener("visibilitychange", () => {
+  //  if (document.visibilityState === "visible") {
+  //    compareData.renderKey++;
+//	  console.log("renderKey =" + compareData.renderKey);
+//    }
+//  });
 });
+

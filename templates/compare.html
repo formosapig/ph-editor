@@ -18,7 +18,6 @@
 
 <!-- 修改：新增控制區 -->
 <div class="page-wrapper" v-scope v-cloak>
-
 <div class="controls">
   <label><input type="checkbox" v-model="visibleBlocks" value="hair">髮型</label>
   <label><input type="checkbox" v-model="visibleBlocks" value="face">臉龐</label>
@@ -49,13 +48,17 @@
     </thead>
     <tbody>
       <tr v-for="attr in displayAttributes" :key="attr"
-          v-show="visibleBlocks.includes(attrBlockMap[attr])">
+          v-show="attrBlockMap[attr] === 'basic' || visibleBlocks.includes(attrBlockMap[attr])">
         <td class="attr-name-col" :class="getAttributeBlockClass(attr)">
           {{ attrNameMap[attr] || attr }}
         </td>
         <td v-for="(char, index) in characters"
             :key="char.file_id"
-            :class="[getAttributeBlockClass(attr), { 'text-different': index > 0 && isDifferentFromFirst(index, attr) }]">
+            :class="[
+			  getAttributeBlockClass(attr),
+			  { 'text-different': index > 0 && isDifferentFromFirst(index, attr) },
+			  { 'notes-cell': attr === 'notes' } // 檢查屬性是否為 'notes'
+			]">
           <div class="content-container" v-html="generateColorHtml(char[attr])"></div>
         </td>
       </tr>

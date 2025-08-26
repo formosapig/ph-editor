@@ -176,3 +176,11 @@ def is_set(category: str, hair_id: tuple[int, int]) -> bool:
         if item['id'] == hair_id:
             return item.get('set', False)
     return False
+
+
+def is_nashi(category: str, hair_id: tuple[int, int]) -> bool:
+    """
+    Checks if a given category and item ID combination is valid.
+    """
+    return (category == "side" and hair_id == (0, 1)) or \
+           (category == "front" and hair_id == (0, 1))

@@ -201,6 +201,14 @@ th {
   background-color: #d0e0e3;
 }
 
+.notes-cell {
+  white-space: normal; /* 允許文字自動換行 */
+  /*word-break: break-word; /* 確保長單詞也能換行 */
+  /*overflow: visible;     /* 允許內容溢出或自動撐開 */
+  /*text-overflow: clip;   /* 移除省略號效果 */
+  /*max-width: none;       /* 允許單元格根據內容寬度自動調整，或者設定一個較大的值 */
+}
+
 [v-cloak] {
   display: none;
 }

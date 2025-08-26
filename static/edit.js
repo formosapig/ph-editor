@@ -353,6 +353,14 @@ function autoSaveData() {
       globalParsedData[mainTabKey][subTabKey] = newData;
     }
 	
+	// --- 新增 postMessage 通知父頁 ---
+    if (window.opener && !window.opener.closed && fileId) {
+      window.opener.postMessage(
+        { action: "updated", file_id: fileId },
+        window.location.origin
+      );
+    }
+	
     if (result.need_update_profile_dropdown) {
 	  fetchAndRenderDropdowns("story", "profile");
     } else if (result.need_update_scenario_dropdown) {

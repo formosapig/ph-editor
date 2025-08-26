@@ -1,4 +1,4 @@
-# ph-editor/compare/face.py
+# ph-editor/compare/accessory_compare.py
 import math
 from typing import Dict, Any
 from utils.utils import (

@@ -1,6 +1,7 @@
-# ph-editor/compare/face.py
+# ph-editor/compare/face_compare.py
 from typing import Dict, Any
 
+from game_data.face_data import is_nashi
 from utils.utils import (
     get_nested_value,
     convert_rgba_to_hex_aa,
@@ -8,10 +9,11 @@ from utils.utils import (
     join_numbers_with_commas,
 )
 
+
 FACE_KEY_NAME_MAP = {
     
     # 全體 (overall.over_width, upper_parth_depth, upper_part.height, lower_part_depth, lower_part_width)
-    "f_overall": "🏷️全體",
+    "f_overall": "😀️全體",
     # 輪廓 contour
     "f_contour": "輪廓",
     # 肌肉 muscle
@@ -20,76 +22,52 @@ FACE_KEY_NAME_MAP = {
     "f_wrinkle": "皺紋",
     
     # 耳朵 (ears.size, ears.angle_y, ears.angle_z, ears.upper_shape, ears.lower_shape)
-    "f_ears": "🏷️耳朵",
+    "f_ears": "👂️耳朵",
     
     # 眉毛 (eyebrows.height, eyebrows.horizontal_position, eyebrows.angle_z, eyebrows.inner_shaper, eyebrows.outer_shape
-    "f_eye_all": "🏷️眉毛",
+    "f_eye_all": "😀️眉毛",
     # 眉形 eyebrows.name
-    "f_eyebrows": "眉形",
-    # 顏色 eyebrows.color
-    "f_eye_col": "顏色",
-    # 效果 (eyebrows.strength, eyebrows.texture)
-    "f_eye_eff": "效果",
+    "f_eyebrows": "眉形顏色效果",
     
     # 睫毛 eyelashes.#name
-    "f_eyelashes": "🏷️睫毛",
-    # 顏色 eyelashes.color
-    "f_eyel_col": "顏色",
-    # 效果 (eyelashes.strength, eyelashes.texture)
-    "f_eyel_eff": "效果",
+    "f_eyelashes": "😀️睫毛顏色效果",
     
     # 眼睛 eyes.height, eyes.horizontal_position, eyes ... all
-    "f_eyes": "🏷️眼睛",
+    "f_eyes": "👀️眼睛",
         
     # 眼球 (左,右統一喔!!) (eyeballs.pupil_v ... 
-    "f_eyeba_all": "🏷️眼球",
+    "f_eyeba_all": "👀️眼球",
     # 眼球 eyeballs.left_eyeball.#name
-    "f_eyeba_type": "種類",
-    # 鞏膜 eyeballs.left_eyeball.sclera_color
-    "f_eyeba_sce": "鞏膜",
-    # 瞳孔 eyeballs.left_eyeball.pupil_color
-    "f_eyeba_pup": "瞳孔",
-    # 設定 (eyeballs.left_eyeball.pupil_size,eyeballs.left_eyeball.pupil_brightness)
-    "f_eyeba_set": "設定",
+    "f_eyeba_type": "種類鞏膜瞳孔設定",
     # 眼神 eyeballs.#name
-    "f_eyeba_hig": "眼神",
-    # 顏色 eyeballs.hightlight_color
-    "f_eyeba_col": "顏色",
+    "f_eyeba_hig": "眼神顏色",
     
     # 鼻子
-    "f_nose": "🏷️鼻子",
+    "f_nose": "👃️鼻子",
     
     # 臉頰
-    "f_cheeks": "🏷️臉頰",
+    "f_cheeks": "😀️臉頰",
    
     # 嘴唇
-    "f_mouth": "🏷️嘴唇",
+    "f_mouth": "👄️嘴唇",
 
     # 下巴
-    "f_chin": "🏷️下巴",
+    "f_chin": "😀️下巴",
     
     # 痣
-    "f_mole": "🏷️痣",
-    # 顏色
-    "f_mol_col": "顏色",
+    "f_mole": "😀️痣",
     
     # 化妝 眼影
-    "f_mak_eye": "🏷️眼影",
-    # 顏色
-    "f_mak_eye_col": "顏色",
+    "f_mak_eye": "💄️眼影",
+
     # 腮紅
-    "f_mak_blu": "腮紅",
-    # 顏色
-    "f_mak_blu_col": "顏色",
+    "f_mak_blu": "💄腮紅",
+
     # 唇膏
-    "f_mak_lip": "唇膏",
-    # 顏色
-    "f_mak_lip_col": "顏色",
+    "f_mak_lip": "💄唇膏",
     
     # 刺青
-    "f_tattoo": "🏷️刺青",
-    # 顏色
-    "f_tat_col": "顏色"
+    "f_tattoo": "😀️刺青",
 }
 
 FACE_KEY_BLOCK_MAP = {key: 'face' for key in FACE_KEY_NAME_MAP}
@@ -113,7 +91,9 @@ def flatten_face_data(d: Dict[str, Any]) -> Dict[str, Any]:
     result["f_wrinkle"] = (
         f"{get_nested_value(d, 'face.overall.#wrinkle_name', '')} "
         f"{get_nested_value(d, 'face.overall.wrinkle_depth', -1)}"
-        )
+        if not is_nashi('wrinkle', get_nested_value(d, 'face.overall.wrinkle_id', -1))
+        else ""
+    )  
 
     # 耳朵 (ears.size, ears.angle_y, ears.angle_x, ears.upper_shape, ears.lower_shape)
     result["f_ears"] = format_attributes_to_string(
@@ -133,27 +113,19 @@ def flatten_face_data(d: Dict[str, Any]) -> Dict[str, Any]:
         get_nested_value(d, "face.eyebrows.outer_shape", -1)
     )
     # 眉形 eyebrows.#name
-    result["f_eyebrows"] = get_nested_value(d, "face.eyebrows.#name", "")
-    # 顏色 eyebrows.color
-    result["f_eye_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.eyebrows.color", "")
-    )
-    # 強度,紋理 (eyebrows.strength, eyebrows.texture)
-    result["f_eye_eff"] = format_attributes_to_string(
-        get_nested_value(d, "face.eyebrows.strength", -1),
-        get_nested_value(d, "face.eyebrows.texture", -1)
+    result["f_eyebrows"] = (
+        f"{get_nested_value(d, 'face.eyebrows.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.eyebrows.color', ''))} "
+        f"{get_nested_value(d, 'face.eyebrows.strength', -1)} "
+        f"{get_nested_value(d, 'face.eyebrows.texture', -1)}"
     )
     
     # 睫毛 eyelashes.#name
-    result["f_eyelashes"] = get_nested_value(d, "face.eyelashes.#name", "")
-    # 顏色 eyelashes.color
-    result["f_eyel_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.eyelashes.color", "")
-    )
-    # 效果 (eyelashes.strength, eyelashes.texture)
-    result["f_eyel_eff"] = format_attributes_to_string(
-        get_nested_value(d, "face.eyelashes.strength", -1),
-        get_nested_value(d, "face.eyelashes.texture", -1)
+    result["f_eyelashes"] = (
+        f"{get_nested_value(d, 'face.eyelashes.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.eyelashes.color', ''))} "
+        f"{get_nested_value(d, 'face.eyelashes.strength', -1)} "
+        f"{get_nested_value(d, 'face.eyelashes.texture', -1)}"
     )
     
     # 眼睛 eyes.height, eyes.horizontal_position, eyes ... all
@@ -179,26 +151,20 @@ def flatten_face_data(d: Dict[str, Any]) -> Dict[str, Any]:
         get_nested_value(d, "face.eyeballs.pupil_width", -1),
         get_nested_value(d, "face.eyeballs.pupil_vertical_width", -1)
     )
+    
     # 眼球 eyeballs.left_eyeball.#name
-    result["f_eyeba_type"] = get_nested_value(d, "face.eyeballs.left_eyeball.#name", "")
-    # 鞏膜 eyeballs.left_eyeball.sclera_color
-    result["f_eyeba_sce"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.eyeballs.left_eyeball.sclera_color", "")
+    result["f_eyeba_type"] = (
+        f"{get_nested_value(d, 'face.eyeballs.left_eyeball.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.eyeballs.left_eyeball.sclera_color', ''))} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.eyeballs.left_eyeball.pupil_color', ''))} "
+        f"{get_nested_value(d, 'face.eyeballs.left_eyeball.pupil_size', -1)} "
+        f"{get_nested_value(d, 'face.eyeballs.left_eyeball.pupil_brightness', -1)}"
     )
-    # 瞳孔 eyeballs.left_eyeball.pupil_color
-    result["f_eyeba_pup"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.eyeballs.left_eyeball.pupil_color", "")
-    )
-    # 設定 (eyeballs.left_eyeball.pupil_size,eyeballs.left_eyeball.pupil_brightness)
-    result["f_eyeba_set"] = format_attributes_to_string(
-        get_nested_value(d, "face.eyeballs.left_eyeball.pupil_size", -1),
-        get_nested_value(d, "face.eyeballs.left_eyeball.pupil_brightness", -1)
-    )
+    
     # 眼神 eyeballs.#name
-    result["f_eyeba_hig"] = get_nested_value(d, "face.eyeballs.#name", "")
-    # 顏色 eyeballs.hightlight_color
-    result["f_eyeba_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.eyeballs.highlight_color", "")
+    result["f_eyeba_hig"] = (
+        f"{get_nested_value(d, 'face.eyeballs.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.eyeballs.highlight_color', ''))}"
     )
 
     # 鼻子
@@ -254,36 +220,43 @@ def flatten_face_data(d: Dict[str, Any]) -> Dict[str, Any]:
     )
 
     # 痣
-    result["f_mole"] = get_nested_value(d, "face.mole.#name", "")
-    # 顏色
-    result["f_mol_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.mole.color", "")
+    result["f_mole"] = (
+        f"{get_nested_value(d, 'face.mole.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.mole.color', ''))}"
+        if not is_nashi('mole', get_nested_value(d, 'face.mole.id', -1))
+        else ""
     )
-
+    
     # 化妝 眼影
-    result["f_mak_eye"] = get_nested_value(d, "face.makeup.eyeshadow.#name", "")
-    # 顏色
-    result["f_mak_eye_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.makeup.eyeshadow.color", "")
+    result["f_mak_eye"] = (
+        f"{get_nested_value(d, 'face.makeup.eyeshadow.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.makeup.eyeshadow.color', ''))}"
+        if not is_nashi('eyeshadow', get_nested_value(d, 'face.makeup.eyeshadow.id', -1))
+        else ""
     )
+    
     # 腮紅
-    result["f_mak_blu"] = get_nested_value(d, "face.makeup.blush.#name", "")
-    # 顏色
-    result["f_mak_blu_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.makeup.blush.color", "")
+    result["f_mak_blu"] = (
+        f"{get_nested_value(d, 'face.makeup.blush.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.makeup.blush.color', ''))}"
+        if not is_nashi('blush', get_nested_value(d, 'face.makeup.blush.id', -1))
+        else ""
     )
+    
     # 唇膏
-    result["f_mak_lip"] = get_nested_value(d, "face.makeup.lipstick.#name", "")
-    # 顏色
-    result["f_mak_lip_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.makeup.lipstick.color", "")
+    result["f_mak_lip"] = (
+        f"{get_nested_value(d, 'face.makeup.lipstick.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.makeup.lipstick.color', ''))}"
+        if not is_nashi('lipstick', get_nested_value(d, 'face.makeup.lipstick.id', -1))
+        else ""
     )
 
     # 刺青
-    result["f_tattoo"] = get_nested_value(d, "face.tattoo.#name", "")
-    # 顏色
-    result["f_tat_col"] = convert_rgba_to_hex_aa(
-        get_nested_value(d, "face.tattoo.color", "")
+    result["f_tattoo"] = (
+        f"{get_nested_value(d, 'face.tattoo.#name', '')} "
+        f"{convert_rgba_to_hex_aa(get_nested_value(d, 'face.tattoo.color', ''))}"
+        if not is_nashi('tattoo', get_nested_value(d, 'face.tattoo.id', -1))
+        else ""
     )
-
+    
     return result
