@@ -41,7 +41,11 @@
              class="file-id-link-content">
             <img :src="`/cache/thumb_${char.file_id}.jpg`"
                  class="file-id-thumbnail" alt="角色縮圖" draggable="false">
-            <span class="truncated-file-id">{{ truncateFileId(char.file_id) }}</span>
+            <!--<span class="truncated-file-id">{{ truncateFileId(char.file_id) }}</span>-->
+			<span class="file-id-text">
+              <span class="file-id-name">{{ truncateFileId(char.file_id) }}</span><br>
+              <span class="file-id-note"> 測試用 remark </span>
+            </span>
           </a>
         </th>
       </tr>

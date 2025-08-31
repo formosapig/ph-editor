@@ -58,7 +58,7 @@ BODY_KEY_NAME_MAP = {
     # 身高設定 story.profile.height
     "b_pro_hei": "身高設定",
     # 全部 (body.overall.height, body.overall.head_size)
-    "b_overall": "🏷️全体(頭圍)",
+    "b_overall": "👍全体(頭圍)",
     # body.overall.#skin_name
     "b_ove_skin": "肌膚肉感",
     # body.overall.hue/body.overall.saturation/body.overall.valu
@@ -67,37 +67,37 @@ BODY_KEY_NAME_MAP = {
     # 胸部設定 story.profile.cup
     "b_pro_cup": "胸圍設定",
     # 全部 body.breast.size ...
-    "b_bre_all": "🏷️全体",
+    "b_bre_all": "👍全体",
     # 乳頭 body.breast.nipples.#name
     "b_bre_nip": "乳頭乳暈",
     # 色相 body.breast.nipples.hue, saturation, value, alpha
     "b_bre_nip_hsva": "色相光澤",
     
     # 上半身
-    "b_upp": "🏷️上半身",
+    "b_upp": "👍上半身",
     
     # 下半身
-    "b_low": "🏷️下半身",
+    "b_low": "👍下半身",
     
     # 腕
-    "b_arm": "🏷️腕",
+    "b_arm": "👍腕",
     
     # 腳
-    "b_leg": "🏷️腳",
+    "b_leg": "👍腳",
     
     # 指甲 hsva
-    "b_nai_hsva": "🏷️指甲色",
+    "b_nai_hsva": "👍指甲色",
     # 指甲油
     "b_nai_pol": "指甲油",
     
     # 陰毛
-    "b_pub": "🏷️陰毛",
+    "b_pub": "👍陰毛",
     
     # 曬痕
-    "b_tan": "🏷️曬痕",
+    "b_tan": "👍曬痕",
     
     # 刺青
-    "b_tat": "🏷️刺青",
+    "b_tat": "👍刺青",
 }
 
 

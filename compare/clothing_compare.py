@@ -16,77 +16,77 @@ CLOTHING_KEY_NAME_MAP = {
     # clothing set...
     "c_set": "️種類",
     # 上衣 clothing.top.#name
-    "c_top": "🏷️上衣",
+    "c_top": "👗上衣",
     # 主色
     "c_top_main": "主色",
     # 副色
     "c_top_sub": "副色",
     
     # 下著 bottom
-    "c_bottom": "🏷️下著",
+    "c_bottom": "👗下著",
     # 主色
     "c_bottom_main": "主色",
     # 副色
     "c_bottom_sub": "副色",
     
     # 胸罩 bra
-    "c_bra": "🏷️胸罩",
+    "c_bra": "👗胸罩",
     # 主色
     "c_bra_main": "主色",
     # 副色
     "c_bra_sub": "副色",
     
     # 內褲 panty
-    "c_panty": "🏷️內褲",
+    "c_panty": "👗內褲",
     # 主色
     "c_panty_main": "主色",
     # 副色
     "c_panty_sub": "副色",
     
     # 泳衣 swimsuit
-    "c_swimsuit": "🏷️泳衣",
+    "c_swimsuit": "👗泳衣",
     # 主色
     "c_swimsuit_main": "主色",
     # 副色
     "c_swimsuit_sub": "副色",
     
     # 泳衣-上衣 swimsuit_top
-    "c_swimsuit_top": "🏷️泳衣-上衣",
+    "c_swimsuit_top": "👗泳衣-上衣",
     # 主色
     "c_swimsuit_top_main": "主色",
     # 副色
     "c_swimsuit_top_sub": "副色",
     
     # 泳衣-下著 swimsuit_bottom
-    "c_swimsuit_bottom": "🏷️泳衣-下著",
+    "c_swimsuit_bottom": "👗泳衣-下著",
     # 主色
     "c_swimsuit_bottom_main": "主色",
     # 副色
     "c_swimsuit_bottom_sub": "副色",
     
     # 手套 gloves
-    "c_gloves": "🏷️手套",
+    "c_gloves": "👗手套",
     # 主色
     "c_gloves_main": "主色",
     # 副色
     "c_gloves_sub": "副色",
     
     # 褲襪 pantyhose
-    "c_pantyhose": "🏷️褲襪",
+    "c_pantyhose": "👗️褲襪",
     # 主色
     "c_pantyhose_main": "主色",
     # 副色
     "c_pantyhose_sub": "副色",
     
     # 襪子 socks
-    "c_socks": "🏷️襪子",
+    "c_socks": "👗️襪子",
     # 主色
     "c_socks_main": "主色",
     # 副色
     "c_socks_sub": "副色",
     
     # 鞋子 shoes
-    "c_shoes": "🏷️鞋子",
+    "c_shoes": "👗鞋子",
     # 主色
     "c_shoes_main": "主色",
     # 副色

@@ -22,7 +22,7 @@ FACE_KEY_NAME_MAP = {
     "f_wrinkle": "皺紋",
     
     # 耳朵 (ears.size, ears.angle_y, ears.angle_z, ears.upper_shape, ears.lower_shape)
-    "f_ears": "👂️耳朵",
+    "f_ears": "😀️耳朵",
     
     # 眉毛 (eyebrows.height, eyebrows.horizontal_position, eyebrows.angle_z, eyebrows.inner_shaper, eyebrows.outer_shape
     "f_eye_all": "😀️眉毛",
@@ -33,23 +33,23 @@ FACE_KEY_NAME_MAP = {
     "f_eyelashes": "😀️睫毛顏色效果",
     
     # 眼睛 eyes.height, eyes.horizontal_position, eyes ... all
-    "f_eyes": "👀️眼睛",
+    "f_eyes": "😀️眼睛",
         
     # 眼球 (左,右統一喔!!) (eyeballs.pupil_v ... 
-    "f_eyeba_all": "👀️眼球",
+    "f_eyeba_all": "😀️眼球",
     # 眼球 eyeballs.left_eyeball.#name
     "f_eyeba_type": "種類鞏膜瞳孔設定",
     # 眼神 eyeballs.#name
     "f_eyeba_hig": "眼神顏色",
     
     # 鼻子
-    "f_nose": "👃️鼻子",
+    "f_nose": "😀️鼻子",
     
     # 臉頰
     "f_cheeks": "😀️臉頰",
    
     # 嘴唇
-    "f_mouth": "👄️嘴唇",
+    "f_mouth": "😀️嘴唇",
 
     # 下巴
     "f_chin": "😀️下巴",
@@ -58,13 +58,13 @@ FACE_KEY_NAME_MAP = {
     "f_mole": "😀️痣",
     
     # 化妝 眼影
-    "f_mak_eye": "💄️眼影",
+    "f_mak_eye": "😀️眼影",
 
     # 腮紅
-    "f_mak_blu": "💄腮紅",
+    "f_mak_blu": "😀️腮紅",
 
     # 唇膏
-    "f_mak_lip": "💄唇膏",
+    "f_mak_lip": "😀️唇膏",
     
     # 刺青
     "f_tattoo": "😀️刺青",

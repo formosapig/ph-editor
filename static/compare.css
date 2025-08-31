@@ -131,6 +131,26 @@ th {
 	word-break: break-all;
 }
 
+.file-id-text {
+  display: inline-block;
+  white-space: normal;
+  text-align: center; /* 檔名置中 */
+}
+
+.file-id-name {
+  display: block;
+}
+
+.file-id-note {
+  display: block;
+  font-size: 0.8em;
+  color: #F00;
+  text-align: left;       /* 註解靠左 */
+  white-space: nowrap;    
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .color-box {
   display: inline-block;
   width: 20px;
