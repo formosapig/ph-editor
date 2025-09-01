@@ -347,9 +347,14 @@ class ExtraDataManager():
         metadata['backstage'] = backstage_data
         self._metadata_map[file_id] = metadata
         self._save_metadata_data()
-        
+
+    def update_remark(self, file_id: str, remark: str):
+        metadata = self._metadata_map.get(file_id, {})
+        metadata['!remark'] = remark
+        self._metadata_map[file_id] = metadata
+        self._save_metadata_data()
+
     # --- 簡化版的 get_default_backstage 方法 ---
-    
     def get_dafault_profile(self) -> Dict[str, Any]:
         return DEFAULT_PROFILE_TEMPLATE
         

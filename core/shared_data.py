@@ -257,6 +257,16 @@ def update_backstage_data(
     return True
     
     
+def update_remark_data(file_id: str, remark: str) -> bool:
+    _extra_data_manager.update_remark(file_id, remark)
+    
+    character_file_entry_obj = get_character_file_entry(file_id)
+    if character_file_entry_obj is None:
+        raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
+    character_file_entry_obj.update_remark(remark)
+
+    return True    
+    
 def process_tag_info(file_id: str) -> tuple[str, str]:
     tag_style = ""
     tag_name = ""

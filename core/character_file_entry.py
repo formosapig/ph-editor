@@ -40,8 +40,6 @@ class CharacterFileEntry:
             scan_path, file_id + ".png"
         )  # 組成完整檔案路徑
         self.character_data: CharacterData = character_data
-        self.save_flag: bool = False  # 預設不需儲存
-        self.sync_flag: bool = False  # 預設不需同步資料
         
         #if not self.scenario_id is None:
         #logger.debug("\n" + repr(self))
@@ -53,12 +51,13 @@ class CharacterFileEntry:
             # metadata 為 None 時的處理方式
             self.profile_id = None
             self.scenario_id = None
+            self.remark = "" # 空字串...
             self.tag_id = None
         else:
             # 使用 .get() 方法安全地存取字典鍵值，避免 KeyError
             self.profile_id = metadata.get('!profile_id')
             self.scenario_id = metadata.get('!scenario_id')
-            
+            self.remark = metadata.get('!remark', "")
             # 存取巢狀字典時，也使用 .get() 來確保安全
             backstage_data = metadata.get('backstage', {})
             self.tag_id = backstage_data.get('!tag_id')
@@ -117,18 +116,6 @@ class CharacterFileEntry:
             )
                 
         return title.strip()
-        
-    def set_sync_flag(self, value: bool = True):
-        self.sync_flag = value
-
-    def needs_syncing(self) -> bool:
-        return self.sync_flag
-
-    def set_save_flag(self, value: bool = True):
-        self.save_flag = value
-
-    def needs_saving(self) -> bool:
-        return self.save_flag
 
     def get_filename(self) -> str:
         return self.filename
@@ -187,15 +174,20 @@ class CharacterFileEntry:
     def update_tag_id(self, tag_id: int):
         self.tag_id = tag_id
 
+    def update_remark(self, remark: str):
+        self.remark = remark
+
+    def get_remark(self) -> str:
+        return self.remark
+
     def __repr__(self):
         lines = [
             f"{'File ID':>14}: {self.file_id}",
             f"{'Filename':>14}: {self.filename}",
-            f"{'Save Flag':>14}: {self.save_flag}",
-            f"{'Sync Flag':>14}: {self.sync_flag}",
             f"{'Profile ID':>14}: {self.profile_id}",
             f"{'Scenario ID':>14}: {self.scenario_id}",
             f"{'Tag ID':>14}: {self.tag_id}",
+            f"{'Remark':>14}: {self.remark}",
         ]
         return "\n".join(lines)
 
@@ -224,10 +216,6 @@ class CharacterFileEntry:
             raise IOError(f"寫入檔案失敗：{self.filename} -> {e}")
 
         logger.info(f"儲存 {self.filename} 成功")
-
-        self.save_flag = False
-        if not individual_only:
-            self.sync_flag = False
 
     @classmethod
     def load(

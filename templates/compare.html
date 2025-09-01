@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>比較角色</title>
-  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+  <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='compare.css') ]]" />
+  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
   <script>
     window.rawCompareData = {
       characters: [[ characters | tojson ]],
@@ -44,7 +45,7 @@
             <!--<span class="truncated-file-id">{{ truncateFileId(char.file_id) }}</span>-->
 			<span class="file-id-text">
               <span class="file-id-name">{{ truncateFileId(char.file_id) }}</span><br>
-              <span class="file-id-note"> 測試用 remark </span>
+              <span class="file-id-note">{{ char.remark }}</span>
             </span>
           </a>
         </th>

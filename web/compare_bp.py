@@ -89,6 +89,7 @@ def compare():
 
                 final_flat_data = {}
                 final_flat_data['file_id'] = file_id
+                final_flat_data['remark'] = character_entry.get_remark()
                 
                 # 依次合併
                 final_flat_data.update(flatten_basic_data(full_character_data))
@@ -162,6 +163,7 @@ def compare_reload():
         logger.debug(f"檔案 ID: {file_id} 的所有資料檢查通過，開始進行轉換處理。")
 
         final_flat_data = {'file_id': file_id}
+        final_flat_data.update({'remark': character_entry.get_remark()})
                 
         # 依次合併
         final_flat_data.update(flatten_basic_data(full_character_data))

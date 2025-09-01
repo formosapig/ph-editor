@@ -1,8 +1,8 @@
 window.addEventListener('DOMContentLoaded', () => {
-  PetiteVue.createApp(window.app).mount('[v-scope]');
-});
+  //PetiteVue.createApp(window.app).mount('[v-scope]');
+//});
 
-window.app = {
+const app = PetiteVue.reactive({//window.app = {
   // State
   currentScanPath: '',
   allImages: [],
@@ -83,10 +83,10 @@ window.app = {
   
   toggleSort() {
     this.showSortMenu = !this.showSortMenu;
-	
-	if (this.showSortMenu) {
+    
+    if (this.showSortMenu) {
       this.showFilterMenu = false;	  
-	}
+    }
   },
   
   applySort(key) {
@@ -381,5 +381,52 @@ window.app = {
     
     window.addEventListener('resize', adjustGalleryTop);
     adjustGalleryTop();
-  }
-};
+  },
+
+    // --- 修改開始：新增 reload 單個檔案函式 ---
+    reloadFile(fileId) {
+      // 檢查 fileId 是否為空，避免發送無效請求
+      if (!fileId) {
+         console.error("無法重新載入檔案：缺少 fileId。");
+         return;
+      }
+
+      fetch(`/reload_file/${encodeURIComponent(fileId)}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(newData => {
+          // 在 displayedImages 中找到對應的物件
+          const index = this.displayedImages.findIndex(c => c.id === fileId);
+
+          if (index !== -1) {
+            this.displayedImages[index] = newData;
+          }
+        })
+        .catch(error => {
+          console.error(`重新載入檔案 ${fileId} 失敗:`, error);
+        });
+    },
+  
+});
+
+
+  // --- 修改開始：加入 postMessage 監聽 ---
+  window.addEventListener("message", (event) => {
+    // 確認訊息來源安全
+    if (event.origin !== window.location.origin) return;
+
+    const { file_id, action } = event.data;
+    if (action === "updated") {
+      app.reloadFile(file_id);
+	  //window.location.reload();
+    }
+  });
+
+  // inital petiteVue
+  PetiteVue.createApp(app).mount('[v-scope]');
+
+});

@@ -13,13 +13,20 @@
     <!-- <button type="button" onclick="window.close()">結束</button> -->
   </div>
 
-  <h1 style="display: flex; align-items: center; gap: 0.5em;">
+  <div style="display: flex; align-items; center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
+    <!-- 角色縮圖 -->
     <img src="/cache/thumb_[[ file_id ]].jpg"
          alt="角色縮圖"
          style="height: 44px; width: auto; object-fit: contain; border-radius: 4px;"
          draggable="false">
-	[[ file_id ]]
-  </h1>
+
+    <!-- ID -->
+    <span class="file-id-label">[[ file_id ]]</span>
+
+    <!-- Remark 可編輯 -->
+    <span id="file-id-remark" contenteditable="true">[[ remark ]]</span>
+  
+  </div>
 
   <div class="tab-container">
     <div class="tab-buttons">
@@ -47,8 +54,9 @@
   <div id="result-message"></div>
   
   <script>
-    const characterData = [[ data | safe ]];
-	const fileId = [[ file_id |　tojson | safe ]];
+    const fileId = [[ file_id |　tojson | safe ]];
+	const remarkData = [[ remark | tojson | safe ]];
+	const characterData = [[ data | safe ]];
   </script>
   <script src="[[ url_for('static', filename='edit.js') ]]"></script>
 </body>

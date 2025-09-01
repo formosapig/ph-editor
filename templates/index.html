@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <title>PH editor</title>
+  <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='app.css') ]]" />
-  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]"></script>
+  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
 </head>
 <body>
-  <div v-scope="app">
+  <div v-scope v-cloak>
     <div v-effect="onMounted()"></div>
     <div id="actionButtons" class="action-bar">
       <div class="buttons-row">
@@ -53,7 +54,10 @@
           </div>
 		  <div v-if="item.scenario_title" class="scenario-badge">{{ item.scenario_title }}</div>
         </div>
-        <div class="filename-label">{{ item.id }}</div>
+		<div>
+          <div class="filename-label">{{ item.id }}</div>
+		  <div v-if="item.remark" class="file-id-remark">{{ item.remark }}</div>
+		</div>
       </div>
     </div>
 

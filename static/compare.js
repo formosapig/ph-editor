@@ -25,6 +25,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       return ''; // 如果沒有定義，返回空字串
     },
+	
 	// 檢查色塊,只接受 #RRGGBBAA
 	isCssColor(value) {
 	  return false;
@@ -43,9 +44,10 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       return false; // 不符合 #RRGGBBAA 格式
-	},
-	// 縮檔名
-	truncateFileId(fileId) {
+    },
+
+    // 縮檔名
+    truncateFileId(fileId) {
       const maxLength = 166; // 設定你希望顯示的最大長度
       if (!fileId || typeof fileId !== 'string') {
         return '-'; // 如果 fileId 無效或不是字串，顯示 '-'
@@ -55,84 +57,85 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       return fileId; // 不足長度則完整顯示
     },
-	isDifferentFromFirst(index, attr) {
+
+    isDifferentFromFirst(index, attr) {
       if (!this.characters.length || index === 0) return false;
-	  if (this.attrBlockMap[attr] === 'basic') return false;
+      if (this.attrBlockMap[attr] === 'basic') return false;
       const firstValue = this.characters[0][attr];
       const currentValue = this.characters[index][attr];
       return firstValue !== currentValue;
     },
+    
     parseColorString(str) {
       //console.log("input = " + str);
 	  
-  // 1. 處理無效輸入：null 或 undefined
-  // 這些情況無法顯示，用 '-' 表示
-  if (str === null || str === undefined) {
-    return [{ type: 'text', value: '-' }];
-  }
+      // 1. 處理無效輸入：null 或 undefined
+      // 這些情況無法顯示，用 '-' 表示
+      if (str === null || str === undefined) {
+        return [{ type: 'text', value: '-' }];
+      }
 
-  // 2. 處理數字：將數字直接轉為字串顯示
-  if (typeof str === 'number') {
-    return [{ type: 'text', value: String(str) }];
-  }
+      // 2. 處理數字：將數字直接轉為字串顯示
+      if (typeof str === 'number') {
+        return [{ type: 'text', value: String(str) }];
+      }
 
-  // 3. 處理空字串：單獨回傳空字串的文字物件
-  if (str === '') {
-    return [{ type: 'text', value: '' }];
-  }
+      // 3. 處理空字串：單獨回傳空字串的文字物件
+      if (str === '') {
+        return [{ type: 'text', value: '' }];
+      }
   
-  // 到這裡，str 一定是有效的非空字串
+      // 到這裡，str 一定是有效的非空字串
+      // 4. 檢查整個字串是否為單一顏色碼
+      const singleColorRegex = /^#[0-9A-Fa-f]{6,8}$/i;
+      if (singleColorRegex.test(str)) {
+        return [{ type: 'color', value: str }];
+      }
 
-  // 4. 檢查整個字串是否為單一顏色碼
-  const singleColorRegex = /^#[0-9A-Fa-f]{6,8}$/i;
-  if (singleColorRegex.test(str)) {
-    return [{ type: 'color', value: str }];
-  }
+      // 5. 處理包含多個顏色碼或文字的複雜字串
+      const result = [];
+      const regex = /(#[0-9A-Fa-f]{6,8})/gi;
+      let lastIndex = 0;
+      let match;
 
-  // 5. 處理包含多個顏色碼或文字的複雜字串
-  const result = [];
-  const regex = /(#[0-9A-Fa-f]{6,8})/gi;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = regex.exec(str)) !== null) {
-    if (match.index > lastIndex) {
-      result.push({ type: 'text', value: str.slice(lastIndex, match.index) });
-    }
-    result.push({ type: 'color', value: match[1] });
-    lastIndex = regex.lastIndex;
-  }
-
-  if (lastIndex < str.length) {
-    result.push({ type: 'text', value: str.slice(lastIndex) });
-  }
-  
-  // 6. 如果最終結果陣列是空的，表示沒有顏色碼，整個字串都是文字
-  if (result.length === 0) {
-    return [{ type: 'text', value: str }];
-  }
-
-  return result;
-},
-  generateColorHtml(attrValue) {
-    if (!attrValue) return ''; // 處理空值
-
-    let html = '';
-    const parts = this.parseColorString(attrValue);
-
-    for (const part of parts) {
-        if (part.type === 'color') {
-            // 注意：這裡使用 ES6 模板字串來建立 HTML
-            html += `<span class="color-box" style="background-color: ${part.value}"></span>`;
-        } else {
-            // 記得要對文字進行 HTML 轉義，以防 XSS 攻擊
-            const sanitizedValue = part.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            html += `<span>${sanitizedValue}</span>`;
+      while ((match = regex.exec(str)) !== null) {
+        if (match.index > lastIndex) {
+          result.push({ type: 'text', value: str.slice(lastIndex, match.index) });
         }
-    }
-    return html;
-},
-    
+        result.push({ type: 'color', value: match[1] });
+        lastIndex = regex.lastIndex;
+      }
+
+      if (lastIndex < str.length) {
+        result.push({ type: 'text', value: str.slice(lastIndex) });
+      }
+
+      // 6. 如果最終結果陣列是空的，表示沒有顏色碼，整個字串都是文字
+      if (result.length === 0) {
+        return [{ type: 'text', value: str }];
+      }
+
+      return result;
+    },
+
+    generateColorHtml(attrValue) {
+      if (!attrValue) return ''; // 處理空值
+
+      let html = '';
+      const parts = this.parseColorString(attrValue);
+
+      for (const part of parts) {
+        if (part.type === 'color') {
+          // 注意：這裡使用 ES6 模板字串來建立 HTML
+          html += `<span class="color-box" style="background-color: ${part.value}"></span>`;
+        } else {
+          // 記得要對文字進行 HTML 轉義，以防 XSS 攻擊
+          const sanitizedValue = part.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          html += `<span>${sanitizedValue}</span>`;
+        }
+      }
+      return html;
+    },
 
     reloadData() {
       //this.characters = [...window.rawCompareData.characters];
@@ -142,7 +145,6 @@ window.addEventListener('DOMContentLoaded', () => {
 	  this.characters.pop();
 	  this.renderKey++;
     },
-    // --- 修改結束 ---
 
     // --- 修改開始：新增 reload 單個檔案函式 ---
     reloadFile(fileId) {
@@ -151,28 +153,15 @@ window.addEventListener('DOMContentLoaded', () => {
         .then(newData => {
           const index = this.characters.findIndex(c => c.file_id === fileId);
           if (index !== -1) {
-			  this.characters[index] = newData;
-			//console.log("try to add new Data ?!");
-            //this.characters.splice(index, 1, newData);
-			//const updated = [...this.characters];
-//updated[index] = newData;
-//this.characters = updated;
-//this.renderKey++;
-			//this.characters.pop();
-
+            this.characters[index] = newData;
           } else {
-            // 如果不在現有陣列中，直接加入
             this.characters.push(newData);
           }
-		  //this.renderKey++;
-		  console.log("renderKey = " + this.renderKey);
         })
         .catch(err => {
           console.error(`Reload file ${fileId} 失敗:`, err);
         });
     },
-    // --- 修改結束 ---
-
   });
 
   // --- 修改開始：加入 postMessage 監聽 ---
@@ -187,15 +176,5 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-
   PetiteVue.createApp(compareData).mount('[v-scope]');
-
-  // -- what the fuck ?!
-  //document.addEventListener("visibilitychange", () => {
-  //  if (document.visibilityState === "visible") {
-  //    compareData.renderKey++;
-//	  console.log("renderKey =" + compareData.renderKey);
-//    }
-//  });
 });
-

@@ -144,7 +144,7 @@ th {
 .file-id-note {
   display: block;
   font-size: 0.8em;
-  color: #F00;
+  color: #999;
   text-align: left;       /* 註解靠左 */
   white-space: nowrap;    
   overflow: hidden;
@@ -229,6 +229,10 @@ th {
   /*max-width: none;       /* 允許單元格根據內容寬度自動調整，或者設定一個較大的值 */
 }
 
+/* 要放在這邊, 因為 page-wrapper 也有控 display,
+　　 當 html 準備好後, v-cloak 會被移除,
+　　　 display 會依 page-wrapper 的設定走
+*/
 [v-cloak] {
   display: none;
 }

@@ -1,4 +1,4 @@
-# ph-editor/api/character.py
+# ph-editor/api/character_bp.py
 import json
 import logging
 from typing import Any, Dict, Tuple, Union
@@ -17,6 +17,7 @@ from core.shared_data import (
     process_scenario_data,
     update_backstage_data,
     update_character_data,
+    update_remark_data,
 )
 from utils.character_file_utils import reload_character_data
 
@@ -238,24 +239,6 @@ def update_data(main_tab, sub_tab):
         if new_scenario_id is not None:
             response_data["new_scenario_id"] = new_scenario_id        
 
-        # 若節點不是 'story' 'general' 或 'story' 'profile' 或 'story' 'scenario' 時，把 save_flag 設為 true
-        #entry = get_character_file_entry(file_id)
-        #if entry is not None:
-            # 順便更新一下 tag_id
-        #    if main_tab == "story" and sub_tab == "backstage":
-        #        entry.update_tag_id()
-
-        #    if not (main_tab == "story" and sub_tab in ("general", "profile", "scenario")):
-        #        entry.set_save_flag(True)
-        #        response_data["need_save"] = True
-
-            # 看一下 save flag
-            #logger.debug(f"save flag : {entry.save_flag}")
-        #else:
-        #    logger.warning(
-        #        f"Character file entry not found for file_id: {file_id}"
-        #    )
-
         return jsonify(response_data)
 
     except Exception as e:
@@ -263,3 +246,42 @@ def update_data(main_tab, sub_tab):
 
         traceback.print_exc()  # 會印出錯誤堆疊
         return jsonify({"error": f"更新失敗: {str(e)}"}), 500
+
+
+@api_character_bp.route("/<file_id>/remark", methods=["PATCH"])
+def patch_character_remark(file_id):
+    """ 根據 file_id 更新角色的備註 """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "請求內容必須是 JSON 格式。"}), 400
+
+    remark = data.get("remark")
+    if remark is None:
+        return jsonify({"error": "缺少 data 欄位。"}), 400
+
+    try:
+        success = update_remark_data(file_id, remark)
+        
+        if not success:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": f"角色資料節點 [{main_tab}][{sub_tab}] 不需要更新。",
+                }
+            )
+        
+        return jsonify({
+            "success": True,
+            "message": f"更新檔案註解(REMARK)成功。",
+        })
+            
+    except Exception as e:
+        logger.error(e)
+        return jsonify({"error": f"更新失敗: {str(e)}"}), 500
+    
+    
+@api_character_bp.route("/<file_id>/remark", methods=["GET"])
+def get_character_remark():
+    """ 由前端傳來 fild_id 進行儲存 """
+    #data = request.get_json()
+    file_id = data.get('file_id')    

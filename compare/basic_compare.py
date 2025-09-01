@@ -4,7 +4,8 @@ from typing import Dict, Any
 from utils.utils import get_nested_value
 
 BASIC_KEY_NAME_MAP = {
-    "file_id": "檔案",
+    #"file_id": "檔案",
+    #"remark": "註解",
     "profile": "角色",
     "age": "年齡",
     "tag": "標籤",

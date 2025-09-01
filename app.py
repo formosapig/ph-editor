@@ -12,7 +12,7 @@ from flask import (
 )
 from PIL import Image
 
-from api.character import api_character_bp
+from api.character_bp import api_character_bp
 from api.profile import api_profile_bp
 from api.scenario import api_scenario_bp
 from api.ui_config import api_ui_config_bp
@@ -193,6 +193,8 @@ def scan_folder():
                 
                 scenario_title = character_file_obj.get_scenario_title()
                 #logger.debug(f"SCENARIO TITLE = {scenario_title}")
+                
+                remark = character_file_obj.get_remark()
 
                 tag_style, tag_name = process_tag_info(file_id)
                 #logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
@@ -205,6 +207,7 @@ def scan_folder():
                         "scenario_title": scenario_title,  # 有可能為空字串
                         "tag_style": tag_style,  # 可能為 ""
                         "tag_name": tag_name,  # 可能為　""
+                        "remark": remark, # 可能為 ""
                     }
                 )
 
@@ -239,6 +242,54 @@ def scan_folder():
     )
 
 
+@app.route("/reload_file/<file_id>", methods=["GET"])
+def reload_file(file_id):
+    """
+    處理重新載入單個角色檔案的請求，從設定的路徑讀取數據並返回。
+    """
+    # 檢查 file_id 是否存在，這是 URL 路由參數
+    if not file_id:
+        logger.warning("reload_file 請求缺少檔案 ID。")
+        return jsonify({"error": "缺少檔案 ID"}), 400
+
+    try:
+        # 1. 取得掃描路徑並嘗試更新檔案
+        scan_path = app.config.get("SCAN_PATH")
+        if not scan_path:
+            logger.error("未設定 SCAN_PATH，無法重新載入角色檔案。")
+            return jsonify({"error": "系統設定錯誤：找不到掃描路徑"}), 500
+        
+        # 嘗試重新載入或更新指定的檔案
+        character_file_obj = add_or_update_character_with_path(scan_path, file_id)
+
+        # 2. 檢查檔案物件是否成功返回
+        if not character_file_obj:
+            logger.warning(f"重新載入檔案 '{file_id}' 失敗，可能找不到該檔案。")
+            return jsonify({"error": "找不到指定的檔案或處理失敗"}), 404
+
+        # 3. 從檔案物件中提取並整理所需資料
+        data_to_return = {
+            "thumb": f"thumb_{file_id}.jpg",
+            "id": file_id,
+            "profile_name": character_file_obj.get_profile_name(),
+            "scenario_title": character_file_obj.get_scenario_title(),
+            "remark": character_file_obj.get_remark(),
+        }
+
+        # 4. 處理標籤資訊，這個函式也可能出錯
+        tag_style, tag_name = process_tag_info(file_id)
+        data_to_return["tag_style"] = tag_style
+        data_to_return["tag_name"] = tag_name
+
+        # 5. 返回整理好的 JSON 數據
+        return jsonify(data_to_return)
+
+    except Exception as e:
+        # 6. 統一處理所有未預期的錯誤
+        logger.exception(f"處理檔案 '{file_id}' 時發生內部錯誤。")
+        return jsonify({"error": f"處理檔案時發生內部錯誤: {str(e)}"}), 500
+   
+    
 @app.route("/suggest_filename", methods=["POST"])
 def suggest_filename():
     data = request.get_json()
