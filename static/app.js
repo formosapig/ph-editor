@@ -123,19 +123,32 @@ const app = PetiteVue.reactive({//window.app = {
   
   applyFilter(key) {
     this.filterKey = key;
-    const kw = this.filterKeyword.trim().toLowerCase();
+    const rawKw = this.filterKeyword.trim().toLowerCase();
 
     // 這裡是修改處：在執行新的篩選前，將所有選取的項目清空
     this.selectedSet = []; 
 
-    if (!kw || !this.filterKey) {
+    if (!rawKw || !this.filterKey) {
       this.displayedImages = [...this.allImages];
       return;
     }
 
+    // 判斷是否為精確比對
+    const isExactMatch = rawKw.startsWith('"') && rawKw.endsWith('"');
+
+    // 取得實際的關鍵字
+    const kw = isExactMatch ? rawKw.replace(/^="|"$|^"|"/g, '') : rawKw;
+
     this.displayedImages = this.allImages.filter(item => {
       const val = (item[key] || '').toString().toLowerCase();
-      return val.includes(kw);
+
+      if (isExactMatch) {
+        // 精確比對
+        return val === kw;
+      } else {
+        // 模糊比對
+        return val.includes(kw);
+      }
     });
   },
 
