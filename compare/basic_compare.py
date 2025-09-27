@@ -12,6 +12,7 @@ BASIC_KEY_NAME_MAP = {
     "persona": "外顯",
     "shadow": "內隱",
     "title": "場景",
+    "pilot": "劇情",
     "notes": "備註",
 }
 
@@ -31,7 +32,15 @@ def flatten_basic_data(d: Dict[str, Any]) -> Dict[str, Any]:
     
     result["persona"] = get_nested_value(d, "story.backstage.persona", "")
     result["shadow"] = get_nested_value(d, "story.backstage.shadow", "")
-    result["title"] = get_nested_value(d, "story.scenario.title", "")
-    result["notes"] = get_nested_value(d, "story.backstage.notes", "")
-
+    title = get_nested_value(d, "story.scenario.title", "")
+    result["title"] = "🎬" + title if title != "" else ""
+    result["pilot"] = get_nested_value(d, "story.scenario.pilot", "")
+    
+    notes = [
+        get_nested_value(d, "story.profile.notes", ""),
+        get_nested_value(d, "story.scenario.notes", ""),
+        get_nested_value(d, "story.backstage.notes", "")
+    ]
+    filtered_notes = [f"⚙️{n}" for n in notes if n]
+    result["notes"] = "\n".join(filtered_notes)
     return result

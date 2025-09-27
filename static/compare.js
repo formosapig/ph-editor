@@ -130,7 +130,9 @@ window.addEventListener('DOMContentLoaded', () => {
           html += `<span class="color-box" style="background-color: ${part.value}"></span>`;
         } else {
           // 記得要對文字進行 HTML 轉義，以防 XSS 攻擊
-          const sanitizedValue = part.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          let sanitizedValue = part.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		  // 加上這行，將換行符號 \n 轉換成 HTML 的 <br>
+          sanitizedValue = sanitizedValue.replace(/\n/g, '<br>');
           html += `<span>${sanitizedValue}</span>`;
         }
       }
