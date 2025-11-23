@@ -227,8 +227,8 @@ button.active {
 }
 .profile-badge {
   position: absolute;
-  bottom: 3px;
-  left: 3px;
+  bottom: 2px;
+  left: 2px;
   background-color: rgba(255, 222, 150, 0.85); /* 溫和亮黃 */
   color: #3b2a00;
   font-size: 14px;
@@ -247,8 +247,8 @@ button.active {
 }
 .tag-label {
     position: absolute;
-    bottom: 4px; /* 保持距離頂部 */
-    right: 4px; /* 調整為 4px，稍微與左邊界對齊 */
+    bottom: 2px; /* 保持距離頂部 */
+    right: 2px; /* 調整為 4px，稍微與左邊界對齊 */
     padding: 2px 5px; /* 稍微縮小 padding */
     border-radius: 4px;
     font-size: 14px; /* 稍微縮小字體，使其為輔 */
@@ -261,7 +261,7 @@ button.active {
 }
 .scenario-badge {
   position: absolute;
-  top: -4px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(175, 215, 175, 0.85); /* 淡草綠，霧面感 */

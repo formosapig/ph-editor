@@ -15,11 +15,8 @@ from core.character_file_entry import CharacterFileEntry
 # get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
     add_or_update_character_with_path,
+    find_fild_id_by_scenario_id,
     get_character_file_entry,
-    #get_general_data,
-    
-    #get_profile,
-    #get_scenario,
 )
 from utils.character_file_utils import (
     #reload_character_data,
@@ -59,9 +56,14 @@ def edit():
         result_content = character_file_entry_obj.get_character_data()
         append_general_data(result_content)
 
+        # 取得使用同一個 scenario id 的 file entry object 
+        sub_file_id = find_fild_id_by_scenario_id(character_file_entry_obj.scenario_id, file_id)
+        
+
         return render_template(
             "edit.html",
             file_id = file_id,
+            sub_file_id = sub_file_id,
             remark = character_file_entry_obj.get_remark(),
             data = json.dumps(result_content),
         )

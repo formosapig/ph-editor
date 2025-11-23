@@ -1,4 +1,6 @@
 # ph-editor/web/general_bp.py
+import logging
+import json
 import traceback
 from flask import (
     Blueprint,
@@ -11,6 +13,9 @@ from core.shared_data import (
     get_general_data,
     update_general_data,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 general_bp = Blueprint("general_bp", __name__)
@@ -45,6 +50,9 @@ def update_general_settings():
         color_traits = data.get("color_traits")
         tag_styles = data.get("tag_styles")
         tag_list = data.get("tag_list")
+        
+        #logger.debug("更新全域資料：")
+        #logger.debug(json.dumps(data, ensure_ascii=False, indent=2))
 
         # 進行資料驗證 (這裡可以根據你的需求添加更嚴格的驗證邏輯)
         if color_traits is None or tag_styles is None or tag_list is None:
@@ -61,17 +69,18 @@ def update_general_settings():
             )
 
         # 取得目前的 general_data
-        current_general_data = get_general_data()
+        #current_general_data = get_general_data()
 
         # 更新 general_data 的相關欄位
-        current_general_data["color_traits"] = color_traits
-        current_general_data["tag_styles"] = tag_styles
-        current_general_data["tag_list"] = tag_list
+        #current_general_data["color_traits"] = color_traits
+        #current_general_data["tag_styles"] = tag_styles
+        #current_general_data["tag_list"] = tag_list
 
         # 呼叫 function 來更新全域設定資料
         # 假設 update_global_general_data 負責將資料寫入檔案或資料庫
         # 視為新增版本
-        update_general_data(current_general_data)
+        #update_general_data(current_general_data)
+        update_general_data(data)
 
         return jsonify({"message": "全域設定更新成功！"}), 200
 

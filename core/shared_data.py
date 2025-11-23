@@ -39,6 +39,8 @@ def get_general_data() -> Dict[str, Any]:
 
 
 def update_general_data(new_data: Dict[str, Any]):
+    logger.debug("更新全域資料：")
+    logger.debug(json.dumps(new_data, ensure_ascii=False, indent=2))
     _extra_data_manager.update_general_data(new_data)
 
 
@@ -215,32 +217,7 @@ def get_scenario(scenario_id: int) -> Dict[str, Any]:
     if scenario is None:
         raise ValueError(f"SCENARIO ID {scenario_id} 不存在。")
     return scenario
-    
-    
-def get_scenario_title(file_id: str) -> str:
-    entry = get_character_file_entry(file_id)
-    if not entry:
-        raise ValueError(f"❌ 找不到角色檔案。 FILE ID = {file_id}")
 
-    if entry.scenario_id is None:
-        return ""  # 沒綁定 scenario 是正常的情況
-
-    scenario = get_scenario(entry.scenario_id)
-    if not scenario:
-        raise ValueError(
-            f"❌ 找不到 scenario："
-            f"SCENARIO ID = {entry.scenario_id}, file id = {file_id}"
-        )
-
-    title = scenario.get("title")
-    if not isinstance(title, str) or not title.strip():
-        raise ValueError(
-            f"❌ scenario['title'] 無效或為空："
-            f"SCENARIO ID = {entry.scenario_id}, FILE ID = {file_id}"
-        )
-
-    return title.strip()
-    
     
 def update_backstage_data(
     file_id: str, updated_backstage: Dict[str, Any]
@@ -302,56 +279,6 @@ def process_tag_info(file_id: str) -> tuple[str, str]:
     return tag_style, tag_name
 
 
-def dump_all_data() -> None:
-    """
-    將當前作用域中的 global_general_data, profile_map, scenario_map
-    以格式化的 JSON 形式輸出到 debug log。
-    """
-    
-    logger.debug("\n--- Dumping All Data for Debug ---")
-
-    # 處理 global_general_data
-    if global_general_data is not None:
-        try:
-            logger.debug(
-                "\n"
-                + "Global General Data:\n"
-                + json.dumps(global_general_data, ensure_ascii=False, indent=2)
-            )
-        except TypeError as e:
-            logger.error(f"Error dumping global_general_data: {e}")
-    else:
-        logger.debug("Global General Data: None")
-
-    # 處理 profile_map
-    if profile_map is not None:
-        try:
-            logger.debug(
-                "\n"
-                + "Profile Map:\n"
-                + json.dumps(profile_map, ensure_ascii=False, indent=2)
-            )
-        except TypeError as e:
-            logger.error(f"Error dumping profile_map: {e}")
-    else:
-        logger.debug("Profile Map: None") # 實際上 profile_map 通常不會是 None 因為有預設值
-
-    # 處理 scenario_map
-    if scenario_map is not None:
-        try:
-            logger.debug(
-                "\n"
-                + "Scenario Map:\n"
-                + json.dumps(scenario_map, ensure_ascii=False, indent=2)
-            )
-        except TypeError as e:
-            logger.error(f"Error dumping scenario_map: {e}")
-    else:
-        logger.debug("Scenario Map: None") # 實際上 scenario_map 通常不會是 None 因為有預設值
-
-    logger.debug("\n--- Dump Complete ---")
-    
-
 def get_suggest_file_name(file_id: str) -> str:
     """
     根據角色、情境或標籤資料，生成一個建議的檔案名稱。
@@ -372,7 +299,7 @@ def get_suggest_file_name(file_id: str) -> str:
         return "未知.png"
     
     # 3. 取得 Profile 資料並檢查其有效性
-    profile_data = get_profile(file_entry.profile_id)
+    profile_data = file_entry.get_profile()
     if not profile_data:
         return "未知.png"
         
@@ -381,16 +308,18 @@ def get_suggest_file_name(file_id: str) -> str:
         # 4a. 如果沒有 Scenario，則嘗試使用 Tag 資料
         tag_type, tag_name = process_tag_info(file_id)
         
+        logger.debug(f"process tag info : {tag_type}{tag_name}")
+        
         if not tag_name:
             return "未知.png"
         
         profile_name = profile_data.get("name", "")
-        suggested_name = f"{tag_name}{profile_name}.png"
+        suggested_name = f"「{tag_name}」~{profile_name}.png"
         return suggested_name.strip()
         
     else:
         # 4b. 如果有 Scenario ID，則取得情境資料並組合檔名
-        scenario_data = get_scenario(file_entry.scenario_id)
+        scenario_data = file_entry.get_scenario()
         
         # 再次檢查情境資料是否成功取得
         if not scenario_data:
@@ -400,7 +329,7 @@ def get_suggest_file_name(file_id: str) -> str:
                 return "未知.png"
             
             profile_name = profile_data.get("name", "")
-            suggested_name = f"{tag_name}{profile_name}.png"
+            suggested_name = f"「{tag_name}」~{profile_name}.png"
             return suggested_name.strip()
 
         # 取得年份資料
@@ -418,12 +347,53 @@ def get_suggest_file_name(file_id: str) -> str:
         profile_name = profile_data.get("name", "")
         scenario_title = scenario_data.get("title", "")
         
-        suggested_name = f"{profile_name}{age_str}【{scenario_title}】.png"
+        
+        suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
         
         if not profile_name and not scenario_title:
              return "未知.png"
         
         return suggested_name.strip()
 
+
 def dump_profile_id():
     logger.debug(f"shared_data.py: profile_map 的 ID: {id(profile_map)}")    
+
+
+def find_fild_id_by_scenario_id(
+    scenario_id: int,
+    file_id_to_exclude: str
+) -> Optional[str]:
+    """
+    掃描 characters_db，找出符合特定 scenario_id，
+    但其 file_id 不等於 file_id_to_exclude 的第一個 file_id。
+
+    Args:
+        scenario_id: 目標情境 ID。
+        file_id_to_exclude: 要排除的 file_id (即主角的 file_id)。
+        characters_db: 存有 CharacterFileEntry 物件的字典。
+
+    Returns:
+        找到的 file_id (配角的 file_id)，如果找不到則回傳 None。
+    """
+    
+    # 遍歷字典中的所有值 (CharacterFileEntry 物件)
+    for entry in characters_db.values():
+        
+        # 條件一：scenario_id 必須匹配
+        scenario_match = (entry.scenario_id == scenario_id)
+        
+        # 條件二：file_id 必須不等於要排除的 file_id
+        file_id_mismatch = (entry.file_id != file_id_to_exclude)
+        
+        if scenario_match and file_id_mismatch:
+            # 找到符合條件的第一個 file_id，立即回傳
+            return entry.file_id
+            
+    # 如果遍歷完畢都沒有找到，則回傳 None
+    return None
+    
+
+
+
+    

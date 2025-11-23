@@ -63,7 +63,7 @@ const subTabs = {
     { key: 'accessory_10', label: '10' }
   ],
   story: [
-    { key: 'general', label: '全域' },
+    //{ key: 'general', label: '全域' },
     { key: 'profile', label: '簡介' },
     { key: 'scenario', label: '場景' },
     { key: 'backstage', label: '幕後' }

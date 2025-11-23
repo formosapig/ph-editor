@@ -32,15 +32,33 @@ def flatten_basic_data(d: Dict[str, Any]) -> Dict[str, Any]:
     
     result["persona"] = get_nested_value(d, "story.backstage.persona", "")
     result["shadow"] = get_nested_value(d, "story.backstage.shadow", "")
+    
     title = get_nested_value(d, "story.scenario.title", "")
-    result["title"] = "🎬" + title if title != "" else ""
+    subtitle = get_nested_value(d, "story.backstage.subtitle", "")
+    if title != "":
+        result["title"] = "🎬" + title
+        if subtitle != "":
+            result["title"] += "-" + subtitle
+    else:
+        result["title"] = ""
+        
     result["pilot"] = get_nested_value(d, "story.scenario.pilot", "")
     
-    notes = [
-        get_nested_value(d, "story.profile.notes", ""),
-        get_nested_value(d, "story.scenario.notes", ""),
-        get_nested_value(d, "story.backstage.notes", "")
+    # 備註們...
+    # (Emoji 1, 路徑), (Emoji 2, 路徑), (Emoji 3, 路徑)
+    note_sources = [
+        ("👤️", "story.profile.notes"),
+        ("🎬️", "story.scenario.notes"),
+        ("📜", "story.backstage.notes")
     ]
-    filtered_notes = [f"⚙️{n}" for n in notes if n]
+    
+    filtered_notes = [
+        f"{emoji}{note}"
+        for emoji, path in note_sources
+        if (note := get_nested_value(d, path, "")) # 使用海象運算子 (:=) 取得值並同時檢查
+    ]
+    
     result["notes"] = "\n".join(filtered_notes)
+    
+    
     return result

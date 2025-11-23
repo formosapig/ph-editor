@@ -14,12 +14,12 @@
   </div>
 
   <div style="display: flex; align-items; center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
-    <!-- 角色縮圖 -->
+    <!-- 角色縮圖 
     <img src="/cache/thumb_[[ file_id ]].jpg"
          alt="角色縮圖"
          style="height: 44px; width: auto; object-fit: contain; border-radius: 4px;"
          draggable="false">
-
+	-->
     <!-- ID -->
     <span class="file-id-label">[[ file_id ]]</span>
 
@@ -30,12 +30,12 @@
 
   <div class="tab-container">
     <div class="tab-buttons">
-      <button class="tab-button active" data-tab="hair">頭髮</button>
+      <button class="tab-button active" data-tab="story">故事</button>
+	  <button class="tab-button" data-tab="hair">頭髮</button>
       <button class="tab-button" data-tab="face">臉部</button>
       <button class="tab-button" data-tab="body">身體</button>
       <button class="tab-button" data-tab="clothing">服裝</button>
       <button class="tab-button" data-tab="accessory">配件</button>
-      <button class="tab-button" data-tab="story">故事</button>
     </div>
 
     <div id="sub-tab-buttons" class="sub-tab-buttons"></div>
@@ -45,9 +45,61 @@
       <div id="dropdown-2" class="dropdown-slot"></div>
       <div id="dropdown-3" class="dropdown-slot"></div>
     </div>
-	<div id="main-content-shell">
-      <div id="main-content" contenteditable="true"></div>
-    </div>
+	
+	<!--
+    <div id="thumbnail-container">
+      <!- - 角色縮圖 - ->
+      <img src="/cache/thumb_[[ file_id ]].jpg"
+           alt="角色縮圖"
+           style="height: 440px; width: auto; object-fit: contain; border-radius: 4px;"
+           draggable="false">
+	</div>
+	-->
+
+    <!--<style>
+      #main-content {
+        /* 使用 Jinja2 語法 {{ }} 插入變數 */
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.6), 
+                          rgba(255, 255, 255, 0.6)),
+          url("/cache/thumb_[[ file_id ]].jpg");
+        
+        /* 調整圖片屬性 */
+        background-repeat: no-repeat;
+        background-position: right center;
+        background-size: contain; 
+        
+        /* 確保有設定高度，否則背景不會顯示 */
+        min-height: 352px; 
+        width: 100%;
+      }
+    </style>-->
+
+    <div class="content-and-thumbnail-wrapper">
+
+
+	  <div id="main-content-shell">
+        <div id="main-content" contenteditable="true"></div>
+      </div>
+	
+	  <div id="thumbnail-container">
+	    <div id="main-thumb-wrapper">
+	      <img src="/cache/thumb_[[ file_id ]].jpg"
+	           alt="主角縮圖"
+		       draggable="false">
+		</div>
+		
+		[% if sub_file_id %]
+		<div id="sub-thumb-wrapper">
+	      <img src="/cache/thumb_[[ sub_file_id ]].jpg"
+	           alt="配角縮圖"
+		       draggable="false">
+		</div>	   
+		[% endif %]	 
+      </div>
+
+	</div>
+	
     <!-- <div id="main-content" contenteditable="true"></div> -->
   </div>
   

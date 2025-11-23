@@ -117,11 +117,18 @@ class CharacterFileEntry:
                 
         return title.strip()
 
+    def get_scenario_subtitle(self) -> str:
+        """從關聯的 Backstage 資料中取得名稱。"""
+        # 在找不到資料時會回傳空字典 {}
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.file_id)
+        
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('subtitle', "").strip()
+        
     def get_filename(self) -> str:
         return self.filename
-
-    #def get_character_data(self) -> CharacterData:
-    #    return self.character_data
 
     def get_character_data(self) -> dict:
         """
@@ -144,20 +151,10 @@ class CharacterFileEntry:
         return full_data
 
     def get_profile(self) -> dict:
-        if isinstance(self.character_data.parsed_data, dict):
-            story = self.character_data.parsed_data.get("story", {})
-            profile = story.get("profile")
-            if isinstance(profile, dict):
-                return profile
-        return {}
+        return self.data_source.get_profile(self.profile_id)
 
     def get_scenario(self) -> dict:
-        if isinstance(self.character_data.parsed_data, dict):
-            story = self.character_data.parsed_data.get("story", {})
-            scenario = story.get("scenario")
-            if isinstance(scenario, dict):
-                return scenario
-        return {}
+        return self.data_source.get_scenario(self.scenario_id)
         
     def update_profile_id(self, profile_id: int):
         self.profile_id = profile_id

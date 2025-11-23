@@ -22,10 +22,7 @@ from config.logging_setup import setup_logging
 from core.shared_data import (
     add_or_update_character_with_path,
     clear_characters_db,
-    
-    
     process_tag_info,
-    #dump_all_data,  # debug use.
     get_suggest_file_name,
     initialize_extra_data,
     get_general_data,
@@ -44,6 +41,8 @@ UserConfigManager.ensure_dir()
 app = Flask(__name__, template_folder='templates')
 app.jinja_env.variable_start_string = '[['
 app.jinja_env.variable_end_string = ']]'
+app.jinja_env.block_start_string = '[%'
+app.jinja_env.block_end_string = '%]'
 
 app.register_blueprint(arrange_bp)
 app.register_blueprint(compare_bp)
@@ -135,6 +134,8 @@ def scan_folder():
             if file_name_with_ext.lower().endswith(".png"):
                 file_path = os.path.join(root, file_name_with_ext)
                 file_id = os.path.splitext(file_name_with_ext)[0]
+                
+                #logger.debug(f"處理 {file_id}")
 
                 # --- 縮圖生成邏輯 ---
                 thumbnail_name = f"thumb_{file_id}.jpg"
@@ -225,9 +226,6 @@ def scan_folder():
             "color": style.get("color", "#000"),
             "bg_color": style.get("background", "#fff"),
         }
-
-    # 3. dump all data 資料
-    # dump_all_data()
 
     logger.debug(
         f"掃描完成。總計處理 {len(thumbnails)} 個檔案，成功載入 {loaded_character_count} 個角色數據。"

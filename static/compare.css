@@ -228,6 +228,7 @@ th {
   /*text-overflow: clip;   /* 移除省略號效果 */
   /*max-width: none;       /* 允許單元格根據內容寬度自動調整，或者設定一個較大的值 */
   text-align: left;
+  vertical-align: top;
 }
 
 /* 要放在這邊, 因為 page-wrapper 也有控 display,

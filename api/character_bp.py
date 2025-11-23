@@ -10,8 +10,6 @@ from core.shared_data import (
     characters_db,
     get_character_data,
     get_character_file_entry,
-    get_profile,
-    get_scenario,
     
     process_profile_data,
     process_scenario_data,

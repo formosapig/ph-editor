@@ -281,12 +281,26 @@
       const finalFilteredTags = this.tag_array
         .filter(item => item.type.trim() && item.name.zh.trim())
         .sort((a, b) => {
+          // 1. 取得 Type 的 Order (第一排序依據)
           const orderA = filteredTagTypeSettings[a.type]?.order || Infinity;
           const orderB = filteredTagTypeSettings[b.type]?.order || Infinity;
-          return orderA - orderB;
+        
+          // 檢查 Order 是否相等
+          if (orderA !== orderB) {
+            // Order 不相等，直接依 Order 由小到大排序
+            return orderA - orderB;
+          }
+
+          // 2. Order 相等，則依 Tag 的 ID 排序 (第二排序依據)
+          // 假設 item.id 已經是數字 (在 addTag 中是以數字生成)
+          const idA = a.id || Infinity;
+          const idB = b.id || Infinity;
+        
+          // 依 ID 由小到大排序
+          return idA - idB;
         })
         .map((item, index) => ({
-          id: index + 1, // 從 1 開始重新給予 id
+          id: item.id, //index + 1, // 從 1 開始重新給予 id
           type: item.type,
           name: { zh: item.name.zh },
           desc: { zh: item.desc.zh },
@@ -318,7 +332,7 @@
       .then(data => {
         this.showMessage('送出成功，正在儲存資料...', 'info');
         // 加入 pingPongSync 流程
-        return this.pingPongSync();  // 確保是 this 上的函式
+        //return this.pingPongSync();  // 確保是 this 上的函式
       })
       .catch(err => {
         // 使用自定義的訊息框代替 alert

@@ -230,9 +230,13 @@ class ExtraDataManager():
 
     def update_general_data(self, new_data: Dict[str, Any]):
         """更新全域 general 資料。"""
+        logger.debug("準備寫入全域資料了!!")
+        logger.debug(json.dumps(self._general_data, ensure_ascii=False, indent=2))
         if new_data != self._general_data:
             self._general_data = new_data
             self._save_general_data()
+            logger.debug("寫入全域資料：")
+            logger.debug(json.dumps(new_data, ensure_ascii=False, indent=2))
             
     def add_profile(self, updated_profile: Dict[str, Any]) -> bool:
         ''' 新增一個 profile data, 並返回是否新增成功 '''
