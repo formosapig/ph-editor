@@ -6,13 +6,15 @@
   <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
 </head>
 <body>
+  <!--
   <div class="top-right-button-container">
-    <!-- <button type="button" onclick="pingPongSync()">乒乓</button> -->
+    <!-- <button type="button" onclick="pingPongSync()">乒乓</button> - ->
     <button type="button" onclick="reloadFile()">重讀</button>
     <button id="saveButton" type="button" onclick="saveFile()" disabled>儲存</button>
-    <!-- <button type="button" onclick="window.close()">結束</button> -->
+    <!-- <button type="button" onclick="window.close()">結束</button> - ->
   </div>
-
+  -->
+  
   <div style="display: flex; align-items; center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
     <!-- 角色縮圖 
     <img src="/cache/thumb_[[ file_id ]].jpg"
@@ -25,7 +27,24 @@
 
     <!-- Remark 可編輯 -->
     <span id="file-id-remark" contenteditable="true">[[ remark ]]</span>
-  
+    <div class="status-radio-group">
+	  <label class="status-radio-btn">
+		<input type="radio" name="file-status" value="archived" [% if status == 'archived' %]checked[% endif %]>
+		<span>📦 封存</span>
+	  </label>
+	  <label class="status-radio-btn">
+		<input type="radio" name="file-status" value="draft" [% if status == 'draft' %]checked[% endif %]>
+		<span>🧩 草稿</span>
+	  </label>
+	  <label class="status-radio-btn">
+		<input type="radio" name="file-status" value="refinement" [% if status == 'refinement' %]checked[% endif %]>
+		<span>🎨 潤飾</span>
+	  </label>
+	  <label class="status-radio-btn">
+		<input type="radio" name="file-status" value="finalized" [% if status == 'finalized' %]checked[% endif %]>
+		<span>📌 定稿</span>
+	  </label>
+	</div>  
   </div>
 
   <div class="tab-container">
@@ -95,7 +114,7 @@
 	           alt="配角縮圖"
 		       draggable="false">
 		</div>	   
-		[% endif %]	 
+		[% endif %]
       </div>
 
 	</div>
@@ -108,6 +127,7 @@
   <script>
     const fileId = [[ file_id |　tojson | safe ]];
 	const remarkData = [[ remark | tojson | safe ]];
+	const statusData = [[ status | tojson | safe ]];
 	const characterData = [[ data | safe ]];
   </script>
   <script src="[[ url_for('static', filename='edit.js') ]]"></script>

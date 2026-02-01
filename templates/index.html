@@ -22,7 +22,22 @@
           <button @click="renameSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="改名">🅰️</button>
           <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
         </div>
+		<div class="center-status-toggle">
+          <label class="status-btn" :class="{ active: activeStatuses.includes('archived') }">
+            <input type="checkbox" v-model="activeStatuses" value="archived" @change="toggleStatus" hidden> 📦封存
+          </label>
+          <label class="status-btn" :class="{ active: activeStatuses.includes('draft') }">
+            <input type="checkbox" v-model="activeStatuses" value="draft" @change="toggleStatus" hidden> 🧩草稿
+          </label>
+          <label class="status-btn" :class="{ active: activeStatuses.includes('refinement') }">
+            <input type="checkbox" v-model="activeStatuses" value="refinement" @change="toggleStatus" hidden> 🎨潤飾
+          </label>
+          <label class="status-btn" :class="{ active: activeStatuses.includes('finalized') }">
+            <input type="checkbox" v-model="activeStatuses" value="finalized" @change="toggleStatus" hidden> 📌定稿
+          </label>
+        </div>
         <div class="right-button">
+		  <button @click="openCCM" :disabled="!currentScanPath" title="時空因果矩陣">🌌️</button>
           <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📋️</button>
         </div>
       </div>
@@ -55,7 +70,13 @@
 		  <div v-if="item.scenario_title" class="scenario-badge">{{ item.scenario_title }}</div>
         </div>
 		<div>
-          <div class="filename-label">{{ item.id }}</div>
+          <div class="filename-label">
+		    <span v-if="item.status === 'archived'" title="封存">📦</span>
+		    <span v-if="item.status === 'draft'" title="草稿">🧩</span>
+            <span v-if="item.status === 'refinement'" title="潤飾">🎨</span>
+            <span v-if="item.status === 'finalized'" title="定稿">📌</span>
+			{{ item.id }}
+          </div>
 		  <div v-if="item.remark" class="file-id-remark">{{ item.remark }}</div>
 		</div>
       </div>

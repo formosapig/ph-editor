@@ -358,6 +358,12 @@ class ExtraDataManager():
         self._metadata_map[file_id] = metadata
         self._save_metadata_data()
 
+    def update_status(self, file_id: str, status: str):
+        metadata = self._metadata_map.get(file_id, {})
+        metadata['!status'] = status
+        self._metadata_map[file_id] = metadata
+        self._save_metadata_data()
+
     # --- 簡化版的 get_default_backstage 方法 ---
     def get_dafault_profile(self) -> Dict[str, Any]:
         return DEFAULT_PROFILE_TEMPLATE

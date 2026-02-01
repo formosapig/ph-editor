@@ -37,7 +37,7 @@
     </table>
     <button @click="addColorTrait">新增一行</button>
 
-    <pre>目前 color_traits 資料： [[ color_traits ]]</pre>
+    <!--<pre>目前 color_traits 資料： [[ color_traits ]]</pre>-->
   </section>
 
     <section>
@@ -76,7 +76,7 @@
     </table>
     <button @click="addTagTypeSetting">新增一行</button>
 
-    <pre>目前 tag_styles 資料： [[ tag_styles ]]</pre>
+    <!--<pre>目前 tag_styles 資料： [[ tag_styles ]]</pre>-->
   </section>
 
     <section>
@@ -98,7 +98,7 @@
           <td>
             <select v-model="item.type">
               <option disabled value="">請選擇類型</option>
-                              <option v-for="typeItem in tag_type_settings_array" :value="typeItem.key">{% raw %}{{ typeItem.name.zh }}{% endraw %}</option>
+                              <option v-for="typeItem in tag_type_settings_array" :value="typeItem.key">{{ typeItem.name.zh }}</option>
             </select>
           </td>
           <td>
@@ -114,7 +114,7 @@
           </td>
           <td><textarea v-model="item.desc.zh" placeholder="描述"></textarea></td>
           <td><textarea v-model="item.snapshot.zh" placeholder="拍照"></textarea></td>
-          <td><textarea v-model="item.marks.zh" placeholder="特徵"></textarea></td>
+          <td><textarea v-model="item.appearance.zh" placeholder="特徵"></textarea></td>
           <td><textarea v-model="item.clothing.zh" placeholder="穿著"></textarea></td>
           <td>
             <button @click="removeTag(index)" :disabled="tag_array.length === 1">刪除</button>
@@ -124,11 +124,49 @@
     </table>
     <button @click="addTag">新增一行</button>
 
-    <pre>目前 tag_list 資料： [[ tag_list ]]</pre>
+    <!--<pre>目前 tag_list 資料： [[ tag_list ]]</pre>-->
   </section>
 
+<section>
+    <h3>簡介分組</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>名稱</th>
+          <th>描述</th>
+          <th>文字</th>
+		  <th>背景</th>
+          <th>排序</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in profile_group_array" :key="item.id">
+          <td>{{ item.id }}</td>
+          <td>
+            <input 
+              type="text" 
+              v-model="item.name.zh" 
+              placeholder="分組名稱"
+              :style="{ color: item.color, backgroundColor: item.background }"
+            />
+          </td>
+          <td><textarea v-model="item.desc.zh" placeholder="描述"></textarea></td>
+          <td><input type="color" v-model="item.color" /></td>
+          <td><input type="color" v-model="item.background" /></td>
+          <td><input type="number" v-model.number="item.order" min="1" /></td>
+          <td>
+            <button @click="removeProfileGroup(index)" :disabled="profile_group_array.length === 1">刪除</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button @click="addProfileGroup">新增分組</button>
+  </section>    
+
     <button @click="submit" :disabled="submitDisabled">送出資料</button>
-</div>
+  </div>
 
 <script>
   window.addEventListener('DOMContentLoaded', () => {
@@ -139,6 +177,7 @@
   const initialColorTraits = [[ color_traits | tojson ]];
   const initialTagTypeSettings = [[ tag_styles | tojson ]]; // 假設後端傳遞 tag_type_setting
   const initialTags = [[ tag_list | tojson ]]; // 假設後端傳遞 tag 資料
+  const initialProfileGroups = [[ profile_group | tojson ]];
 
   window.app = {
     // color_traits 初始化
@@ -169,9 +208,21 @@
         name: { zh: '' },
         desc: { zh: '' },
         snapshot: { zh: '' },
-        marks: { zh: '' },
+        appearance: { zh: '' },
         clothing: { zh: '' }
     }],
+
+    // 2. 初始化 profile_group_array
+    profile_group_array: initialProfileGroups.length > 0 
+      ? initialProfileGroups.sort((a, b) => a.order - b.order)
+      : [{ 
+          id: 1, 
+          name: { zh: '' }, 
+          desc: { zh: '' }, 
+          order: 1, 
+          color: '#000000', 
+          background: '#FFFFFF' 
+        }],
 
     get tagTypeSettingsMap() {
       return this.tag_type_settings_array.reduce((map, item) => {
@@ -224,7 +275,7 @@
             name: { zh: '' },
             desc: { zh: '' },
             snapshot: { zh: '' },
-            marks: { zh: '' },
+            appearance: { zh: '' },
             clothing: { zh: '' }
         });
     },
@@ -234,6 +285,24 @@
         }
     },
 
+    // 3. 新增相關方法
+    addProfileGroup() {
+      const maxId = this.profile_group_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
+      const maxOrder = this.profile_group_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
+      this.profile_group_array.push({
+        id: maxId + 1,
+        name: { zh: '' },
+        desc: { zh: '' },
+        order: maxOrder + 1,
+        color: '#000000',
+        background: '#FFFFFF'
+      });
+    },
+    removeProfileGroup(index) {
+      if (this.profile_group_array.length > 1) {
+        this.profile_group_array.splice(index, 1);
+      }
+    },
 
     // --- 提交相關邏輯 ---
     get submitDisabled() {
@@ -252,8 +321,13 @@
         !item.type.trim() || !item.name.zh.trim()
       );
 
-
-      return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid;
+      // ... 原有的檢查 ...
+      const profileGroupInvalid = this.profile_group_array.some(item => 
+        !item.name.zh.trim() || !item.order
+      );
+      
+      // 在 return 中加入檢查
+      return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid;
     },
     submit() {
       // 過濾並轉換 color_traits
@@ -305,14 +379,28 @@
           name: { zh: item.name.zh },
           desc: { zh: item.desc.zh },
           snapshot: { zh: item.snapshot.zh },
-          marks: { zh: item.marks.zh },
+          appearance: { zh: item.appearance.zh },
           clothing: { zh: item.clothing.zh }
+        }));
+
+      // 過濾並排序 Profile Group
+      const filteredProfileGroups = this.profile_group_array
+        .filter(item => item.name.zh.trim())
+        .sort((a, b) => a.order - b.order)
+        .map(item => ({
+          id: item.id,
+          name: { zh: item.name.zh },
+          desc: { zh: item.desc.zh },
+          order: item.order,
+          color: item.color,
+          background: item.background
         }));
 
       const dataToSend = {
         color_traits: filteredColorTraits,
         tag_styles: filteredTagTypeSettings,
-        tag_list: finalFilteredTags 
+        tag_list: finalFilteredTags,
+        profile_group: filteredProfileGroups // <-- 新增這行
       };
       
       fetch('/general/update', { // 這裡的 API 端點是用來 POST 資料的

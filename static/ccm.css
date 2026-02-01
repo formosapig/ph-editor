@@ -1,0 +1,165 @@
+:root {
+  --cell-w: 160px;
+  --cell-h: 80px;
+  --header-h: 50px;
+  --fixed-col-w: 120px;
+  --border-color: #999;
+  --bg-main: #f9f9f9;
+  --bg-header: #f2f2f2;
+  --bg-sticky: #d9d9d9;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background-color: #e0e0e0; /* 略深底色，突顯 table-container */
+  font-family: verdana, sans-serif;
+}
+
+/* 佈局容器 */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+/* 控制區塊 (參考比較功能的風格) */
+.controls {
+  margin-bottom: 15px;
+  padding: 12px 20px;
+  border: 1px solid #ccc;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+}
+
+.controls label {
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  color: #333;
+}
+
+.controls button {
+  padding: 6px 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #4a90e2;
+  color: #fff;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.controls button:hover {
+  background-color: #357ab8;
+}
+
+/* 矩陣表格容器 */
+.table-container {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border-color);
+}
+
+table {
+  border-collapse: separate; /* 必須用 separate 才能讓 sticky border 正常顯示 */
+  border-spacing: 0;
+  width: auto;
+  user-select: none;
+}
+
+/* 單元格通用樣式 */
+th, td {
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* 標題列 (Scenarios / Years) */
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--bg-header);
+  height: var(--header-h);
+  font-size: 16px;
+  min-width: var(--cell-w);
+}
+
+/* 左上角固定格 */
+.corner-cell {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 30; /* 最高階層 */
+  background-color: var(--bg-sticky) !important;
+  width: var(--fixed-col-w);
+  min-width: var(--fixed-col-w);
+}
+
+/* 首欄固定 (Profiles) */
+.fixed-col {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: var(--bg-sticky);
+  width: var(--fixed-col-w);
+  min-width: var(--fixed-col-w);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Backstage 標籤塊 */
+.backstage-box {
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  cursor: pointer;
+  padding: 4px;
+  box-sizing: border-box;
+  transition: transform 0.1s;
+}
+
+.backstage-box:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.tag-text {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;
+}
+.modal {
+    background: white; padding: 20px; border-radius: 8px; width: 400px; color: #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.styled-input {
+    width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;
+}
+
+/* v-cloak 避免閃爍 */
+[v-cloak] {
+  display: none;
+}

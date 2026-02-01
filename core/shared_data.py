@@ -235,8 +235,6 @@ def update_backstage_data(
     
     
 def update_remark_data(file_id: str, remark: str) -> bool:
-    _extra_data_manager.update_remark(file_id, remark)
-    
     character_file_entry_obj = get_character_file_entry(file_id)
     if character_file_entry_obj is None:
         raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
@@ -244,6 +242,14 @@ def update_remark_data(file_id: str, remark: str) -> bool:
 
     return True    
     
+def update_status_data(file_id: str, status: str) -> bool:
+    character_file_entry_obj = get_character_file_entry(file_id)
+    if character_file_entry_obj is None:
+        raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
+    character_file_entry_obj.update_status(status)
+
+    return True    
+
 def process_tag_info(file_id: str) -> tuple[str, str]:
     tag_style = ""
     tag_name = ""
@@ -376,6 +382,10 @@ def find_fild_id_by_scenario_id(
     Returns:
         找到的 file_id (配角的 file_id)，如果找不到則回傳 None。
     """
+    
+    # 增加檢查：如果任一關鍵輸入參數為 None，則立即回傳 None
+    if scenario_id is None or file_id_to_exclude is None:
+        return None
     
     # 遍歷字典中的所有值 (CharacterFileEntry 物件)
     for entry in characters_db.values():

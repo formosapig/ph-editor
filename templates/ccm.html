@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>時空因果</title>
+  <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
+  <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
+  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+  <script>
+    window.rawData = {
+      profiles: [[ profiles | tojson ]],
+      scenarios: [[ scenarios | tojson ]],
+      backstages: [[ backstages | tojson ]],
+    };
+  </script>
+</head>
+<body>
+    <div v-scope v-cloak class="page-wrapper">
+        <div class="controls">
+            <div class="control-group">
+                <strong>CCM 矩陣編輯器</strong>
+            </div>
+            <button @click="saveData">儲存變更</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="corner-cell">角色 \ 年份</th>
+                        <th v-for="sc in scenarios" :key="sc.id">
+                            <strong>{{ sc.year }}</strong>
+                            <div style="font-size: 11px; font-weight: normal; color: #666;">
+                                {{ sc.title }}
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="p in profiles" :key="p.id">
+                        <td class="fixed-col">{{ p.name }}</td>
+                        
+                        <td v-for="sc in scenarios" :key="sc.id">
+                            <div v-if="getBS(p.id, sc.id)" 
+                                 class="backstage-box"
+                                 @click="openEditor(sc, p)"
+                                 :style="{ backgroundColor: getBS(p.id, sc.id).code }">
+                                <span class="tag-text">{{ getBS(p.id, sc.id).tag }}</span>
+                            </div>
+                            <div v-else class="empty-cell-trigger" @click="addNewBS(p.id, sc.id)">
+                                +
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div v-if="editingScene" class="modal-overlay" @click.self="editingScene = null">
+            <div class="modal">
+                <h3>場景編輯：{{ editingScene.title }}</h3>
+                <p>年份：{{ editingScene.year }}</p>
+                <hr>
+                <div class="modal-content">
+                    <strong>角色：{{ currentTargetProfile.name }}</strong>
+                    <div class="input-group">
+                        <label>狀態標籤：</label>
+                        <input v-model="editingBS.tag" class="styled-input">
+                    </div>
+                    <div class="input-group">
+                        <label>顏色代碼：</label>
+                        <input type="color" v-model="editingBS.code">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="editingScene = null">確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
+</body>
+</html>

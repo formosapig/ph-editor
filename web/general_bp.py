@@ -27,12 +27,14 @@ def general():
     color_traits_data = general_data["color_traits"]
     tag_styles_data = general_data["tag_styles"]
     tag_list_data = general_data["tag_list"]
+    profile_group_data = general_data["profile_group"]
 
     return render_template(
         "general.html",
-        color_traits=color_traits_data,
-        tag_styles=tag_styles_data,
-        tag_list=tag_list_data,
+        color_traits = color_traits_data,
+        tag_styles = tag_styles_data,
+        tag_list = tag_list_data,
+        profile_group = profile_group_data,
     )
 
 
@@ -50,6 +52,7 @@ def update_general_settings():
         color_traits = data.get("color_traits")
         tag_styles = data.get("tag_styles")
         tag_list = data.get("tag_list")
+        profile_group = data.get("profile_group")
         
         #logger.debug("更新全域資料：")
         #logger.debug(json.dumps(data, ensure_ascii=False, indent=2))

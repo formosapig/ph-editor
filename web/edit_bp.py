@@ -59,12 +59,12 @@ def edit():
         # 取得使用同一個 scenario id 的 file entry object 
         sub_file_id = find_fild_id_by_scenario_id(character_file_entry_obj.scenario_id, file_id)
         
-
         return render_template(
             "edit.html",
             file_id = file_id,
             sub_file_id = sub_file_id,
             remark = character_file_entry_obj.get_remark(),
+            status = character_file_entry_obj.get_status(),
             data = json.dumps(result_content),
         )
     

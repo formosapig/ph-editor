@@ -29,6 +29,7 @@ from core.shared_data import (
 )
 from core.user_config_manager import UserConfigManager
 from web.arrange_bp import arrange_bp
+from web.ccm_bp import ccm_bp
 from web.compare_bp import compare_bp
 from web.edit_bp import edit_bp
 from web.general_bp import general_bp
@@ -45,6 +46,7 @@ app.jinja_env.block_start_string = '[%'
 app.jinja_env.block_end_string = '%]'
 
 app.register_blueprint(arrange_bp)
+app.register_blueprint(ccm_bp)
 app.register_blueprint(compare_bp)
 app.register_blueprint(edit_bp)
 app.register_blueprint(general_bp)
@@ -200,6 +202,10 @@ def scan_folder():
                 tag_style, tag_name = process_tag_info(file_id)
                 #logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
 
+                status = character_file_obj.get_status()
+                if not status:
+                    status = "draft"
+
                 character_list.append(
                     {
                         "thumb": thumbnail_name,
@@ -209,6 +215,7 @@ def scan_folder():
                         "tag_style": tag_style,  # 可能為 ""
                         "tag_name": tag_name,  # 可能為　""
                         "remark": remark, # 可能為 ""
+                        "status": status,
                     }
                 )
 
@@ -231,6 +238,9 @@ def scan_folder():
         f"掃描完成。總計處理 {len(thumbnails)} 個檔案，成功載入 {loaded_character_count} 個角色數據。"
     )
     
+    # 排序
+    #character_list.sort(key=lambda item: item["id"].lower())
+        
     return jsonify(
         {
             "images": character_list,
@@ -272,6 +282,7 @@ def reload_file(file_id):
             "profile_name": character_file_obj.get_profile_name(),
             "scenario_title": character_file_obj.get_scenario_title(),
             "remark": character_file_obj.get_remark(),
+            "status": character_file_obj.get_status(),
         }
 
         # 4. 處理標籤資訊，這個函式也可能出錯

@@ -16,6 +16,7 @@ from core.shared_data import (
     update_backstage_data,
     update_character_data,
     update_remark_data,
+    update_status_data,
 )
 from utils.character_file_utils import reload_character_data
 
@@ -276,8 +277,30 @@ def patch_character_remark(file_id):
     except Exception as e:
         logger.error(e)
         return jsonify({"error": f"更新失敗: {str(e)}"}), 500
+
     
-    
+@api_character_bp.route("/<file_id>/status", methods=["PATCH"])
+def patch_character_status(file_id):
+    """ 根據 file_id 更新角色的狀態 """
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if not new_status:
+        return jsonify({"error": "缺少 status 。"}), 400
+
+    try:
+        update_status_data(file_id, new_status)
+        
+        return jsonify({
+            "success": True,
+            "message": f"更新檔案狀態(STATUS)成功。",
+        })
+            
+    except Exception as e:
+        logger.error(e)
+        return jsonify({"error": f"更新失敗: {str(e)}"}), 500
+        
+        
 @api_character_bp.route("/<file_id>/remark", methods=["GET"])
 def get_character_remark():
     """ 由前端傳來 fild_id 進行儲存 """

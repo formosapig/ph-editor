@@ -182,6 +182,19 @@ window.addEventListener('DOMContentLoaded', () => {
 	  remarkHasChanged = false;
 	}
   });
+  
+  // 綁定 Status Radio Group
+  const statusRadios = document.querySelectorAll('input[name="file-status"]');
+  statusRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        const newStatus = radio.value;
+        console.log("status trigger: " + newStatus);
+        updateStatus(newStatus);
+      }
+    });
+  });  
+  
 });
 
 function updateMainContent(strJson, autoSave = false) {
@@ -428,6 +441,38 @@ function updateRemark(remark) {
     showMessage(`更新失敗。`, 'error');
   });
 }
+
+/**
+ * 更新狀態並通知後端
+ */
+function updateStatus(status) {
+  showMessage(`正在更新狀態為 ${status}...`);
+  
+  fetch(`/api/character/${encodeURIComponent(fileId)}/status`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ status: status })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('狀態更新成功:', data);
+    showMessage(`狀態已更新為：${status}`);
+    
+    // 通知父頁面 (Gallery) 重新讀取，這樣 Emoji 才會變
+    if (window.opener && !window.opener.closed && fileId) {
+      window.opener.postMessage(
+        { action: "updated", file_id: fileId },
+        window.location.origin
+      );
+    }
+  })
+  .catch(err => {
+    console.error('狀態更新失敗:', err);
+    showMessage(`狀態更新失敗。`, 'error');
+  });
+}
+
+
 /**
  * 以下是你原本的 ajax 請求範例，可配合使用
  * 例如呼叫 reloadFile() 或 saveFile() 來更新 globalParsedData

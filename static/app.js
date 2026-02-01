@@ -14,6 +14,8 @@ const app = PetiteVue.reactive({//window.app = {
   filterKey: 'id',
   filterKeyword: '',
   showFilterMenu: false,
+  // 新增：最基礎狀態 (預設全選)
+  activeStatuses: ['draft', 'refinement', 'finalized'],
   globalTagStyles: {},
   
   // Computed
@@ -68,6 +70,7 @@ const app = PetiteVue.reactive({//window.app = {
       this.globalTagStyles = data.tag_styles || {};
       this.allImages = data.images;
       this.displayedImages = [...data.images];
+	  this.applyFilter(this.filterKeyword);
     } catch (e) {
       alert('網路或伺服器錯誤');
       console.error(e);
@@ -124,37 +127,6 @@ const app = PetiteVue.reactive({//window.app = {
   /*applyFilter(key) {
     this.filterKey = key;
     const rawKw = this.filterKeyword.trim().toLowerCase();
-
-    // 這裡是修改處：在執行新的篩選前，將所有選取的項目清空
-    this.selectedSet = []; 
-
-    if (!rawKw || !this.filterKey) {
-      this.displayedImages = [...this.allImages];
-      return;
-    }
-
-    // 判斷是否為精確比對
-    const isExactMatch = rawKw.startsWith('"') && rawKw.endsWith('"');
-
-    // 取得實際的關鍵字
-    const kw = isExactMatch ? rawKw.replace(/^="|"$|^"|"/g, '') : rawKw;
-
-    this.displayedImages = this.allImages.filter(item => {
-      const val = (item[key] || '').toString().toLowerCase();
-
-      if (isExactMatch) {
-        // 精確比對
-        return val === kw;
-      } else {
-        // 模糊比對
-        return val.includes(kw);
-      }
-    });
-  },*/
-
-  applyFilter(key) {
-    this.filterKey = key;
-    const rawKw = this.filterKeyword.trim().toLowerCase();
     this.selectedSet = [];
 
     // 如果關鍵字為空，直接顯示所有圖片
@@ -194,6 +166,49 @@ const app = PetiteVue.reactive({//window.app = {
           return val === searchObj.keyword;
         } else {
           // 模糊比對邏輯
+          return val.includes(searchObj.keyword);
+        }
+      });
+    });
+  },*/
+  
+  applyFilter(key) {
+    this.filterKey = key;
+    const rawKw = this.filterKeyword.trim().toLowerCase();
+    this.selectedSet = [];
+
+    // --- 核心邏輯修改：先過濾狀態，再過濾關鍵字 ---
+    
+    // 1. 根據「草稿/潤飾/定稿」勾選狀況過濾 (最基礎過濾)
+    let filteredBase = this.allImages.filter(item => {
+      // 如果 item.status 未定義，預設視為 'draft'
+      const status = item.status || 'draft'; 
+      return this.activeStatuses.includes(status);
+    });
+
+    // 2. 如果沒有關鍵字，直接返回符合狀態的結果
+    if (!rawKw || !this.filterKey) {
+      this.displayedImages = filteredBase;
+      return;
+    }
+
+    // 3. 解析搜尋關鍵字 (維持你原有的 OR 邏輯)
+    const parts = rawKw.match(/"[^"]*"|\S+/g) || [];
+    const searchKeywords = parts.map(part => {
+      const isExact = part.startsWith('"') && part.endsWith('"');
+      return {
+        keyword: isExact ? part.replace(/^"|"$/g, '') : part,
+        isExact: isExact
+      };
+    });
+
+    // 4. 在符合狀態的基礎上，執行關鍵字篩選
+    this.displayedImages = filteredBase.filter(item => {
+      const val = (item[key] || '').toString().toLowerCase();
+      return searchKeywords.some(searchObj => {
+        if (searchObj.isExact) {
+          return val === searchObj.keyword;
+        } else {
           return val.includes(searchObj.keyword);
         }
       });
@@ -363,8 +378,12 @@ const app = PetiteVue.reactive({//window.app = {
     }
   },
   
-  
-  
+  // 時空因果矩陣 Chronos Causality Matrix 
+  openCCM() {
+    window.open('/ccm', 'EditCCM');
+  },
+
+  // 全域設定
   openGeneral() {
     window.open('/general', 'EditGeneralSetting');
   },
@@ -444,34 +463,55 @@ const app = PetiteVue.reactive({//window.app = {
     adjustGalleryTop();
   },
 
-    // --- 修改開始：新增 reload 單個檔案函式 ---
-    reloadFile(fileId) {
-      // 檢查 fileId 是否為空，避免發送無效請求
-      if (!fileId) {
-         console.error("無法重新載入檔案：缺少 fileId。");
-         return;
-      }
+  // --- 修改開始：新增 reload 單個檔案函式 ---
+  reloadFile(fileId) {
+    // 檢查 fileId 是否為空，避免發送無效請求
+    if (!fileId) {
+       console.error("無法重新載入檔案：缺少 fileId。");
+       return;
+    }
 
-      fetch(`/reload_file/${encodeURIComponent(fileId)}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(newData => {
-          // 在 displayedImages 中找到對應的物件
-          const index = this.displayedImages.findIndex(c => c.id === fileId);
+    fetch(`/reload_file/${encodeURIComponent(fileId)}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(newData => {
+        // 直接更新原始資料,然後重跑 filter
+		// 1. 更新唯一的真理來源：allImages
+        const allIndex = this.allImages.findIndex(c => c.id === fileId);
 
-          if (index !== -1) {
-            this.displayedImages[index] = newData;
-          }
-        })
-        .catch(error => {
-          console.error(`重新載入檔案 ${fileId} 失敗:`, error);
-        });
-    },
-  
+        if (allIndex !== -1) {
+          console.log(`[Sync] 更新原始資料 allImages[${allIndex}]，狀態為: ${newData.status}`);
+          this.allImages[allIndex] = newData;
+    
+          // 2. 讓過濾器根據最新的 allImages 重新產生 displayedImages
+          // 這樣不管狀態是變更、隱藏還是排序，都會一次到位
+          this.applyFilter(this.filterKey);
+        } else {
+          console.error(`[Sync] 在原始資料庫中找不到 ID: ${fileId}，同步失敗。`);
+        }
+		
+        // 在 displayedImages 中找到對應的物件
+        //const index = this.displayedImages.findIndex(c => c.id === fileId);
+
+        //if (index !== -1) {
+        //  this.displayedImages[index] = newData;
+        //}
+      })
+      .catch(error => {
+        console.error(`重新載入檔案 ${fileId} 失敗:`, error);
+      });
+  },
+	
+  toggleStatus() {
+    // 透過 setTimeout 讓執行順序排在 v-model 寫入變數之後
+    setTimeout(() => {
+      this.applyFilter(this.filterKey);
+    }, 0);
+  },
 });
 
 

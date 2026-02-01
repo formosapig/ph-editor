@@ -48,6 +48,49 @@ html, body {
   /* 自動靠右 */
 }
 
+.center-status-toggle {
+  display: flex;
+  background-color: #1d353e; /* 比背景再深一點的凹陷感 */
+  padding: 3px;
+  border-radius: 20px;
+  gap: 2px;
+  border: 1px solid #3a5a6b;
+}
+
+/* 狀態按鈕基礎樣式 */
+.status-btn {
+  padding: 4px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 16px;
+  color: #a8dadc;
+  transition: all 0.2s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+/* 滑鼠懸停效果 */
+.status-btn:hover {
+  background-color: rgba(168, 218, 220, 0.1);
+}
+
+/* 激活狀態 (多選中) */
+.status-btn.active {
+  background-color: #2a6b78;       /* 延用你 active 按鈕的深藍綠 */
+  color: #ffffff;
+  border: 1px solid #a8dadc;       /* 淺藍綠描邊 */
+  box-shadow: 0 0 8px rgba(168, 218, 220, 0.3);
+}
+
+/* 隱藏原生 Checkbox 但保持可操作性 */
+.status-btn input[type="checkbox"] {
+  display: none;
+}
+
+
+
 /* 按鈕統一樣式 */
 .action-bar button {
   padding: 6px 10px;

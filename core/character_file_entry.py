@@ -53,11 +53,13 @@ class CharacterFileEntry:
             self.scenario_id = None
             self.remark = "" # 空字串...
             self.tag_id = None
+            self.status = "draft"
         else:
             # 使用 .get() 方法安全地存取字典鍵值，避免 KeyError
             self.profile_id = metadata.get('!profile_id')
             self.scenario_id = metadata.get('!scenario_id')
             self.remark = metadata.get('!remark', "")
+            self.status = metadata.get('!status', "draft")
             # 存取巢狀字典時，也使用 .get() 來確保安全
             backstage_data = metadata.get('backstage', {})
             self.tag_id = backstage_data.get('!tag_id')
@@ -173,9 +175,25 @@ class CharacterFileEntry:
 
     def update_remark(self, remark: str):
         self.remark = remark
+        self.data_source.update_remark(self.file_id, remark)
 
     def get_remark(self) -> str:
         return self.remark
+
+    def get_status(self) -> str:
+        """取得目前檔案的製作狀態 (draft, refinement, finalized)。"""
+        return self.status
+
+    def update_status(self, status: str):
+        """更新製作狀態。"""
+        valid_statuses = ["archived", "draft", "refinement", "finalized"]
+        if status not in valid_statuses:
+            logger.warning(f"嘗試設定無效的狀態: {status}，已忽略。")
+            return
+            
+        self.status = status
+        self.data_source.update_status(self.file_id, status)
+
 
     def __repr__(self):
         lines = [
@@ -185,6 +203,7 @@ class CharacterFileEntry:
             f"{'Scenario ID':>14}: {self.scenario_id}",
             f"{'Tag ID':>14}: {self.tag_id}",
             f"{'Remark':>14}: {self.remark}",
+            f"{'Status':>14}: {self.status}",
         ]
         return "\n".join(lines)
 
