@@ -801,7 +801,10 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
         dropdownConfig.options,
         currentDataForDropdown || dropdownConfig.defaultValue, // 優先使用當前資料，否則使用後端提供的預設值
         selected => {
-          if (isProfileDropdown) {
+          // 給 profile / scenario 使用的...
+          const isMainIdSwitch = (dropdownConfig.dataKey === "!id");
+		  
+          if (isProfileDropdown && isMainIdSwitch) {
             if (selected.value === "") return; // 使用者還沒有選到真實的東西.
             // profile 路由：呼叫後端拉詳細資料更新整個 JSON
             fetch(`/api/profile/detail/${selected.value}`)
@@ -820,7 +823,7 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
               showMessage(`載入 Profile 詳細資料失敗：${err.message}`, 'error');
               console.error('載入 Profile 詳細資料失敗', err);
             });
-		  } else if (isScenarioDropdown) {
+		  } else if (isScenarioDropdown && isMainIdSwitch) {
             if (selected.value === "") return; // 使用者還沒有選到真實的東西.
             // scenario 路由：呼叫後端拉詳細資料更新整個 JSON
             fetch(`/api/scenario/detail/${selected.value}`)

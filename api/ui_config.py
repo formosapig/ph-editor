@@ -65,6 +65,7 @@ def get_dropdown_options(tab, subTab):
     return jsonify({"dropdowns": dropdowns})
 
 
+'''
 @api_ui_config_bp.route("/profiles", methods=["GET"])
 def get_profile_list():
     profile_map = get_profile_map()
@@ -113,8 +114,90 @@ def get_profile_list():
     }]
 
     return jsonify({"dropdowns": dropdown_config})
+'''
 
 
+@api_ui_config_bp.route("/profiles", methods=["GET"])
+def get_profile_list():
+    profile_map = get_profile_map()
+    general_data = get_general_data()
+    group_list = general_data.get("profile_group", [])
+    
+    # 建立 Group 查找表：id -> {order, name}
+    group_info = {g["id"]: {"order": g.get("order", 999), "name": g.get("name", {}).get("zh", "未命名分組")} 
+                  for g in group_list}
+    
+    # --- 第一部分：Profile 下拉選單資料處理 ---
+    zero_profile = profile_map.get(0)
+    other_profiles = [p for k, p in profile_map.items() if k != 0]
+
+    # 排序邏輯：1. Group Order, 2. Born
+    def sort_key(p):
+        g_id = p.get("!group_id", 0)
+        group_order = group_info.get(g_id, {}).get("order", 9999) if g_id != 0 else 9999
+        born_val = p.get("born", 0)
+        return (group_order, born_val)
+
+    sorted_profiles = sorted(other_profiles, key=sort_key)
+
+    profile_options = [{"label": "請選擇角色", "value": ""}]
+    if zero_profile:
+        profile_options.append({
+            "label": zero_profile.get("name", f"id:{zero_profile.get('!id', '')}"),
+            "value": zero_profile.get("!id", ""),
+        })
+
+    current_group_id = None
+    for profile in sorted_profiles:
+        p_group_id = profile.get("!group_id", 0)
+        # 插入分組標題
+        if p_group_id != 0 and p_group_id != current_group_id:
+            group_name = group_info.get(p_group_id, {}).get("name", "其他")
+            profile_options.append({"label": f"👥{group_name}", "value": "", "disabled": True})
+            current_group_id = p_group_id
+        elif p_group_id == 0 and current_group_id != 0 and current_group_id is not None:
+            profile_options.append({"label": "👤未分組", "value": "", "disabled": True})
+            current_group_id = 0
+
+        profile_options.append({
+            "label": profile.get("name", f"id:{profile.get('!id', '')}"),
+            "value": profile.get("!id", ""),
+        })
+
+    # --- 第二部分：Profile Group 下拉選單資料處理 ---
+    # 按 order 排序 group 列表
+    sorted_group_list = sorted(group_list, key=lambda g: g.get("order", 999))
+    
+    group_options = [
+        {"label": "無", "value": 0}
+    ]
+    for g in sorted_group_list:
+        group_options.append({
+            "label": g.get("name", {}).get("zh", f"Group:{g.get('id')}"),
+            "value": g.get("id")
+        })
+
+    # --- 整合輸出 ---
+    dropdown_configs = [
+        {
+            "displayLabel": "角色選擇",
+            "dataKey": "!id",
+            "labelKey": "name",
+            "options": profile_options,
+            "defaultValue": ""
+        },
+        {
+            "displayLabel": "角色分組",
+            "dataKey": "!group_id",
+            "labelKey": "group",
+            "options": group_options,
+            "defaultValue": 0
+        }
+    ]
+
+    return jsonify({"dropdowns": dropdown_configs})
+    
+    
 @api_ui_config_bp.route("/scenarios", methods=["GET"])
 def get_scenario_list():
     scenario_map = get_scenario_map()

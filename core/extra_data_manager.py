@@ -251,9 +251,10 @@ class ExtraDataManager():
         if updated_profile.get("!id") == 0:
             new_id = max(self._profile_map.keys(), default = 0) + 1
             updated_profile["!id"] = new_id # 重要!!這邊更新 profile_id 成新的.
-            copy_updated = copy.deepcopy(updated_profile) # 注意,做一個深層複製來維持封裝性.
-            self._profile_map[new_id] = copy_updated
-            self._save_profile_data() # 永遠即時儲存
+            #copy_updated = copy.deepcopy(updated_profile) # 注意,做一個深層複製來維持封裝性.
+            #self._profile_map[new_id] = copy_updated
+            #self._save_profile_data() # 永遠即時儲存
+            self._commit_profile(new_id, updated_profile)
             return True
         else:
             logger.error(f"無效的 PROFILE_ID: {updated_profile.get('!id')}")
@@ -277,13 +278,33 @@ class ExtraDataManager():
             logger.info("資料沒有變動，無需更新。")
             return True 
 
-        updated = copy.deepcopy(updated_profile)
-        self._profile_map[updated_profile_id] = updated
+        #updated = copy.deepcopy(updated_profile)
+        #self._profile_map[updated_profile_id] = updated
         
-        self._save_profile_data()
-
+        #self._save_profile_data()
+        self._commit_profile(updated_profile_id, updated_profile) 
         return True
         
+    def _commit_profile(self, profile_id: int, profile_data: Dict[str, Any]):
+        """
+        【私有核心：統一提交】
+        負責排序、深拷貝、存入記憶體並觸發存檔。
+        """
+        # 如果你想做排序，就在這裡做，這樣 add 和 update 都能受益
+        # ordered_data = self._sort_profile_keys(profile_data) 
+        order = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
+        profile_data = {k: profile_data[k] for k in order if k in profile_data}
+        
+        # 執行深拷貝以維持封裝性
+        copy_data = copy.deepcopy(profile_data)
+        
+        # 存入記憶體地圖
+        self._profile_map[profile_id] = copy_data
+        
+        # 執行即時儲存
+        self._save_profile_data()
+        logger.info(f"Profile {profile_id} 提交成功並存檔。")
+    
     def update_profile_id(self, file_id: str, profile_id: int):
         logger.debug(f"update PROFILE_ID: ${profile_id} to ${file_id}")
         # 要修改內容,直接內部讀取
