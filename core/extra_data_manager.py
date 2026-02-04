@@ -187,14 +187,8 @@ class ExtraDataManager():
         """獲取所有 scenario 資料。"""
         return self._scenario_map
         
-    def get_extra_data(self, file_id: str) -> Dict[str, Any]:
-        """獲取特定檔案的獨有資料，若不存在則返回預設值。"""
-        extra_data = self._backstage_map.get(file_id)
-        if extra_data:
-            # 返回副本以防止外部直接修改快取
-            return copy.deepcopy(extra_data)
-        else:
-            return copy.deepcopy(DEFAULT_EXTRA_DATA_TEMPLATE)
+    def get_metadata_map(self) -> Dict[str, Dict[str, Any]]:
+        return self._metadata_map    
             
     # --- 對外提供的更新介面 (會由 CharacterFileEntry 呼叫) ---
     

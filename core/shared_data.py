@@ -51,6 +51,8 @@ def get_profile_map() -> Dict[int, Dict[str, Any]]:
 def get_scenario_map() -> Dict[int, Dict[str, Any]]:
     return _extra_data_manager.get_scenario_map()
 
+def get_metadata_map() -> Dict[str, Dict[str, Any]]:
+    return _extra_data_manager.get_metadata_map()
 
 def get_default_backstage() -> dict:    
     return _extra_data_manager.get_default_backstage()

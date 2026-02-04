@@ -8,65 +8,51 @@ from flask import (
     render_template,
     request,
 )
-# 假設你的 core.shared_data 已經有對應的 getter/setter
-#from core.shared_data import (
-    #get_all_profiles,
-    #get_all_scenarios,
-    #get_all_backstages,
-    #update_backstage_batch, # 批次更新 Backstage 用的
-#)
+from core.shared_data import (
+    get_general_data,
+    get_profile_map,
+    get_scenario_map,
+    get_metadata_map,
+)
 
 logger = logging.getLogger(__name__)
 ccm_bp = Blueprint("ccm_bp", __name__)
   
 @ccm_bp.route("/ccm")
 def ccm_view():
-    """ 
-    渲染 CCM 矩陣主頁面，直接將資料注入前端模板。
-    原本是非同步載入，現在改為同步注入以利 Petite-vue 或 Template 直接使用。
-    """
+   
     try:
-        # 1. 準備資料（實務上這裡會改成 get_all_profiles() 等資料庫查詢函數）
-        profiles = [
-            {"id": 1, "name": "許母IF", "persona": "三兇-臉兇"},
-            {"id": 2, "name": "許秀芬IF", "persona": "三兇-乳兇"},
-            {"id": 3, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 4, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 5, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 6, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 7, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 8, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 9, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 10, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 11, "name": "九条幽", "persona": "三兇-脾氣兇"},
-            {"id": 12, "name": "九条幽", "persona": "三兇-脾氣兇"}
-        ]
-        
-        scenarios = [
-            {"id": 101, "year": 1997, "title": "落榜之夜"},
-            {"id": 102, "year": 1998, "title": "雞湯練習"},
-            {"id": 103, "year": 1999, "title": "覺醒瞬間"},
-            {"id": 104, "year": 1999, "title": "覺醒瞬間"},
-            {"id": 105, "year": 1999, "title": "覺醒瞬間"},
-            {"id": 106, "year": 1999, "title": "覺醒瞬間"},
-            {"id": 107, "year": 1999, "title": "覺醒瞬間"},
-            {"id": 108, "year": 1999, "title": "覺醒瞬間"},
-        ]
-        
-        backstages = [
-            {"scenario_id": 101, "profile_id": 1, "tag": "設定-virgin", "code": "#FFC0CB"},
-            {"scenario_id": 101, "profile_id": 2, "tag": "設定-virgin", "code": "#FFC0CB"},
-            {"scenario_id": 102, "profile_id": 3, "tag": "暴食期", "code": "#800080"},
-            {"scenario_id": 103, "profile_id": 1, "tag": "覺醒", "code": "#FF0000"},
-            {"scenario_id": 103, "profile_id": 2, "tag": "犧牲", "code": "#4B0082"}
-        ]
+    
+        general_data = get_general_data()
+        profile_group = general_data.get('profile_group', "")
+        tag_styles = general_data.get('tag_styles', "")
+        tag_list = general_data.get('tag_list', "")
+    
+        profiles = get_profile_map()
+        # 過濾：Key 不為 0 且 內部的 !id 也不為 0
+        clean_profiles = {
+            k: v for k, v in profiles.items()
+            if k != 0 and v.get("!id") != 0
+        }
+    
+        scenarios = get_scenario_map()
+        # 同樣邏輯過濾場景
+        clean_scenarios = {
+            k: v for k, v in scenarios.items()
+            if k != 0 and v.get("!id") != 0
+        }
+    
+        metadatas = get_metadata_map()
 
         # 2. 將資料渲染進模板
         return render_template(
             "ccm.html",
-            profiles = profiles,
-            scenarios = scenarios,
-            backstages = backstages
+            profiles = clean_profiles,
+            scenarios = clean_scenarios,
+            metadatas = metadatas,
+            tag_styles = tag_styles,
+            tag_list = tag_list,
+            profile_group = profile_group
         )
 
     except Exception as e:

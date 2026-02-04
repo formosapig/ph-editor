@@ -1,84 +1,106 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>時空因果</title>
-  <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
-  <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
-  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
-  <script>
-    window.rawData = {
-      profiles: [[ profiles | tojson ]],
-      scenarios: [[ scenarios | tojson ]],
-      backstages: [[ backstages | tojson ]],
-    };
-  </script>
+    <meta charset="UTF-8">
+    <title>時空因果矩陣</title>
+    <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
+    <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
+    <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+    <script>
+        window.rawData = {
+            profiles: [[ profiles | tojson ]],
+            scenarios: [[ scenarios | tojson ]],
+            metadatas: [[ metadatas | tojson ]],
+            tag_styles: [[ tag_styles | tojson ]],
+            tag_list: [[ tag_list | tojson ]],
+            profile_group: [[ profile_group | tojson ]]
+        };
+    </script>
 </head>
 <body>
-    <div v-scope v-cloak class="page-wrapper">
-        <div class="controls">
-            <div class="control-group">
-                <strong>CCM 矩陣編輯器</strong>
-            </div>
-            <button @click="saveData">儲存變更</button>
-        </div>
+  <div v-scope v-cloak class="page-wrapper">
+	  <div class="table-container">
+		<table>
+		  <thead>
+			<tr>
+			  <th class="corner-cell">角色 \ 年份</th>
+			  <th v-for="year in sortedYears" :key="year">
+				<div class="year-header">{{ year }}</div>
+			  </th>
+			</tr>
+		  </thead>
+		  <tbody>
+			<tr v-for="p in sortedProfiles" :key="p['!id']">
+			  <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
+				  <div class="profile-cell-wrapper">
+					<div class="p-name">
+					  {{ p.name }} 
+					  <span class="p-born">({{ p.born }})</span>
+					</div>
+					<!--<div class="p-group">{{ p.group }}</div>-->
+					<div class="p-stats">
+					  {{ p.height }}cm / {{ p.cup }}
+					</div>
+				  </div>
+				</td>
+			  <td v-for="year in sortedYears" :key="year" class="matrix-cell">
+				<div v-for="sc in getScenariosByYearAndProfile(p['!id'], year)"
+                     :key="sc.id"
+                     class="event-box"
+					 @click="toggleLock(sc.id)"
+					 :class="{ 'active-link': hoveredScenarioId === sc.id, 'locked': isLocked && hoveredScenarioId === sc.id }"
+					 :style="getScenarioStyle(sc.id, p['!id'])"
+					 @mouseenter="handleMouseEnter(sc.id)"
+					 @mouseleave="handleMouseLeave()"
+                >
+				  <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
+				  <!--
+				  <div class="actor-list">
+					<span v-for="actorKey in sc.actors" class="actor-tag">{{ actorKey }}</span>
+				  </div>-->
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="corner-cell">角色 \ 年份</th>
-                        <th v-for="sc in scenarios" :key="sc.id">
-                            <strong>{{ sc.year }}</strong>
-                            <div style="font-size: 11px; font-weight: normal; color: #666;">
-                                {{ sc.title }}
-                            </div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="p in profiles" :key="p.id">
-                        <td class="fixed-col">{{ p.name }}</td>
-                        
-                        <td v-for="sc in scenarios" :key="sc.id">
-                            <div v-if="getBS(p.id, sc.id)" 
-                                 class="backstage-box"
-                                 @click="openEditor(sc, p)"
-                                 :style="{ backgroundColor: getBS(p.id, sc.id).code }">
-                                <span class="tag-text">{{ getBS(p.id, sc.id).tag }}</span>
-                            </div>
-                            <div v-else class="empty-cell-trigger" @click="addNewBS(p.id, sc.id)">
-                                +
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div v-if="editingScene" class="modal-overlay" @click.self="editingScene = null">
-            <div class="modal">
-                <h3>場景編輯：{{ editingScene.title }}</h3>
-                <p>年份：{{ editingScene.year }}</p>
-                <hr>
-                <div class="modal-content">
-                    <strong>角色：{{ currentTargetProfile.name }}</strong>
-                    <div class="input-group">
-                        <label>狀態標籤：</label>
-                        <input v-model="editingBS.tag" class="styled-input">
-                    </div>
-                    <div class="input-group">
-                        <label>顏色代碼：</label>
-                        <input type="color" v-model="editingBS.code">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button @click="editingScene = null">確認</button>
-                </div>
-            </div>
-        </div>
+<div class="tags-container">
+  <div v-for="bg in getBackstagesByScenario(sc.id)" :key="bg.id" style="display: contents">
+    <div 
+      v-if="getTagInfo(bg.tag_id)"
+      class="sc-tag"
+      :style="{ 
+        color: getTagInfo(bg.tag_id).style.color, 
+        background: getTagInfo(bg.tag_id).style.background,
+        border: '1px solid ' + getTagInfo(bg.tag_id).style.color
+      }"
+      :class="{ 
+        'tag-active': bg.profile_id === p['!id'], 
+        'tag-dimmed': bg.profile_id !== p['!id'] 
+      }"
+      @click.stop="handleTagClick(bg, p['!id'])"
+    >
+      {{ getTagInfo(bg.tag_id).name.zh }}
+      
+      <!--<span v-if="bg.profile_id === p['!id']" class="edit-hint">✎</span>-->
     </div>
+  </div>
+</div>				  
 
-    <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
+				</div>
+			  </td>
+			</tr>
+		  </tbody>
+		</table>
+		
+	  </div>
+	
+    <!-- 浮動 pilot -->	
+    <div v-if="hoveredPilot" class="pilot-tooltip">
+      <div class="tooltip-header">
+        <div class="header-left">
+          <span v-if="isLocked">📌</span> {{ hoveredTitle }}
+        </div>
+        <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
+      </div>
+      <div class="tooltip-body">{{ hoveredPilot }}</div>
+    </div>
+  </div>
+  <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
 </body>
 </html>

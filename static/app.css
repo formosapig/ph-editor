@@ -48,6 +48,12 @@ html, body {
   /* 自動靠右 */
 }
 
+.action-bar button {
+  user-select: none;
+  cursor: default;
+  outline: none;
+}
+
 .center-status-toggle {
   display: flex;
   background-color: #1d353e; /* 比背景再深一點的凹陷感 */
