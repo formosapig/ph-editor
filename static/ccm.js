@@ -14,7 +14,36 @@ window.addEventListener('DOMContentLoaded', () => {
 	hoveredYear: '',
 	hoveredPilot: '',
 	isLocked: false,
+	collapsedGroups: [], // 
 	
+	
+	get sortedGroups() {
+      return this.profile_group
+        .filter(group => {
+          return true;
+		})
+        .sort((a, b) => a.order - b.order);		
+	},
+	
+	
+	toggleGroup(groupId) {
+	  const index = this.collapsedGroups.indexOf(groupId);
+	  if (index > -1) {
+		this.collapsedGroups.splice(index, 1); // 移除 = 展開
+	  } else {
+		this.collapsedGroups.push(groupId); // 加入 = 縮起
+	  }
+	},
+
+	isCollapsed(groupId) {
+	  return this.collapsedGroups.includes(groupId);
+	},
+
+    // 輔助方法：根據 group 過濾 profile
+    getProfilesByGroup(groupId) {
+      return this.sortedProfiles.filter(p => p.group_id === groupId);
+    },
+
 	// 私有輔助方法：統一處理資料更新與清空
     _updateHoverState(scId = null) {
       const sc = this.scenarios[scId];
@@ -48,24 +77,49 @@ window.addEventListener('DOMContentLoaded', () => {
 	  
     getBackstagesByScenario(scId) {
       // 1. 找出「所有」這場戲的 metadata (可能有巫子的、也有佐藤的)
-      const matchedMetas = Object.values(this.metadatas || {}).filter(
-        meta => String(meta["!scenario_id"]) === String(scId)
-      );
+      //const matchedMetas = Object.values(this.metadatas || {}).filter(
+        //meta => String(meta["!scenario_id"]) === String(scId)
+      //);
+      const matchedMetas = Object.entries(this.metadatas ||	{}).filter(
+	    ([fileId, meta]) => meta["!scenario_id"] === scId
+	  ).flatMap(([fileId, meta]) => {
+	    const backstage = meta.backstage || {};
+		return {
+          file_id: fileId,
+		  tag_id: backstage["!tag_id"],
+		  profile_id: meta["!profile_id"]
+		};
+	  });
+      
+	  //console.log("MatchedMetas :", matchedMetas);
+	  
+	  return matchedMetas;
 
       // 2. 使用 flatMap 直接攤平並回傳新物件陣列
-      return matchedMetas.flatMap(meta => {
-        const currentProfileId = meta["!profile_id"];
-        const backstage = meta.backstage || {};
-	    return {
-	      tag_id: backstage["!tag_id"],
-	      profile_id: currentProfileId
-		
-        };
-      });
+      //return matchedMetas.flatMap(meta => {
+      //  const currentProfileId = meta["!profile_id"];
+      //  const backstage = meta.backstage || {};
+	  //  return {
+	  //    tag_id: backstage["!tag_id"],
+	  //    profile_id: currentProfileId
+//		
+//        };
+//      });
 	},		
 
     // 輔助函式：透過 tag_id 取得完整的 tag 物件與樣式
     getTagInfo(tagId) {
+      if (!tagId) {
+		// 回傳一個虛擬的「未定義」樣式
+		return {
+		  name: { zh: "未設定" },
+		  style: { 
+			color: "#888", 
+			background: "transparent", 
+			borderStyle: "dashed" // 加上虛線感
+		  }
+		};
+	  }	
 		//console.error(tagId)
       const tag = this.tag_list.find(t => t.id === tagId);
       if (!tag) return null;
@@ -86,13 +140,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 處理點擊標籤開啟檔案
     handleTagClick(backstageItem, currentProfileId) {
+      console.log("handleTagClick:", backstageItem);		
+		
       // 只有當這個標籤屬於目前橫行的 profile 時才執行
       if (backstageItem.profile_id === currentProfileId) {
         const fileId = backstageItem.file_id;
         if (fileId) {
-          console.log(`開啟角色 ${currentProfileId} 的檔案: ${fileId}`);
-          // 這裡接你的 API 或跳轉連結
-          // window.open('https://your-edit-url.com/' + fileId);
+          // 情況 A：已有 metadata file_id，開啟編輯
+          const windowName = `edit_file_${fileId}`;
+          const url = `/edit?file_id=${encodeURIComponent(fileId)}`;
+          console.log(`開啟編輯: ${fileId}`);
+          window.open(url, windowName);
         } else {
           alert('該標籤未設定 file_id');
         }
@@ -104,6 +162,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return [...new Set(years)].sort((a, b) => a - b);
     },
 
+    /*
     get sortedProfiles() {
       const groups = profile_group || [];
       return Object.values(profiles).sort((a, b) => {
@@ -119,7 +178,31 @@ window.addEventListener('DOMContentLoaded', () => {
           groupBg: 'rgba(255,255,255,0.02)'
         };
       });
-    },
+    },*/
+	get sortedProfiles() {
+      const groups = this.profile_group || [];
+	  // 將 Object 轉為 Array
+	  return Object.values(this.profiles).sort((a, b) => {
+		// 1. 先用 !group_id 找對應的 group 定義
+		const gA = groups.find(g => g.id === a['!group_id']) || { order: 999 };
+		const gB = groups.find(g => g.id === b['!group_id']) || { order: 999 };
+		
+		// 2. 比較 Group 的 order
+		if (gA.order !== gB.order) return gA.order - gB.order;
+		
+		// 3. 同組內按出生年份排序
+		return (a.born || 0) - (b.born || 0);
+	  }).map(p => {
+		// 注入顏色等樣式資訊，方便模板使用
+		const g = groups.find(g => g.id === p['!group_id']) || {};
+		return {
+		  ...p,
+		  group_id: p['!group_id'], // 簡化一個 key 給模板用
+		  groupColor: g.color || '#666',
+		  groupBg: 'rgba(255,255,255,0.02)' // 維持你喜歡的低調底色
+		};
+	  });
+	},
 
     getScenariosByYearAndProfile(pId, year) {
       const results = [];
@@ -151,10 +234,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const defaultBorderColor = '#555'; 
       //const defaultBackground = 'rgba(255, 255, 255, 0.03)';
   
-      if (scId == 20) { // profileId == 13) {
-		  console.log(backstages);
-		  console.log(primaryBG);
-	  }
+      //if (scId == 20) { // profileId == 13) {
+		//  console.log(backstages);
+		 // console.log(primaryBG);
+	  //}
   
 	  if (primaryBG) {
 		const tagInfo = this.getTagInfo(primaryBG.tag_id);
@@ -197,6 +280,12 @@ window.addEventListener('DOMContentLoaded', () => {
 	  }
 	  return {}; // 若沒找到則回傳空物件，套用 CSS 預設值
 	}
+  };
+
+  // 聽到 editor 很吵
+  const bc = new BroadcastChannel('edit_file_sync_bus');
+  bc.onmessage = (e) => {
+	  if (e.data === 'reload_all') window.location.reload();
   };
 
   PetiteVue.createApp(app).mount('[v-scope]');

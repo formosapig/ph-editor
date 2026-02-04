@@ -301,6 +301,78 @@ hr {
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
 
+/* 分組標頭樣式 */
+.group-header-row {
+  cursor: pointer;
+  background-color: #2a2a2a; /* 比背景 #222 亮一點點 */
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+/* 讓分組標頭變得精幹 */
+.group-header-row td {
+  /*position: sticky;
+  left: 0;
+  z-index: 5;*/
+  padding: 4px 10px; /* 從原本可能預設的 12px 大幅縮小 */
+  background-color: #2a2a2a; /* 稍微提亮，區別於底色 #222 */
+  font-size: 13px; /* 縮小字體，使其看起來像元數據 */
+  border-bottom: 1px solid #111; /* 底邊界線，增加層次 */
+}
+
+.group-header-row:hover {
+  background-color: #333;
+}
+
+.group-title-content {
+	position: sticky;
+	z-index: 6;
+  left: 0; /* 當表格橫向捲動時，這個 div 會卡在左邊 */
+  display: inline-block;
+  align-items: center;
+  height: 20px; /* 固定高度，防止被撐開 */
+  
+}
+
+.group-name {
+  font-weight: 600;
+  letter-spacing: 1px; /* 增加字間距，提升質感 */
+}
+
+.group-desc {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+  /* 如果描述太長，可以限制寬度並顯示省略號 */
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.collapse-icon {
+  font-size: 10px; /* 箭頭小一點，精緻感就出來了 */
+  opacity: 0.6;
+}
+
+.group-count {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
+}
+
+/* 讓 tbody 之間有一點視覺間隔 (可選) */
+tbody {
+  border-top: 2px solid #111;
+}
+
+/* 當內容縮起時的過渡優化 */
+.matrix-row[v-show="false"] {
+  display: none;
+}
+
+
 /* 要放在這邊, 因為 page-wrapper 也有控 display,
 　　 當 html 準備好後, v-cloak 會被移除,
 　　　 display 會依 page-wrapper 的設定走

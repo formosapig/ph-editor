@@ -526,7 +526,13 @@ const app = PetiteVue.reactive({//window.app = {
 	  //window.location.reload();
     }
   });
-
+  
+  // 聽到 editor 很吵
+  const bc = new BroadcastChannel('edit_file_sync_bus');
+  bc.onmessage = (e) => {
+	  if (e.data === 'reload_all') window.location.reload();
+  };
+  
   // inital petiteVue
   PetiteVue.createApp(app).mount('[v-scope]');
 

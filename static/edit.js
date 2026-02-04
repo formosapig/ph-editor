@@ -395,13 +395,7 @@ function autoSaveData() {
       globalParsedData[mainTabKey][subTabKey] = newData;
     }
 	
-	// --- 新增 postMessage 通知父頁 ---
-    if (window.opener && !window.opener.closed && fileId) {
-      window.opener.postMessage(
-        { action: "updated", file_id: fileId },
-        window.location.origin
-      );
-    }
+	notifyParent();
 	
     if (result.need_update_profile_dropdown) {
 	  fetchAndRenderDropdowns("story", "profile");
@@ -427,14 +421,7 @@ function updateRemark(remark) {
   .then(data => {
     console.log('更新成功:', data);
 	showMessage(`更新成功。`);
-	
-	// --- 新增 postMessage 通知父頁 ---
-    if (window.opener && !window.opener.closed && fileId) {
-      window.opener.postMessage(
-        { action: "updated", file_id: fileId },
-        window.location.origin
-      );
-    }
+	notifyParent();
   })
   .catch(err => {
     console.error('更新失敗:', err);
@@ -459,12 +446,7 @@ function updateStatus(status) {
     showMessage(`狀態已更新為：${status}`);
     
     // 通知父頁面 (Gallery) 重新讀取，這樣 Emoji 才會變
-    if (window.opener && !window.opener.closed && fileId) {
-      window.opener.postMessage(
-        { action: "updated", file_id: fileId },
-        window.location.origin
-      );
-    }
+	notifyParent();
   })
   .catch(err => {
     console.error('狀態更新失敗:', err);
@@ -918,6 +900,20 @@ function showMessage(text, type = 'success') {
   el.textContent = text;
   el.className = '';
   el.classList.add(type);
+}
+
+
+function notifyParent() {
+  // --- 新增 postMessage 通知父頁 ---
+  if (window.opener && !window.opener.closed && fileId) {
+    window.opener.postMessage(
+      { action: "updated", file_id: fileId },
+      window.location.origin
+    );
+  }	
+	
+  // 大吼大叫...
+  new BroadcastChannel('edit_file_sync_bus').postMessage('reload_all');	
 }
 
 window.reloadFile = reloadFile;
