@@ -16,6 +16,7 @@ body {
   box-sizing: border-box; /* 確保 padding 不會撐大寬度 */
   padding: 12px; /* 這裡就是那道「呼吸感」的空隙 */
   display: flex;
+  user-select: none;
 }
 
 /* 調整 table-container 增加圓角與陰影 */
@@ -41,10 +42,11 @@ th {
   text-align: center;
   vertical-align: middle;
   background: #2d2d2d;
-  padding: 12px;
+  padding: 6px 12px;
   position: sticky; /* 關鍵 */
   top: 0;           /* 釘在頂部 */
   z-index: 10;      /* 高於一般的 matrix-cell */
+  font-size: 14px;
 }
 
 .year-header {
@@ -124,6 +126,7 @@ th {
   min-width: 120px;
   background: #2d2d2d !important;
   border-right: 2px solid #444; /* 讓角落與下方固定欄對齊 */
+  font-size: 14px;
 }
 
 th:not(.corner-cell), .matrix-cell {
