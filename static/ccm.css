@@ -217,7 +217,7 @@ th:not(.corner-cell), .matrix-cell {
   bottom: 30px;
   right: 30px;
   width: 400px;         /* 稍微加寬，閱讀感更佳 */
-  max-height: 500px;
+  max-height: 400px;
   background: rgba(28, 23, 30, 0.98); /* 極深紫色基調 */
   border: 1px solid #b388ff;          /* 淡紫色邊框 */
   border-radius: 0;                   /* 堅持直角 */
@@ -254,10 +254,11 @@ th:not(.corner-cell), .matrix-cell {
 .tooltip-body {
   color: #eaddff;       /* 帶紫感的極淡文字色 */
   font-size: 14px;
-  line-height: 1.8;
+  line-height: 1.6;
   padding: 10px;        /* 這裡增加了內文與框的 padding */
   overflow-y: auto;
   white-space: pre-wrap;
+  white-space: normal;
   scrollbar-width: thin;
   scrollbar-color: #b388ff transparent;
 }
@@ -271,6 +272,12 @@ th:not(.corner-cell), .matrix-cell {
 }
 .tooltip-body::-webkit-scrollbar-thumb { 
   background: #b388ff; 
+}
+
+.dashed {
+  border: none;
+  border-top: 1px dashed #999;
+  margin: 0.5em 0;
 }
 
 /* 動畫稍微柔和一點 */

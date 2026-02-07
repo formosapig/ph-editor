@@ -167,7 +167,8 @@
         </div>
         <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
       </div>
-      <div class="tooltip-body">{{ hoveredPlot }}</div>
+      <div class="tooltip-body" v-html="hoveredPlot"></div>
+      <!--<div class="tooltip-body">{{ hoveredPlot }}</div>-->
     </div>
   </div>
   <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
