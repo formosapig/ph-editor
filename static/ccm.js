@@ -1,7 +1,7 @@
 window.addEventListener('DOMContentLoaded', () => {
   const { profiles, scenarios, metadatas, tag_styles, tag_list, profile_group } = window.rawData;
 
-  const app = {
+  const app = PetiteVue.reactive({
 	profiles,
     scenarios,
     metadatas,
@@ -12,9 +12,10 @@ window.addEventListener('DOMContentLoaded', () => {
     hoveredScenarioId: null,
 	hoveredTitle: '',
 	hoveredYear: '',
-	hoveredPilot: '',
+	hoveredPlot: '',
 	isLocked: false,
-	collapsedGroups: [], // 
+	collapsedGroups: [], //
+	version: 0,
 	
 	
 	get sortedGroups() {
@@ -50,7 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
       this.hoveredScenarioId = scId;
       this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
       this.hoveredYear  = sc ? sc.year  : '';
-      this.hoveredPilot = sc ? sc.pilot : (scId ? '暫無劇情簡介' : '');
+      this.hoveredPlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
     },
 
 	handleMouseEnter(scId) {
@@ -105,7 +106,8 @@ window.addEventListener('DOMContentLoaded', () => {
 //		
 //        };
 //      });
-	},		
+	  // 先拿 Keys，再用 map 轉成類似 values 的陣列
+ 	},		
 
     // 輔助函式：透過 tag_id 取得完整的 tag 物件與樣式
     getTagInfo(tagId) {
@@ -206,16 +208,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
     getScenariosByYearAndProfile(pId, year) {
       const results = [];
-      const yearScs = Object.values(scenarios).filter(s => s.year === year);
+      const yearScs = Object.values(this.scenarios).filter(s => s.year === year);
       
       yearScs.forEach(sc => {
         const sid = sc["!id"];
-        const hasJoined = Object.values(metadatas).some(bs => 
+        const hasJoined = Object.values(this.metadatas).some(bs => 
           bs["!profile_id"] === pId && bs["!scenario_id"] === sid
         );
 
         if (hasJoined) {
-          const actors = Object.keys(metadatas).filter(k => 
+          const actors = Object.keys(this.metadatas).filter(k => 
             metadatas[k]["!scenario_id"] === sid
           );
           results.push({ id: sid, title: sc.title, actors });
@@ -279,13 +281,45 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 	  }
 	  return {}; // 若沒找到則回傳空物件，套用 CSS 預設值
-	}
-  };
+	},
+	
+	async reloadData() {
+      console.log("正在從伺服器同步資料...");
+      try {
+        const response = await fetch("/ccm/reload");
+        const result = await response.json();
+
+        if (result.status === "success") {
+          // 解構後端回傳的資料
+          const newData = result.data;
+          
+          // 更新響應式資料
+          // 注意：這裡要確保後端 data 裡面的 key 與前端一致
+          this.profiles = newData.profiles;
+          this.scenarios = newData.scenarios;
+          this.metadatas = newData.metadatas;
+          this.tag_styles = newData.tag_styles;
+          this.tag_list = newData.tag_list;
+          this.profile_group = newData.profile_group;
+          
+		  this.version++;
+          console.log("資料同步完成！");
+        } else {
+          console.error("同步失敗:", result.message);
+        }
+      } catch (err) {
+        console.error("網路請求出錯:", err);
+      }
+    },
+	
+  });
 
   // 聽到 editor 很吵
   const bc = new BroadcastChannel('edit_file_sync_bus');
   bc.onmessage = (e) => {
-	  if (e.data === 'reload_all') window.location.reload();
+    if (e.data === 'reload_all') {
+      app.reloadData();
+    }
   };
 
   PetiteVue.createApp(app).mount('[v-scope]');

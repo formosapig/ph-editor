@@ -12,7 +12,7 @@ BASIC_KEY_NAME_MAP = {
     "persona": "外顯",
     "shadow": "內隱",
     "title": "場景",
-    "pilot": "劇情",
+    "plot": "劇情",
     "notes": "備註",
 }
 
@@ -42,7 +42,7 @@ def flatten_basic_data(d: Dict[str, Any]) -> Dict[str, Any]:
     else:
         result["title"] = ""
         
-    result["pilot"] = get_nested_value(d, "story.scenario.pilot", "")
+    result["plot"] = get_nested_value(d, "story.scenario.plot", "")
     
     # 備註們...
     # (Emoji 1, 路徑), (Emoji 2, 路徑), (Emoji 3, 路徑)

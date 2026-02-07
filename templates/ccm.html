@@ -136,7 +136,7 @@
               <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
               
               <div class="tags-container">
-                <div v-for="bg in getBackstagesByScenario(sc.id)" :key="bg.id" style="display: contents">
+                <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.id" style="display: contents">
                   <div v-if="getTagInfo(bg.tag_id)" class="sc-tag"
                        :style="{ 
                          color: getTagInfo(bg.tag_id).style.color, 
@@ -160,14 +160,14 @@
 	
 	
     <!-- 浮動 pilot -->	
-    <div v-if="hoveredPilot" class="pilot-tooltip">
+    <div v-if="hoveredPlot" class="plot-tooltip">
       <div class="tooltip-header">
         <div class="header-left">
           <span v-if="isLocked">📌</span> {{ hoveredTitle }}
         </div>
         <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
       </div>
-      <div class="tooltip-body">{{ hoveredPilot }}</div>
+      <div class="tooltip-body">{{ hoveredPlot }}</div>
     </div>
   </div>
   <script src="[[ url_for('static', filename='ccm.js') ]]"></script>

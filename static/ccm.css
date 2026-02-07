@@ -209,7 +209,7 @@ th:not(.corner-cell), .matrix-cell {
 }
 
 /* ccm.css - 優雅紫紅直角版 */
-.pilot-tooltip {
+.plot-tooltip {
   position: fixed;
   bottom: 30px;
   right: 30px;

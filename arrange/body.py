@@ -8,6 +8,7 @@ from utils.utils import (
     format_hsv_to_string,
     format_hsva_to_string,
 )
+from game_data.cup_data import get_sister_cup_value
 
 
 def calculate_value_by_height(height: int) -> Optional[int]:
@@ -31,27 +32,6 @@ def calculate_value_by_height(height: int) -> Optional[int]:
     else:
         return None
         
-        
-def calculate_value_by_cup(cup: str) -> Optional[int]:
-    cup_map = {
-        "A-": 28, "A": 32, "A+": 35,
-        "B": 38, "B+": 41,
-        "C": 44, "C+": 47,
-        "D": 50, "D+": 52,
-        "E": 54, "E+": 56,
-        "F": 58,
-        "G": 61,
-        "H": 64,
-        "I": 66,
-        "J": 68,
-        "K": 70
-    }
-    # 直接比對 cup_map
-    if cup in cup_map:
-        return cup_map[cup]
-    else:
-        return None
-
 
 BODY_KEY_NAME_MAP = {
     
@@ -153,7 +133,7 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
 
     # 胸部設定 story.profile.cup
     val_origin_cup = get_nested_value(d, "story.profile.cup", "")
-    val_setting_cup = calculate_value_by_cup(val_origin_cup)
+    val_setting_cup = get_sister_cup_value(val_origin_cup)
     result["b_pro_cup"] = f"{val_origin_cup} ➡️ [{val_setting_cup}]" if val_setting_cup is not None else ""
     # 全部 body.breast.size ...
     result["b_bre_all"] = format_attributes_to_string(

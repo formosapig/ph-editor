@@ -62,7 +62,7 @@
             :class="[
 			  getAttributeBlockClass(attr),
 			  { 'text-different': index > 0 && isDifferentFromFirst(index, attr) },
-			  { 'notes-cell': (attr === 'notes' || attr ==='pilot') } // 檢查屬性是否為 'notes'
+			  { 'notes-cell': (attr === 'notes' || attr ==='plot') } // 檢查屬性是否為 'notes'
 			]">
           <div class="content-container" v-html="generateColorHtml(char[attr])"></div>
         </td>

@@ -9,6 +9,7 @@ from utils.utils import (
     format_hsva_to_string,
 )
 from game_data.body_data import is_nashi
+from game_data.cup_data import get_sister_cup_value
 
 def calculate_value_by_height(height: int) -> Optional[int]:
     base_value = 50
@@ -28,27 +29,6 @@ def calculate_value_by_height(height: int) -> Optional[int]:
 
     if 0 <= rounded_result <= 100:
         return int(rounded_result)
-    else:
-        return None
-        
-        
-def calculate_value_by_cup(cup: str) -> Optional[int]:
-    cup_map = {
-        "A-": 28, "A": 32, "A+": 35,
-        "B": 38, "B+": 41,
-        "C": 44, "C+": 47,
-        "D": 50, "D+": 52,
-        "E": 54, "E+": 56,
-        "F": 58,
-        "G": 61,
-        "H": 64,
-        "I": 66,
-        "J": 68,
-        "K": 70
-    }
-    # 直接比對 cup_map
-    if cup in cup_map:
-        return cup_map[cup]
     else:
         return None
 
@@ -138,14 +118,16 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
 
     # 胸部設定 story.profile.cup
     val_origin_cup = get_nested_value(d, "story.profile.cup", "")
-    val_setting_cup = calculate_value_by_cup(val_origin_cup)
+    val_setting_cup = get_sister_cup_value(val_origin_cup)
     val_game_cup = get_nested_value(d, "body.breast.size", -1)
     
     result["b_pro_cup"] = (
-        f"{'❌️' if val_setting_cup != val_game_cup else ''}"
-        f" {val_origin_cup} cup {val_setting_cup} → {val_game_cup}"
-        if val_setting_cup is not None else f"{val_game_cup}"
+        f"{'❌ ' + str(val_game_cup) + ' → ' if val_setting_cup != val_game_cup else ''}"
+        f"✔️ {val_setting_cup} ({val_origin_cup})"
+        if val_setting_cup is not None else
+        f"{val_game_cup}"
     )
+    
     # 全部 body.breast.size ...
     result["b_bre_all"] = format_attributes_to_string(
         #get_nested_value(d, "body.breast.size", -1),

@@ -12,6 +12,7 @@ from core.shared_data import (
     get_scenario_map,
     get_default_backstage,
 )
+from game_data.cup_data import generate_cup_options
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +178,10 @@ def get_profile_list():
             "value": g.get("id")
         })
 
+    # --- 第三部分：罩杯尺寸選單 ---
+    # 直接從 cup_data 模組獲取處理好的選項
+    cup_options = generate_cup_options()
+
     # --- 整合輸出 ---
     dropdown_configs = [
         {
@@ -192,6 +197,13 @@ def get_profile_list():
             "labelKey": "group",
             "options": group_options,
             "defaultValue": 0
+        },
+        {
+            "displayLabel": "罩杯",
+            "dataKey": "cup",
+            "labelKey": "cup",
+            "options": cup_options,
+            "defaultValue": "34D"
         }
     ]
 
