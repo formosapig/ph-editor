@@ -14,7 +14,8 @@ window.addEventListener('DOMContentLoaded', () => {
     hoveredYear: '',
     hoveredPlot: '',
     isLocked: false,
-    collapsedGroups: [], //
+    // 預設全部收縮...
+    collapsedGroups: profile_group.map(g => g.id), //[], //
     version: 0,
 
 
