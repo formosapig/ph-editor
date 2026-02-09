@@ -1,164 +1,84 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>時空因果矩陣</title>
-    <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
-    <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
-    <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
-    <script>
-        window.rawData = {
-            profiles: [[ profiles | tojson ]],
-            scenarios: [[ scenarios | tojson ]],
-            metadatas: [[ metadatas | tojson ]],
-            tag_styles: [[ tag_styles | tojson ]],
-            tag_list: [[ tag_list | tojson ]],
-            profile_group: [[ profile_group | tojson ]]
-        };
-    </script>
+  <meta charset="UTF-8">
+  <title>時空因果矩陣</title>
+  <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
+  <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
+  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+  <script>
+    window.rawData = {
+      profiles: [[ profiles | tojson ]],
+      scenarios: [[ scenarios | tojson ]],
+      metadatas: [[ metadatas | tojson ]],
+      tag_styles: [[ tag_styles | tojson ]],
+      tag_list: [[ tag_list | tojson ]],
+      profile_group: [[ profile_group | tojson ]]
+    };
+  </script>
 </head>
 <body>
-<!--
   <div v-scope v-cloak class="page-wrapper">
-	  <div class="table-container">
-		<table>
-		  <thead>
-			<tr>
-			  <th class="corner-cell">角色 \ 年份</th>
-			  <th v-for="year in sortedYears" :key="year">
-				<div class="year-header">{{ year }}</div>
-			  </th>
-			</tr>
-		  </thead>
-		  <tbody>
-			<tr v-for="p in sortedProfiles" :key="p['!id']">
-			  <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
-				  <div class="profile-cell-wrapper">
-					<div class="p-name">
-					  {{ p.name }} 
-					  <span class="p-born">({{ p.born }})</span>
-					</div>
-					<!--<div class="p-group">{{ p.group }}</div>- ->
-					<div class="p-stats">
-					  {{ p.height }}cm / {{ p.cup }}
-					</div>
-				  </div>
-				</td>
-			  <td v-for="year in sortedYears" :key="year" class="matrix-cell">
-				<div v-for="sc in getScenariosByYearAndProfile(p['!id'], year)"
-                     :key="sc.id"
-                     class="event-box"
-					 @click="toggleLock(sc.id)"
-					 :class="{ 'active-link': hoveredScenarioId === sc.id, 'locked': isLocked && hoveredScenarioId === sc.id }"
-					 :style="getScenarioStyle(sc.id, p['!id'])"
-					 @mouseenter="handleMouseEnter(sc.id)"
-					 @mouseleave="handleMouseLeave()"
-                >
-				  <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
-				  <!--
-				  <div class="actor-list">
-					<span v-for="actorKey in sc.actors" class="actor-tag">{{ actorKey }}</span>
-				  </div>- ->
-
-<div class="tags-container">
-  <div v-for="bg in getBackstagesByScenario(sc.id)" :key="bg.id" style="display: contents">
-    <div 
-      v-if="getTagInfo(bg.tag_id)"
-      class="sc-tag"
-      :style="{ 
-        color: getTagInfo(bg.tag_id).style.color, 
-        background: getTagInfo(bg.tag_id).style.background,
-        border: '1px solid ' + getTagInfo(bg.tag_id).style.color
-      }"
-      :class="{ 
-        'tag-active': bg.profile_id === p['!id'], 
-        'tag-dimmed': bg.profile_id !== p['!id'] 
-      }"
-      @click.stop="handleTagClick(bg, p['!id'])"
-    >
-      {{ getTagInfo(bg.tag_id).name.zh }}
-      
-      <!--<span v-if="bg.profile_id === p['!id']" class="edit-hint">✎</span>- ->
-    </div>
-  </div>
-</div>				  
-
-				</div>
-			  </td>
-			</tr>
-		  </tbody>
-		</table>
-		
-	  </div>
-	-->
-<div v-scope v-cloak class="page-wrapper">
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th class="corner-cell">角色 \ 年份</th>
-          <th v-for="year in sortedYears" :key="year">
-            <div class="year-header">{{ year }}</div>
-          </th>
-        </tr>
-      </thead>
-
-      <tbody v-for="group in sortedGroups" :key="group.id">
-<tr class="group-header-row" @click="toggleGroup(group.id)">
-  <td :colspan="sortedYears.length + 1" :style="{ borderLeft: '8px solid ' + group.color}">
-    <div class="group-title-content">
-      <span class="collapse-icon">{{ isCollapsed(group.id) ? '▶' : '▼' }}</span>
-      <span class="group-name" :style="{ color: group.color }">{{ group.name.zh }}</span>
-      <span class="group-desc" v-if="!isCollapsed(group.id)">— {{ group.desc.zh }}</span>
-      <span class="group-count" v-else>({{ getProfilesByGroup(group.id).length }})</span>
-    </div>
-  </td>
-</tr>
-
-        <tr v-for="p in getProfilesByGroup(group.id)" 
-            v-show="!isCollapsed(group.id)" 
-            :key="p['!id']"
-            class="matrix-row">
-          <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
-            <div class="profile-cell-wrapper">
-              <div class="p-name">{{ p.name }} <span class="p-born">({{ p.born }})</span></div>
-              <div class="p-stats">{{ p.height }}cm / {{ p.cup }}</div>
-            </div>
-          </td>
-          <td v-for="year in sortedYears" :key="year" class="matrix-cell">
-            <div v-for="sc in getScenariosByYearAndProfile(p['!id'], year)" 
-                 :key="sc.id" class="event-box"
-                 @click="toggleLock(sc.id)"
-                 :class="{ 'active-link': hoveredScenarioId === sc.id, 'locked': isLocked && hoveredScenarioId === sc.id }"
-                 :style="getScenarioStyle(sc.id, p['!id'])"
-                 @mouseenter="handleMouseEnter(sc.id)"
-                 @mouseleave="handleMouseLeave()">
-              <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
-              
-              <div class="tags-container">
-                <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.id" style="display: contents">
-                  <div v-if="getTagInfo(bg.tag_id)" class="sc-tag"
-                       :style="{ 
-                         color: getTagInfo(bg.tag_id).style.color, 
-                         background: getTagInfo(bg.tag_id).style.background,
-                         border: '1px solid ' + getTagInfo(bg.tag_id).style.color
-                       }"
-                       :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }"
-                       @click.stop="handleTagClick(bg, p['!id'])">
-                    {{ getTagInfo(bg.tag_id).name.zh }}
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th class="corner-cell">角色 \ 年份</th>
+            <th v-for="year in sortedYears" :key="year">
+              <div class="year-header">{{ year }}</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody v-for="group in sortedGroups" :key="group.id">
+          <tr class="group-header-row" @click="toggleGroup(group.id)">
+            <td :colspan="sortedYears.length + 1" :style="{ borderLeft: '8px solid ' + group.color}">
+              <div class="group-title-content">
+                <span class="collapse-icon">{{ isCollapsed(group.id) ? '▶' : '▼' }}</span>
+                <span class="group-name" :style="{ color: group.color }">{{ group.name.zh }}</span>
+                <span class="group-desc" v-if="!isCollapsed(group.id)">— {{ group.desc.zh }}</span>
+                <span class="group-count" v-else>({{ getProfilesByGroup(group.id).length }})</span>
+              </div>
+            </td>
+          </tr>
+          <tr v-for="p in getProfilesByGroup(group.id)" 
+              v-show="!isCollapsed(group.id)" 
+              :key="p['!id']"
+              class="matrix-row">
+            <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
+              <div class="profile-cell-wrapper">
+                <div class="p-name">{{ p.name }} <span class="p-born">({{ p.born }})</span></div>
+                <div class="p-stats">{{ p.height }}cm / {{ p.cup }}</div>
+              </div>
+            </td>
+            <td v-for="year in sortedYears" :key="year" class="matrix-cell">
+              <div v-for="sc in getScenariosByYearAndProfile(p['!id'], year)" 
+                   :key="sc.id" class="event-box"
+                   @click="toggleLock(sc.id)"
+                   :class="{ 'active-link': hoveredScenarioId === sc.id, 'locked': isLocked && hoveredScenarioId === sc.id }"
+                   :style="getScenarioStyle(sc.id, p['!id'])"
+                   @mouseenter="handleMouseEnter(sc.id)"
+                   @mouseleave="handleMouseLeave()">
+                <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
+                <div class="tags-container">
+                  <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.id" style="display: contents">
+                    <div v-if="getTagInfo(bg.tag_id)" class="sc-tag"
+                         :style="{ 
+                           color: getTagInfo(bg.tag_id).style.color, 
+                           background: getTagInfo(bg.tag_id).style.background,
+                           border: '1px solid ' + getTagInfo(bg.tag_id).style.color
+                         }"
+                         :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }"
+                         @click.stop="handleTagClick(bg, p['!id'])">
+                      {{ getTagInfo(bg.tag_id).name.zh }}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  
-	
-	
-	
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <!-- 浮動 pilot -->	
     <div v-if="hoveredPlot" class="plot-tooltip">
       <div class="tooltip-header">

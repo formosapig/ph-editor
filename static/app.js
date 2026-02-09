@@ -527,10 +527,13 @@ const app = PetiteVue.reactive({//window.app = {
     }
   });
   
-  // 聽到 editor 很吵
+  // 接收 editor 資料
   const bc = new BroadcastChannel('edit_file_sync_bus');
   bc.onmessage = (e) => {
-	  if (e.data === 'reload_all') window.location.reload();
+    const {file_id, action} = e.data;
+    if (action === "updated") {
+      app.reloadFile(file_id);
+    }
   };
   
   // inital petiteVue

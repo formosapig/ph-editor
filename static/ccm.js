@@ -45,231 +45,138 @@ window.addEventListener('DOMContentLoaded', () => {
       return this.sortedProfiles.filter(p => p.group_id === groupId);
     },
 
-    // 私有輔助方法：統一處理資料更新與清空
-    /*_updateHoverState(scId = null) {
+    _updateHoverState(scId = null) {
       const sc = this.scenarios[scId];
       this.hoveredScenarioId = scId;
       this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
       this.hoveredYear  = sc ? sc.year  : '';
-      combinedPlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
-      combinedPlot.replace(/\n/g, '<br>');
-      //combinedPlot += '<hr>';
-      //combinedPlot += '許秀芬IF 49';
-      combinedPlot += '<hr class="dashed">';
-      combinedPlot += '許母IF 66';
-      
-      //combinedPlot += '女一 ----------';
-      //combinedPlot += combinedPlot;
-      
-      this.hoveredPlot = combinedPlot;//sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
-    },*/
-    
-    /*_updateHoverState(scId = null) {
-  const sc = this.scenarios[scId];
-  this.hoveredScenarioId = scId;
-  this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
-  this.hoveredYear  = sc ? sc.year  : '';
 
-  let combinedPlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
-  
-  // 處理換行
-  combinedPlot = combinedPlot.replace(/\n/g, '<br>');
+      let combinedPlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
+      combinedPlot = combinedPlot.replace(/\n/g, '<br>');
 
-  if (scId) {
-    // 1. 找出所有屬於該場景的 metadata 條目
-    const matchedEntries = Object.entries(this.metadatas || {}).filter(
-      ([fileId, meta]) => String(meta["!scenario_id"]) === String(scId)
-    );
+      if (scId && this.metadatas) {
+        const matchedEntries = Object.entries(this.metadatas).filter(
+          ([_, meta]) => String(meta["!scenario_id"]) === String(scId)
+        );
 
-    if (matchedEntries.length > 0) {
-      combinedPlot += '<hr class="dashed">';
-      
-      const extraInfo = matchedEntries.map(([fileId, meta]) => {
-        const backstage = meta.backstage || {};
-        const profileId = meta["!profile_id"];
-        const profile = this.profiles ? this.profiles[profileId] : null;
+        if (matchedEntries.length > 0) {
+        //combinedPlot += '<hr>';
 
-        // 2. 取得姓名
-        const name = profile ? profile.name : "未知角色";
+          const extraInfo = matchedEntries.map(([_, meta]) => {
+            const bg = meta.backstage || {};
+            const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
 
-        // 3. 計算年齡 (場景年份 - 出生年份)
-        let ageStr = "";
-        if (profile && profile.born && sc && sc.year) {
-          const age = parseInt(sc.year) - parseInt(profile.born);
-          ageStr = ` (${age})`;
+            // 處理角色標籤 (套用 .sc-tag 類別) ---
+            const tagInfo = this.getTagInfo(bg["!tag_id"]);
+            let tagHtml = "";
+            if (tagInfo && tagInfo.name && tagInfo.name.zh !== "未設定") {
+              const ts = tagInfo.style || {};
+              // 直接使用你的 .sc-tag class，並動態注入顏色與背景
+              tagHtml = `<span class="sc-tag" style="
+                background: ${ts.background || 'transparent'}; 
+                color: ${ts.color || '#ccc'}; 
+                border: 1px ${ts.borderStyle || 'solid'} ${ts.color || '#ccc'};
+                margin-right: 4px;
+                padding: 2px 5px;
+                font-size: 11px;
+                ">${tagInfo.name.zh}</span>`;
+            }
+
+            // 優化年齡顯示 (使用細體或灰字)
+            let ageHtml = "";
+            if (profile?.born && sc?.year) {
+              const age = parseInt(sc.year) - parseInt(profile.born);
+              ageHtml = `<span style="font-weight: normal; opacity: 0.8; font-size: 0.9em;"> · ${age}歲</span>`;
+            }
+
+            // 2. 優化 Persona/Shadow 顯示 (條件渲染)
+            const pColor = bg["!persona_code"] || '#B87333';
+            const sColor = bg["!shadow_code"] || '#43AD2B';
+
+            // 定義標籤的共用樣式，增加 margin-left 讓 Emoji 跟標籤、標籤跟標籤之間有間距
+            const baseTagStyle = (color) => `background: ${color}22; color: ${color}; border: 1px solid ${color}; padding: 0 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle;`;
+            const personaHtml = bg.persona 
+              ? `<span style="margin-left: 8px; vertical-align: middle;">🎭</span><span style="${baseTagStyle(pColor)}">${bg.persona}</span>` 
+              : "";
+
+            const shadowHtml = bg.shadow 
+              ? `<span style="margin-left: 4px; vertical-align: middle;">👤</span><span style="${baseTagStyle(sColor)}">${bg.shadow}</span>` 
+              : "";
+
+            // 將兩者組合，如果都沒有資料，這裡會是空字串
+            const tagsHtml = `${personaHtml}${shadowHtml}`;
+
+            const name = profile ? profile.name : "未知角色";
+            const notes = bg.notes?.replace(/\n/g, '<br>') ?? '';
+
+            return `
+              <hr>
+              <div style="font-size: 1.05em; font-weight: bold;">
+                ${tagHtml}
+                <span style="font-size: 1.2em; font-weight: bold; color: #ffffff; vertical-align: middle; letter-spacing: 0.5px;">${name}</span>
+                ${ageHtml}
+                ${tagsHtml}
+              </div>
+              <div>${notes || ''}</div>`;
+          }).join('');
+          combinedPlot += extraInfo;
         }
+      }
+      this.hoveredPlot = combinedPlot;
+    },
 
-        // 4. 格式化輸出
-        // 格式：姓名(年齡) [人格/陰影]
-        // 換行
-        // 簡介(notes)
-        let info = `<strong>${name}${ageStr}</strong> [${backstage.persona || '--'}/${backstage.shadow || '--'}]`;
-        info += `<br>${backstage.notes || '暫無備註'}`;
-        
-        return info;
-      }).join('<br><hr style="border-top:1px dotted #ccc;">'); // 多個角色間的分割線
+    handleMouseEnter(scId) {
+      if (this.isLocked) return;
+      this._updateHoverState(scId);
+    },
 
-      combinedPlot += extraInfo;
-    }
-  }
+    handleMouseLeave() {
+      if (this.isLocked) return;
+      this._updateHoverState(null);
+    },
 
-  this.hoveredPlot = combinedPlot;
-},*/
-
-_updateHoverState(scId = null) {
-  const sc = this.scenarios[scId];
-  this.hoveredScenarioId = scId;
-  this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
-  this.hoveredYear  = sc ? sc.year  : '';
-
-  let combinedPlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
-  combinedPlot = combinedPlot.replace(/\n/g, '<br>');
-
-  if (scId && this.metadatas) {
-    const matchedEntries = Object.entries(this.metadatas).filter(
-      ([_, meta]) => String(meta["!scenario_id"]) === String(scId)
-    );
-
-    if (matchedEntries.length > 0) {
-      //combinedPlot += '<hr>';
-      
-      const extraInfo = matchedEntries.map(([_, meta]) => {
-        const bg = meta.backstage || {};
-        const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
-
-// --- 1. 處理角色標籤 (套用 .sc-tag 類別) ---
-        const tagInfo = this.getTagInfo(bg["!tag_id"]);
-        let tagHtml = "";
-        if (tagInfo && tagInfo.name && tagInfo.name.zh !== "未設定") {
-          const ts = tagInfo.style || {};
-          // 直接使用你的 .sc-tag class，並動態注入顏色與背景
-          tagHtml = `<span class="sc-tag" style="
-            background: ${ts.background || 'transparent'}; 
-            color: ${ts.color || '#ccc'}; 
-            border: 1px ${ts.borderStyle || 'solid'} ${ts.color || '#ccc'};
-            margin-right: 4px;
-            padding: 2px 5px;
-            font-size: 11px;
-          ">${tagInfo.name.zh}</span>`;
-        }
-        
-        // 1. 優化年齡顯示 (使用細體或灰字)
-        let ageHtml = "";
-        if (profile?.born && sc?.year) {
-          const age = parseInt(sc.year) - parseInt(profile.born);
-          ageHtml = `<span style="font-weight: normal; opacity: 0.8; font-size: 0.9em;"> · ${age}歲</span>`;
-        }
-
-        // 2. 優化 Persona/Shadow 顯示 (條件渲染)
-const pColor = bg["!persona_code"] || '#B87333';
-const sColor = bg["!shadow_code"] || '#43AD2B';
-
-// 定義標籤的共用樣式，增加 margin-left 讓 Emoji 跟標籤、標籤跟標籤之間有間距
-const baseTagStyle = (color) => `background: ${color}22; color: ${color}; border: 1px solid ${color}; padding: 0 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle;`;
-
-const personaHtml = bg.persona 
-  ? `<span style="margin-left: 8px; vertical-align: middle;">🎭</span><span style="${baseTagStyle(pColor)}">${bg.persona}</span>` 
-  : "";
-
-const shadowHtml = bg.shadow 
-  ? `<span style="margin-left: 4px; vertical-align: middle;">👤</span><span style="${baseTagStyle(sColor)}">${bg.shadow}</span>` 
-  : "";
-
-// 將兩者組合，如果都沒有資料，這裡會是空字串
-const tagsHtml = `${personaHtml}${shadowHtml}`;
-
-        const name = profile ? profile.name : "未知角色";
-
-        return `
-          <hr>
-          <div style="margin-bottom: 12px;">
-            <div style="font-size: 1.05em; font-weight: bold;">
-              ${tagHtml}
-<span style="font-size: 1.2em; font-weight: bold; color: #ffffff; vertical-align: middle; letter-spacing: 0.5px;">${name}</span>
-              ${ageHtml}
-              ${tagsHtml}
-            </div>
-            <div>${bg.notes || ''}</div>
-          </div>
-        `;
-      }).join('');
-
-      combinedPlot += extraInfo;
-    }
-  }
-
-  this.hoveredPlot = combinedPlot;
-},
-
-	handleMouseEnter(scId) {
-	  if (this.isLocked) return;
-	  this._updateHoverState(scId);
-	},
-
-	handleMouseLeave() {
-	  if (this.isLocked) return;
-	  this._updateHoverState(null);
-	},
-
-	toggleLock(scId) {
-	  // 如果點擊已鎖定的同一個對象 -> 解鎖並清空
-	  if (this.isLocked && this.hoveredScenarioId === scId) {
-		this.isLocked = false;
-		this._updateHoverState(null);
-	  } else {
-		// 否則 -> 直接鎖定
-		this.isLocked = true;
-		this._updateHoverState(scId);
-	  }
-	},
+    toggleLock(scId) {
+      // 如果點擊已鎖定的同一個對象 -> 解鎖並清空
+      if (this.isLocked && this.hoveredScenarioId === scId) {
+        this.isLocked = false;
+        this._updateHoverState(null);
+      } else {
+        // 否則 -> 直接鎖定
+        this.isLocked = true;
+        this._updateHoverState(scId);
+      }
+    },
 	  
     getBackstagesByScenario(scId) {
-      // 1. 找出「所有」這場戲的 metadata (可能有巫子的、也有佐藤的)
-      //const matchedMetas = Object.values(this.metadatas || {}).filter(
-        //meta => String(meta["!scenario_id"]) === String(scId)
-      //);
       const matchedMetas = Object.entries(this.metadatas ||	{}).filter(
-	    ([fileId, meta]) => meta["!scenario_id"] === scId
-	  ).flatMap(([fileId, meta]) => {
-	    const backstage = meta.backstage || {};
-		return {
+        ([fileId, meta]) => meta["!scenario_id"] === scId
+      ).flatMap(([fileId, meta]) => {
+        const backstage = meta.backstage || {};
+        return {
           file_id: fileId,
-		  tag_id: backstage["!tag_id"],
-		  profile_id: meta["!profile_id"]
-		};
-	  });
-      
-	  //console.log("MatchedMetas :", matchedMetas);
-	  
-	  return matchedMetas;
-
-      // 2. 使用 flatMap 直接攤平並回傳新物件陣列
-      //return matchedMetas.flatMap(meta => {
-      //  const currentProfileId = meta["!profile_id"];
-      //  const backstage = meta.backstage || {};
-	  //  return {
-	  //    tag_id: backstage["!tag_id"],
-	  //    profile_id: currentProfileId
-//		
-//        };
-//      });
-	  // 先拿 Keys，再用 map 轉成類似 values 的陣列
- 	},		
+          tag_id: backstage["!tag_id"],
+          profile_id: meta["!profile_id"]
+        };
+      });
+  
+      return matchedMetas;
+    },		
 
     // 輔助函式：透過 tag_id 取得完整的 tag 物件與樣式
     getTagInfo(tagId) {
       if (!tagId) {
-		// 回傳一個虛擬的「未定義」樣式
-		return {
-		  name: { zh: "未設定" },
-		  style: { 
-			color: "#888", 
-			background: "transparent", 
-			borderStyle: "dashed" // 加上虛線感
-		  }
-		};
-	  }	
-		//console.error(tagId)
+        // 回傳一個虛擬的「未定義」樣式
+        return {
+          name: { zh: "未設定" },
+          style: { 
+            color: "#888", 
+            background: "transparent", 
+            borderStyle: "dashed" // 加上虛線感
+          }
+        };
+      }	
+      
+      //console.error(tagId)
       const tag = this.tag_list.find(t => t.id === tagId);
       if (!tag) return null;
       const style = this.tag_styles[tag.type] || {};
@@ -311,47 +218,30 @@ const tagsHtml = `${personaHtml}${shadowHtml}`;
       return [...new Set(years)].sort((a, b) => a - b);
     },
 
-    /*
     get sortedProfiles() {
-      const groups = profile_group || [];
-      return Object.values(profiles).sort((a, b) => {
-        const gA = groups.find(g => g.name.zh === a.group) || { order: 999 };
-        const gB = groups.find(g => g.name.zh === b.group) || { order: 999 };
+      const groups = this.profile_group || [];
+      // 將 Object 轉為 Array
+      return Object.values(this.profiles).sort((a, b) => {
+        // 1. 先用 !group_id 找對應的 group 定義
+        const gA = groups.find(g => g.id === a['!group_id']) || { order: 999 };
+        const gB = groups.find(g => g.id === b['!group_id']) || { order: 999 };
+
+        // 2. 比較 Group 的 order
         if (gA.order !== gB.order) return gA.order - gB.order;
-        return a.born - b.born;
+
+        // 3. 同組內按出生年份排序
+        return (a.born || 0) - (b.born || 0);
       }).map(p => {
-        const g = groups.find(g => g.name.zh === p.group) || {};
+        // 注入顏色等樣式資訊，方便模板使用
+        const g = groups.find(g => g.id === p['!group_id']) || {};
         return {
           ...p,
+          group_id: p['!group_id'], // 簡化一個 key 給模板用
           groupColor: g.color || '#666',
-          groupBg: 'rgba(255,255,255,0.02)'
+          groupBg: 'rgba(255,255,255,0.02)' // 維持你喜歡的低調底色
         };
       });
-    },*/
-	get sortedProfiles() {
-      const groups = this.profile_group || [];
-	  // 將 Object 轉為 Array
-	  return Object.values(this.profiles).sort((a, b) => {
-		// 1. 先用 !group_id 找對應的 group 定義
-		const gA = groups.find(g => g.id === a['!group_id']) || { order: 999 };
-		const gB = groups.find(g => g.id === b['!group_id']) || { order: 999 };
-		
-		// 2. 比較 Group 的 order
-		if (gA.order !== gB.order) return gA.order - gB.order;
-		
-		// 3. 同組內按出生年份排序
-		return (a.born || 0) - (b.born || 0);
-	  }).map(p => {
-		// 注入顏色等樣式資訊，方便模板使用
-		const g = groups.find(g => g.id === p['!group_id']) || {};
-		return {
-		  ...p,
-		  group_id: p['!group_id'], // 簡化一個 key 給模板用
-		  groupColor: g.color || '#666',
-		  groupBg: 'rgba(255,255,255,0.02)' // 維持你喜歡的低調底色
-		};
-	  });
-	},
+    },
 
     getScenariosByYearAndProfile(pId, year) {
       const results = [];
@@ -449,7 +339,7 @@ const tagsHtml = `${personaHtml}${shadowHtml}`;
           this.tag_list = newData.tag_list;
           this.profile_group = newData.profile_group;
           
-		  this.version++;
+          this.version++;
           console.log("資料同步完成！");
         } else {
           console.error("同步失敗:", result.message);
@@ -461,10 +351,12 @@ const tagsHtml = `${personaHtml}${shadowHtml}`;
 	
   });
 
-  // 聽到 editor 很吵
+  // 接收 editor 資料
   const bc = new BroadcastChannel('edit_file_sync_bus');
   bc.onmessage = (e) => {
-    if (e.data === 'reload_all') {
+    const {file_id, action} = e.data;
+    if (action === "updated") {
+      // 不管改了什麼, 預設 reload
       app.reloadData();
     }
   };

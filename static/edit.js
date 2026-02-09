@@ -902,18 +902,24 @@ function showMessage(text, type = 'success') {
   el.classList.add(type);
 }
 
+const bc = new BroadcastChannel('edit_file_sync_bus');
 
 function notifyParent() {
   // --- 新增 postMessage 通知父頁 ---
-  if (window.opener && !window.opener.closed && fileId) {
-    window.opener.postMessage(
-      { action: "updated", file_id: fileId },
-      window.location.origin
-    );
-  }	
-	
+  //if (window.opener && !window.opener.closed && fileId) {
+  //  window.opener.postMessage(
+  //    { action: "updated", file_id: fileId },
+  //    window.location.origin
+  //  );
+  //}
+
   // 大吼大叫...
-  new BroadcastChannel('edit_file_sync_bus').postMessage('reload_all');	
+  //new BroadcastChannel('edit_file_sync_bus').postMessage('reload_all');
+  
+  // 用 channel 通知檔案更新
+  if (fileId) {
+    bc.postMessage({ action: "updated", file_id: fileId });
+  }
 }
 
 window.reloadFile = reloadFile;

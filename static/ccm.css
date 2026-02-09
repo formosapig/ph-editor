@@ -63,9 +63,9 @@ th {
   background: #252525 !important;
   border-right: 2px solid #444;
   box-shadow: 4px 0 10px rgba(0,0,0,0.5);
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   padding: 0;
   vertical-align: middle; 
 }
@@ -122,16 +122,16 @@ th {
   left: 0;
   top: 0;
   z-index: 20;
-  width: 120px;
-  min-width: 120px;
+  width: 100px;
+  min-width: 100px;
   background: #2d2d2d !important;
   border-right: 2px solid #444; /* 讓角落與下方固定欄對齊 */
   font-size: 14px;
 }
 
 th:not(.corner-cell), .matrix-cell {
-  width: 160px;
-  min-width: 160px;
+  width: 130px;
+  min-width: 130px;
 }
 
 .matrix-cell {

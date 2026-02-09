@@ -167,16 +167,25 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- 修改開始：加入 postMessage 監聽 ---
-  window.addEventListener("message", (event) => {
-    // 確認訊息來源安全
-    if (event.origin !== window.location.origin) return;
+  //window.addEventListener("message", (event) => {
+  //  // 確認訊息來源安全
+  //  if (event.origin !== window.location.origin) return;
 
-    const { file_id, action } = event.data;
+  //  const { file_id, action } = event.data;
+  //  if (action === "updated") {
+  //    compareData.reloadFile(file_id);
+	  //window.location.reload();
+  //  }
+  //});
+
+  // 接收 editor 資料
+  const bc = new BroadcastChannel('edit_file_sync_bus');
+  bc.onmessage = (e) => {
+    const {file_id, action} = e.data;
     if (action === "updated") {
       compareData.reloadFile(file_id);
-	  //window.location.reload();
     }
-  });
-
+  };
+  
   PetiteVue.createApp(compareData).mount('[v-scope]');
 });
