@@ -13,6 +13,8 @@ window.addEventListener('DOMContentLoaded', () => {
     hoveredTitle: '',
     hoveredYear: '',
     hoveredPlot: '',
+    basePlot: '',
+    hoveredCharacters: [],
     isLocked: false,
     // 預設全部收縮...
     collapsedGroups: profile_group.map(g => g.id), //[], //
@@ -46,6 +48,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return this.sortedProfiles.filter(p => p.group_id === groupId);
     },
 
+    /*
     _updateHoverState(scId = null) {
       const sc = this.scenarios[scId];
       this.hoveredScenarioId = scId;
@@ -124,14 +127,87 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
       this.hoveredPlot = combinedPlot;
-    },
+    },*/
+    
+    _updateHoverState(scId = null) {
+  const sc = this.scenarios[scId];
+  this.hoveredScenarioId = scId;
+  this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
+  this.hoveredYear = sc 
+  ? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] || '') 
+  : '';
+
+  //this.hoveredYear = sc 
+  //? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] ? ' ' + {"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] : '') 
+  //: '';
+  // 1. 處理基礎劇情
+  this.basePlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
+
+  // 2. 準備角色清單 (不再拼接字串)
+  this.hoveredCharacters = [];
+  if (scId && this.metadatas) {
+    this.hoveredCharacters = Object.entries(this.metadatas)
+      .filter(([_, meta]) => String(meta["!scenario_id"]) === String(scId))
+      .map(([metaKey, meta]) => {
+        const bg = meta.backstage || {};
+        const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
+        const tagInfo = this.getTagInfo(bg["!tag_id"]);
+
+        // 預先計算好所有顯示邏輯
+        return {
+          fileId: metaKey,
+          name: profile ? profile.name : "未知角色",
+          avatar: `/cache/thumb_${metaKey}.jpg`,
+          age: (profile?.born && sc?.year) ? (parseInt(sc.year) - parseInt(profile.born || 0)) : null,
+          // 標籤樣式物件
+          tag: (tagInfo && tagInfo.name?.zh !== "未設定") ? {
+            name: tagInfo.name.zh,
+            style: {
+              background: tagInfo.style?.background || 'transparent',
+              color: tagInfo.style?.color || '#ccc',
+              borderColor: tagInfo.style?.color || '#ccc'
+            }
+          } : null,
+          persona: bg.persona || null,
+          pColor: bg["!persona_code"] || '#B87333',
+          shadow: bg.shadow || null,
+          sColor: bg["!shadow_code"] || '#43AD2B',
+          notes: bg.notes || ''
+        };
+      });
+  }
+},
+
+getBadgeStyle(color) {
+  if (!color) return {};
+  return {
+    background: `${color}22`,
+    color: color,
+    border: `1px solid ${color};`
+  };
+},
+
+    // 在 petite-vue 的 app 物件內
+openFile(fileId) {
+  if (!fileId) {
+    alert('無效的檔案 ID');
+    return;
+  }
+  const windowName = `edit_file_${fileId}`;
+  const url = `/edit?file_id=${encodeURIComponent(fileId)}`;
+  console.log(`開啟編輯: ${fileId}`);
+  window.open(url, windowName);
+},
+
 
     handleMouseEnter(scId) {
+      //this.hoveredScenarioId = scId;
       if (this.isLocked) return;
       this._updateHoverState(scId);
     },
 
     handleMouseLeave() {
+      //this.hoveredScenarioId = null;
       if (this.isLocked) return;
       this._updateHoverState(null);
     },
@@ -140,14 +216,26 @@ window.addEventListener('DOMContentLoaded', () => {
       // 如果點擊已鎖定的同一個對象 -> 解鎖並清空
       if (this.isLocked && this.hoveredScenarioId === scId) {
         this.isLocked = false;
-        this._updateHoverState(null);
+        //this._updateHoverState(null);
+        this.hoveredScenarioId = null;
       } else {
         // 否則 -> 直接鎖定
         this.isLocked = true;
+        this.hoveredScenarioId = scId;
         this._updateHoverState(scId);
       }
     },
 	  
+    toggleLockOnHeader() {
+      this.isLocked = !this.isLocked;
+    },
+    
+    onTooltipMouseLeave() {
+      if (!this.isLocked) {
+        this._updateHoverState(null);
+      }
+    },
+    
     getBackstagesByScenario(scId) {
       const matchedMetas = Object.entries(this.metadatas ||	{}).filter(
         ([fileId, meta]) => meta["!scenario_id"] === scId
@@ -339,6 +427,11 @@ window.addEventListener('DOMContentLoaded', () => {
           this.tag_styles = newData.tag_styles;
           this.tag_list = newData.tag_list;
           this.profile_group = newData.profile_group;
+          
+          // plot
+          if (this.hoveredScenarioId) {
+            this._updateHoverState(this.hoveredScenarioId);
+          }
           
           this.version++;
           console.log("資料同步完成！");

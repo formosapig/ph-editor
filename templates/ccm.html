@@ -67,8 +67,7 @@
                            background: getTagInfo(bg.tag_id).style.background,
                            border: '1px solid ' + getTagInfo(bg.tag_id).style.color
                          }"
-                         :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }"
-                         @click.stop="handleTagClick(bg, p['!id'])">
+                         :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }">
                       {{ getTagInfo(bg.tag_id).name.zh }}
                     </div>
                   </div>
@@ -79,7 +78,7 @@
         </tbody>
       </table>
     </div>
-    <!-- 浮動 pilot -->	
+    <!-- 浮動 pilot -- >	
     <div v-if="hoveredPlot" class="plot-tooltip">
       <div class="tooltip-header">
         <div class="header-left">
@@ -88,8 +87,74 @@
         <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
       </div>
       <div class="tooltip-body" v-html="hoveredPlot"></div>
-      <!--<div class="tooltip-body">{{ hoveredPlot }}</div>-->
+      <!--<div class="tooltip-body">{{ hoveredPlot }}</div>-- >
+    </div>-->
+    
+    <div v-if="hoveredTitle || basePlot" class="plot-tooltip" :class="{ 'is-locked': isLocked }" @mouseleave="onTooltipMouseLeave">
+  <div class="tooltip-header clickable" @click.stop="toggleLockOnHeader()">
+    <div class="header-left">
+      <span v-if="isLocked">📌</span> {{ hoveredTitle }}
     </div>
+    <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
+  </div>
+
+  <div class="tooltip-body">
+    <div style="white-space: pre-wrap; margin-bottom: 8px;">{{ basePlot }}</div>
+
+    <div v-for="char in hoveredCharacters" class="char-entry">
+  <hr class="char-divider">
+  
+  <div class="char-row-container">
+  <!--
+    <div class="char-avatar-box clickable" @click="openFile(char.fileId)">
+      <img :src="char.avatar" class="char-thumb" @error="(e) => e.target.src='/cache/default.jpg'">
+    </div>-->
+
+<div class="char-left-column">
+    
+    <div class="char-avatar-box clickable" @click="openFile(char.fileId)">
+      <img :src="char.avatar" class="char-thumb" @error="(e) => e.target.src='/cache/default.jpg'">
+    </div>
+
+    <div v-if="char.tag" style="margin-top: -10px; z-index: 10; pointer-events: none;">
+      <span class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
+    </div>
+  </div>
+  
+
+    <div class="char-main-info">
+      <div class="info-top">
+
+        <span class="char-name-highlight">{{ char.name }}</span>
+        <span v-if="char.age" class="char-age-dim"> · {{ char.age }}歲</span>
+        
+        <div v-if="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
+        <template v-if="char.persona">
+          <span class="meta-emoji">🎭</span>
+          <span :style="getBadgeStyle(char.pColor)" class="meta-badge">{{ char.persona }}</span>
+        </template>
+        <template v-if="char.shadow">
+          <span class="meta-emoji">👤</span>
+          <span :style="getBadgeStyle(char.sColor)" class="meta-badge">{{ char.shadow }}</span>
+        </template>
+        </div>
+        
+        
+      </div>
+
+      <div v-if="char.notes" class="info-bottom char-notes-text">{{ char.notes.trim() }}</div>
+    </div>
+  </div>
+  
+  
+  
+</div>
+
+
+  </div>
+</div>
+    
+    
   </div>
   <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
 </body>

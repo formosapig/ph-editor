@@ -166,7 +166,7 @@ def scan_folder():
                         with Image.open(file_path) as img:
                             img = img.convert("RGB")
                             # img.thumbnail((189, 264)) # 等比縮圖，寬不超過189，高不超過264
-                            img.save(thumbnail_path, format="JPEG", quality=70)
+                            img.save(thumbnail_path, format="JPEG", quality=85)
                         # print(f"  [縮圖] 生成/更新縮圖: {file_name_with_ext}")
 
                     # if thumbnail_name not in thumbnails: # 避免重複添加，如果之前快取判斷沒有跳過

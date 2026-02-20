@@ -181,34 +181,24 @@ th:not(.corner-cell), .matrix-cell {
 }
 
 .sc-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: inline-block;
   padding: 3px 8px;
   font-size: 12px;
-  cursor: default;
-  transition: all 0.2s ease;
+  font-weight: 600;
   user-select: none;
+  border: 1px solid #ccc;
 }
 
 /* 本人標籤：亮起且有手型游標 */
 .tag-active {
-  cursor: pointer;
   opacity: 1;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.tag-active:hover {
-  filter: brightness(1.2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(255, 0, 255, 0.4); /* 紫紅發光回饋 */
+  pointer-events: none;
 }
 
 /* 他人標籤：調暗且無法點擊 */
 .tag-dimmed {
-  opacity: 0.5;      /* 壓得更低，讓視覺乾淨 */
-  /*filter: grayscale(0.8);*/
-  pointer-events: none; /* 徹底禁止點擊，防止誤觸 */
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 /* ccm.css - 優雅紫紅直角版 */
@@ -216,8 +206,8 @@ th:not(.corner-cell), .matrix-cell {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  width: 400px;         /* 稍微加寬，閱讀感更佳 */
-  max-height: 400px;
+  width: clamp(350px, 35vw, 420px);         /* 稍微加寬，閱讀感更佳 */
+  max-height: clamp(320px, 55vh, 540px); /*400px;*/
   background: rgba(28, 23, 30, 0.98); /* 極深紫色基調 */
   border: 1px solid #b388ff;          /* 淡紫色邊框 */
   border-radius: 0;                   /* 堅持直角 */
@@ -227,6 +217,20 @@ th:not(.corner-cell), .matrix-cell {
   display: flex;
   flex-direction: column;
   animation: slideIn 0.3s ease-out;
+  
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.plot-tooltip.is-locked {
+  pointer-events: auto;  
+  opacity: 1;
+  box-shadow: 0 0 0 2px #b388ff, 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.plot-tooltip:hover {
+  pointer-events: auto;
 }
 
 .tooltip-header {
@@ -382,6 +386,144 @@ tbody {
   display: none;
 }
 
+
+/* 確保 tooltip 內的 hr 顏色不會太突兀 */
+.tooltip-body hr {
+  border: 0;
+  border-top: 1px solid rgba(179, 136, 255, 0.3);
+  margin: 12px 0;
+}
+
+/* 讓名字在深色背景下更顯眼 */
+.tooltip-body b, .tooltip-body strong {
+  color: #fff;
+}
+
+/* 修正原本預設的 sc-tag 行為，避免 inline-style 衝突 */
+.sc-tag {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+/* 讓角色區塊變成左右佈局 */
+.char-row-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.char-left-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* 縮圖外框 */
+.char-avatar-box {
+  flex-shrink: 0; /* 防止圖片被擠壓 */
+  width: 63px;
+  height: 88px;
+  border: 1px solid rgba(179, 136, 255, 0.5); /* 紫色邊框 */
+  background: #000;
+  overflow: hidden;
+  /* 如果想要圓形可以改 50%，但依照你的風格，建議直角或小圓角 4px */
+  border-radius: 4px; 
+}
+
+.char-avatar-box.clickable {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* 滑過時稍微提亮並發光，符合你的紫色調 */
+.char-avatar-box.clickable:hover {
+  border-color: #b388ff;
+  box-shadow: 0 0 10px rgba(179, 136, 255, 0.5);
+  transform: scale(1.02);
+}
+
+/* 縮圖本身 */
+.char-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 確保圖片不變形 */
+  display: block;
+}
+
+/* 右側資訊區塊 */
+.char-main-info {
+  flex-grow: 1;
+}
+
+/* 讓 Meta 標籤自成一列，避免名字太長時擠在一起 */
+.char-meta-row {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-badge {
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  border: 1px solid;
+}
+
+/* 角色條目容器 */
+.char-entry {
+  width: 100%;
+}
+
+.char-row-container {
+  display: flex;
+  gap: 14px; /* 稍微加大間距 */
+  align-items: flex-start; /* 讓內容從頂部對齊 */
+  padding: 4px 0;
+}
+
+.char-main-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column; /* 讓上下兩排垂直排列 */
+  min-height: 72px;       /* 至少跟圖片一樣高，確保對齊美感 */
+}
+
+/* 上方資料列：保持橫向微調 */
+.info-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 下方備註區：確保文字有呼吸空間 */
+/* 角色備註區：對齊 basePlot 但更密集 */
+.info-bottom {
+  margin-top: 4px;
+  font-size: 13px;      /* 與劇情簡介一致 */
+  color: #eaddff;      /* 與劇情簡介一致 */
+  text-align: left;    /* 靠左對齊 */
+  line-height: 1.3;   /* 密集行高，比原本的 1.6 小 */
+  white-space: pre-wrap;
+  opacity: 1;          /* 確保顏色亮度與 basePlot 完全一樣 */
+  display: block;
+}
+
+.char-name-highlight {
+  color: #fff;
+}
+
+.char-age-dim {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #ddd;
+  opacity: 0.8;
+}
 
 /* 要放在這邊, 因為 page-wrapper 也有控 display,
 　　 當 html 準備好後, v-cloak 會被移除,
