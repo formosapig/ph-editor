@@ -1,0 +1,21 @@
+/* animation.css */
+
+/* 動畫稍微柔和一點 */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 進場動畫：帶有一點電子感的平移 */
+@keyframes cyberpunkFade {
+  from { 
+    opacity: 0; 
+    transform: translateX(20px); 
+    filter: brightness(2);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+    filter: brightness(1);
+  }
+}

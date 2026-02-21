@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>時空因果矩陣</title>
-  <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
+  <!--<link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />-->
+  <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
+  <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
   <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
   <script>
@@ -21,15 +23,21 @@
   <div v-scope v-cloak class="page-wrapper">
     <div class="table-container">
       <table>
+      
+        <!-- table head -->
         <thead>
           <tr>
             <th class="corner-cell">角色 \ 年份</th>
-            <th v-for="year in sortedYears" :key="year">
-              <div class="year-header">{{ year }}</div>
+            <th v-for="year in sortedYears" :key="year" class="year-header">
+              {{ year }}
             </th>
           </tr>
         </thead>
+        
+        <!-- table body -->
         <tbody v-for="group in sortedGroups" :key="group.id">
+          
+          <!-- 最左列, 人物, 含群組功能 -->
           <tr class="group-header-row" @click="toggleGroup(group.id)">
             <td :colspan="sortedYears.length + 1" :style="{ borderLeft: '8px solid ' + group.color}">
               <div class="group-title-content">
@@ -40,16 +48,22 @@
               </div>
             </td>
           </tr>
+          
+          <!-- scenario box -->
           <tr v-for="p in getProfilesByGroup(group.id)" 
               v-show="!isCollapsed(group.id)" 
               :key="p['!id']"
               class="matrix-row">
+              
+            <!-- 角色喔... -->  
             <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
               <div class="profile-cell-wrapper">
                 <div class="p-name">{{ p.name }} <span class="p-born">({{ p.born }})</span></div>
                 <div class="p-stats">{{ p.height }}cm / {{ p.cup }}</div>
               </div>
             </td>
+            
+            <!-- 場景唷 -->
             <td v-for="year in sortedYears" :key="year" class="matrix-cell">
               <div v-for="sc in getScenariosByYearAndProfile(p['!id'], year)" 
                    :key="sc.id" class="event-box"
@@ -58,7 +72,11 @@
                    :style="getScenarioStyle(sc.id, p['!id'])"
                    @mouseenter="handleMouseEnter(sc.id)"
                    @mouseleave="handleMouseLeave()">
+                
+                <!-- 場景標題 -->   
                 <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
+                
+                <!-- 場景參與者的 tag -->
                 <div class="tags-container">
                   <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.id" style="display: contents">
                     <div v-if="getTagInfo(bg.tag_id)" class="sc-tag"
@@ -78,83 +96,71 @@
         </tbody>
       </table>
     </div>
-    <!-- 浮動 pilot -- >	
-    <div v-if="hoveredPlot" class="plot-tooltip">
-      <div class="tooltip-header">
-        <div class="header-left">
-          <span v-if="isLocked">📌</span> {{ hoveredTitle }}
+    
+    <!-- 浮動 Plot -->	
+    <div v-if="hoveredTitle || basePlot"
+         class="plot-tooltip"
+         :class="{ 'is-locked': isLocked }"
+         @mouseleave="onTooltipMouseLeave">
+      
+      <!-- Plot 頁面標題 -->
+      <header class="clickable" @click.stop="toggleLockOnHeader()">
+        <div>
+          <span v-if="isLocked" class="pin">📌</span> {{ hoveredTitle }}
         </div>
         <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
-      </div>
-      <div class="tooltip-body" v-html="hoveredPlot"></div>
-      <!--<div class="tooltip-body">{{ hoveredPlot }}</div>-- >
-    </div>-->
-    
-    <div v-if="hoveredTitle || basePlot" class="plot-tooltip" :class="{ 'is-locked': isLocked }" @mouseleave="onTooltipMouseLeave">
-  <div class="tooltip-header clickable" @click.stop="toggleLockOnHeader()">
-    <div class="header-left">
-      <span v-if="isLocked">📌</span> {{ hoveredTitle }}
-    </div>
-    <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
-  </div>
+      </header>
 
-  <div class="tooltip-body">
-    <div style="white-space: pre-wrap; margin-bottom: 8px;">{{ basePlot }}</div>
+      <!-- Plot 內容 -->
+      <main>
+      
+        <!-- 劇情內容 -->
+        <article>{{ basePlot }}</article>
 
-    <div v-for="char in hoveredCharacters" class="char-entry">
-  <hr class="char-divider">
-  
-  <div class="char-row-container">
-  <!--
-    <div class="char-avatar-box clickable" @click="openFile(char.fileId)">
-      <img :src="char.avatar" class="char-thumb" @error="(e) => e.target.src='/cache/default.jpg'">
-    </div>-->
+        <!-- 劇情參與者 -->
+        <section v-for="char in hoveredCharacters">
 
-<div class="char-left-column">
-    
-    <div class="char-avatar-box clickable" @click="openFile(char.fileId)">
-      <img :src="char.avatar" class="char-thumb" @error="(e) => e.target.src='/cache/default.jpg'">
-    </div>
+          <hr> <!-- 分隔線 -->
 
-    <div v-if="char.tag" style="margin-top: -10px; z-index: 10; pointer-events: none;">
-      <span class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
-    </div>
-  </div>
-  
+          <!-- 角色內容 -->
+          <div class="char-row-container">
+            
+            <aside><!-- 左邊, 小圖示及標籤 -->
+              
+              <!-- 人物縮圖 -->
+              <div class="char-avatar-box" @click="openFile(char.fileId)">
+                <img :src="char.avatar" @error="(e) => e.target.src='/cache/default.jpg'">
+              </div>
+              
+              <!-- 標籤 -->
+              <span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
+            </aside>
 
-    <div class="char-main-info">
-      <div class="info-top">
-
-        <span class="char-name-highlight">{{ char.name }}</span>
-        <span v-if="char.age" class="char-age-dim"> · {{ char.age }}歲</span>
+            <summary><!-- 右邊, 人物主要屬性, 說明 -->
         
-        <div v-if="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
-        <template v-if="char.persona">
-          <span class="meta-emoji">🎭</span>
-          <span :style="getBadgeStyle(char.pColor)" class="meta-badge">{{ char.persona }}</span>
-        </template>
-        <template v-if="char.shadow">
-          <span class="meta-emoji">👤</span>
-          <span :style="getBadgeStyle(char.sColor)" class="meta-badge">{{ char.shadow }}</span>
-        </template>
-        </div>
-        
-        
-      </div>
-
-      <div v-if="char.notes" class="info-bottom char-notes-text">{{ char.notes.trim() }}</div>
-    </div>
-  </div>
-  
-  
-  
-</div>
-
-
-  </div>
-</div>
-    
-    
+              <!-- 人物主要屬性 -->
+              <div class="info-top">
+                <span class="char-name-highlight">{{ char.name }}</span>
+                <span v-if="char.age" class="char-age-dim"> · {{ char.age }}歲</span>
+                <div v-if="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
+                  <template v-if="char.persona">
+                    <span>🎭</span>
+                    <span :style="getBadgeStyle(char.pColor)" class="meta-badge">{{ char.persona }}</span>
+                  </template>
+                  <template v-if="char.shadow">
+                    <span>👤</span>
+                    <span :style="getBadgeStyle(char.sColor)" class="meta-badge">{{ char.shadow }}</span>
+                  </template>
+                </div>
+              </div>
+              
+              <!-- 說明 -->
+              <div v-if="char.notes" class="info-bottom">{{ char.notes }}</div>
+            </summary>
+          </div>
+        </section>
+      </main>
+    </div> <!-- end of plot -->
   </div>
   <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
 </body>

@@ -57,7 +57,7 @@ CUP_GROUP_DEFINITIONS = [
     {"group_name": "纖細少女", "items": ["30AA", "30A", "30B"]},
     {"group_name": "身材嬌小", "items": ["32AA", "32A", "32B", "32C", "32D", "32E"]},
     {"group_name": "台灣女生", "items": ["34A", "34B", "34C", "34D", "34E", "34F"]},
-    {"group_name": "人高馬大", "items": ["36B", "36C", "36D", "36E", "36F"]},
+    {"group_name": "人高馬大", "items": ["36B", "36C", "36D", "36E", "36F", "36G"]},
     {"group_name": "體態豐滿", "items": ["38C", "38D", "38E", "38F", "38G"]},
     {"group_name": "肥大,勿選", "items": ["40D", "40E", "40F", "40G", "40H", "40I"]}
 ]
