@@ -1,7 +1,8 @@
 # ph-editor/app.py
 import json
 import logging
-import os
+import os, shutil
+import re
 
 from flask import (
     Flask,
@@ -363,6 +364,34 @@ def rename_file():
         # 捕捉其他可能的錯誤，例如權限問題等
         logger.error(f"重新命名時發生錯誤：{e}")
         return jsonify({"success": False, "error": f"重新命名失敗：{str(e)}"}), 500
+
+
+@app.route("/copy_file", methods=["POST"])
+def copy_file():
+    data = request.get_json()
+    filename = data.get("filename")
+    scan_path = UserConfigManager.load_scan_path()
+
+    if not filename or not scan_path:
+        return jsonify({"status": "error", "message": "參數缺失"}), 400
+
+    src = os.path.join(scan_path, filename)
+    name, ext = os.path.splitext(filename)
+
+    # 核心邏輯：若結尾有 (n)，數字+1；否則加 (1)
+    match = re.search(r"\((\d+)\)$", name)
+    if match:
+        new_name = re.sub(r"\((\d+)\)$", f"({int(match.group(1)) + 1})", name)
+    else:
+        new_name = f"{name}(1)"
+
+    dest = os.path.join(scan_path, f"{new_name}{ext}")
+    
+    try:
+        shutil.copy2(src, dest)
+        return jsonify({"status": "success", "new_file": f"{new_name}{ext}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/delete_files", methods=["POST"])
