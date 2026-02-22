@@ -24,9 +24,11 @@ from core.shared_data import (
     add_or_update_character_with_path,
     clear_characters_db,
     process_tag_info,
-    get_suggest_file_name,
+    get_suggest_filename,
     initialize_extra_data,
     get_general_data,
+    get_character_file_entry,
+    remove_character_file_entry,
 )
 from core.user_config_manager import UserConfigManager
 from web.arrange_bp import arrange_bp
@@ -307,9 +309,9 @@ def suggest_filename():
 
     logger.debug(f"rename {file_id}")
     
-    suggest_filename = get_suggest_file_name(file_id)
+    suggest_filename = get_suggest_filename(file_id)
     
-    logger.debug(f"suggest file name : {suggest_filename}")
+    logger.debug(f"suggest filename : {suggest_filename}")
 
     return jsonify({"success": True, "suggested_filename": suggest_filename})
 
@@ -317,7 +319,7 @@ def suggest_filename():
 @app.route("/rename_file", methods=["POST"])
 def rename_file():
     """
-    接收舊檔名和新檔名，並重新命名檔案。
+    接收舊檔名和新檔名，並重新命名檔案。注意,都未包含副檔名...
     """
     data = request.get_json()
     if not data:
@@ -335,8 +337,8 @@ def rename_file():
         return jsonify({"success": False, "error": "掃描路徑未設定"}), 500
 
     # 使用 os.path.join 組合路徑，避免路徑拼接錯誤
-    old_path_full = os.path.join(scan_path, old_name)
-    new_path_full = os.path.join(scan_path, new_name)
+    old_path_full = os.path.join(scan_path, f"{old_name}.png")
+    new_path_full = os.path.join(scan_path, f"{new_name}.png")
 
     logger.debug(f"{old_path_full} -> {new_path_full}")
 
@@ -353,13 +355,32 @@ def rename_file():
 
     # 5. 執行重新命名操作並處理潛在錯誤
     try:
+        # 檢查新檔名是否已存在，避免覆蓋
+        if os.path.exists(new_path_full):
+             raise FileExistsError(f"目標檔案已存在: {new_name}")
+
         os.rename(old_path_full, new_path_full)
         logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
+        
+        # 6. 成功更名後，修改記憶體及常駐資料...
+        file_entry = get_character_file_entry(old_name)
+        if not file_entry:
+            # 【關鍵改動】如果記憶體更新失敗，手動觸發回滾
+            logger.error(f"記憶體缺失，正在回滾檔案名稱: {new_name} -> {old_name}")
+            os.rename(new_path_full, old_path_full) # 改回來
+            raise ValueError(f"找不到對應的 File Entry : {old_name}")
+            
+        file_entry.change_filename(new_name)    
+        
         return jsonify({"success": True})
     except FileExistsError:
         # 如果新檔名已存在
         logger.error(f"重新命名失敗：新檔案已存在：{new_path_full}")
         return jsonify({"success": False, "error": "新檔名已存在"}), 409
+    except ValueError as e:
+        # 【標註：改動點】專門捕捉找不到 file_entry 的錯誤
+        logger.error(f"資料一致性錯誤：{e}")
+        return jsonify({"success": False, "error": str(e)}), 404
     except Exception as e:
         # 捕捉其他可能的錯誤，例如權限問題等
         logger.error(f"重新命名時發生錯誤：{e}")
@@ -397,7 +418,7 @@ def copy_file():
 @app.route("/delete_files", methods=["POST"])
 def delete_files():
     data = request.get_json()
-    filenames_to_delete = data.get("filenames")  # 改為接收多個檔名（list）
+    filenames_to_delete = data.get("file_ids", [])  # 改為接收多個檔名（list）
 
     if not filenames_to_delete or not isinstance(filenames_to_delete, list):
         return jsonify({"status": "error", "message": "未提供檔案清單或格式錯誤"}), 400
@@ -408,18 +429,19 @@ def delete_files():
 
     results = []
     for filename_to_delete in filenames_to_delete:
-        full_path_original = os.path.join(scan_path, filename_to_delete)
+        full_path_original = os.path.join(scan_path, f"{filename_to_delete}.png")
         logger.debug(f"Delete {full_path_original}")
         try:
             if os.path.exists(full_path_original):
                 os.remove(full_path_original)
                 print(f"刪除原始檔案: {full_path_original}")
-                results.append({"filename": filename_to_delete, "status": "success"})
+                remove_character_file_entry(filename_to_delete)
+                results.append({"file_id": filename_to_delete, "status": "success"})
             else:
-                results.append({"filename": filename_to_delete, "status": "not_found"})
+                results.append({"file_id": filename_to_delete, "status": "not_found"})
         except Exception as e:
             results.append(
-                {"filename": filename_to_delete, "status": "error", "message": str(e)}
+                {"file_id": filename_to_delete, "status": "error", "message": str(e)}
             )
 
     return jsonify({"results": results})

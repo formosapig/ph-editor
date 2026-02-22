@@ -194,6 +194,41 @@ class CharacterFileEntry:
         self.status = status
         self.data_source.update_status(self.file_id, status)
 
+    def change_filename(self, new_name: str):
+        """
+        更新記憶體中的 file_id 與路徑，並同步修改 metadata (JSON) 中的鍵值。
+        注意：此方法應在實體檔案 rename 成功後才呼叫。
+        """
+        old_file_id = self.file_id
+        new_file_id = new_name
+        
+        # 1. 取得目前的目錄路徑（從舊的 filename 取得）
+        directory = os.path.dirname(self.filename)
+        
+        # 2. 更新物件內部的識別資訊與路徑
+        self.file_id = new_file_id
+        self.filename = os.path.join(directory, f"{new_file_id}.png")
+        
+        # 3. 通知 data_source (ExtraDataManager) 處理 metadata 的鍵值轉移
+        # 這裡假設你的 data_source 會有一個對應的方法來處理 key 的更換
+        try:
+            self.data_source.rename_metadata_key(old_file_id, new_file_id)
+        except Exception as e:
+            logger.error(f"同步 metadata 鍵值時發生錯誤: {e}")
+            raise RuntimeError(f"Metadata 同步失敗: {e}")
+
+        logger.info(f"Entry 內部識別碼已更新為: {self.file_id}")    
+
+
+    def remove_metadata(self):
+        try:
+            self.data_source.remove_metadata(self.file_id)
+        except Exception as e:
+            logger.error(f"刪除 metadata 失敗: {e}")
+            raise RuntimeError(f"刪除 metadata 失敗: {e}")
+        
+        logger.info(f"刪除 Metadata : {self.file_id}")    
+        
 
     def __repr__(self):
         lines = [

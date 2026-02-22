@@ -410,6 +410,27 @@ class ExtraDataManager():
             
         return backstage
         
+    def rename_metadata_key(self, old_file_id: str, new_file_id: str):
+        """
+        將 metadata 中的鍵值從 old_file_id 更改為 new_file_id。
+        """
+        if old_file_id in self._metadata_map:
+            # 1. 搬移資料並刪除舊鍵 (pop 會回傳該鍵的值)
+            self._metadata_map[new_file_id] = self._metadata_map.pop(old_file_id)
+            
+            # 2. 立即存檔同步
+            self._save_metadata_data()
+            logger.info(f"Metadata 鍵值已從 {old_file_id} 遷移至 {new_file_id}")
+        else:
+            logger.warning(f"Metadata 中找不到鍵值 {old_file_id}，無需遷移。")        
+        
+    def remove_metadata(self, file_id: str):
+        if file_id in self._metadata_map:
+            del self._metadata_map[file_id]
+            self._save_metadata_data()
+            logger.info(f"metadata {file_id} removed.")
+    
+        
     def dump_all_data(self) -> None:
         """
         將當前作用域中的 global_general_data, profile_map, scenario_map

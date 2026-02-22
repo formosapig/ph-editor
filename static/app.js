@@ -247,7 +247,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       const fileId = this.selectedSet[0];
-      const oldFilename = `${fileId}.png`;
+      //const oldFilename = `${fileId}.png`;
 
       try {
         // 1. 向後端請求建議檔名
@@ -274,20 +274,20 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       
         // 如果新檔名與舊檔名相同，也停止
-        if (newFilenameInput === oldFilename) {
+        if (newFilenameInput === fileId) {
           console.log("新舊同名.");
           return;
         }
 
         const newFilename = newFilenameInput.trim();
 
-      console.log("do rename.");
+        console.log("do rename.");
 
         // 2. 向後端發送請求來執行重新命名
         const renameRes = await fetch('/rename_file', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ old_filename: oldFilename, new_filename: newFilename })
+          body: JSON.stringify({ old_filename: fileId, new_filename: newFilename })
         });
 
         if (!renameRes.ok) {
@@ -296,29 +296,29 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        const renameData = await renameRes.json();
-        const newId = renameData.new_id;
+        //const renameData = await renameRes.json();
+        //const newId = renameData.new_id;
 
         // 3. 成功後更新本地端的資料
         // 更新 allImages 中的物件
-        const renamedImage = this.allImages.find(img => img.id === fileId);
-        if (renamedImage) {
-          renamedImage.id = newId;
-          renamedImage.filename = newFilename;
-        }
+        //const renamedImage = this.allImages.find(img => img.id === fileId);
+        //if (renamedImage) {
+        //  renamedImage.id = newId;
+        //  renamedImage.filename = newFilename;
+        //}
 
         // 更新 displayedImages 中的物件
-        const renamedDisplayedImage = this.displayedImages.find(img => img.id === fileId);
-        if (renamedDisplayedImage) {
-          renamedDisplayedImage.id = newId;
-          renamedDisplayedImage.filename = newFilename;
-        }
+        //const renamedDisplayedImage = this.displayedImages.find(img => img.id === fileId);
+        //if (renamedDisplayedImage) {
+        //  renamedDisplayedImage.id = newId;
+        //  renamedDisplayedImage.filename = newFilename;
+        //}
 
         // 更新選取集合中的 ID
-        const selectedIndex = this.selectedSet.indexOf(fileId);
-        if (selectedIndex !== -1) {
-          this.selectedSet.splice(selectedIndex, 1, newId);
-        }
+        //const selectedIndex = this.selectedSet.indexOf(fileId);
+        //if (selectedIndex !== -1) {
+        //  this.selectedSet.splice(selectedIndex, 1, newId);
+        //}
       
         alert(`檔案已成功重新命名為：${newFilename}`);
 
@@ -367,13 +367,13 @@ window.addEventListener('DOMContentLoaded', () => {
     async deleteSelected() {
       if (this.selectedSet.length === 0 || !confirm('確定要刪除選取的圖片？')) return;
       
-      const filenames = this.selectedSet.map(name => name + '.png');
+      const file_ids = [...this.selectedSet]; // 確保傳送的是純 ID 陣列
       
       try {
         const res = await fetch('/delete_files', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filenames })
+          body: JSON.stringify({ file_ids })
         });
         
         const data = await res.json();
@@ -384,24 +384,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // 遍歷後端回傳的每個刪除結果
         results.forEach(r => {
-          // 如果刪除狀態是 'success'
           if (r.status === 'success') {
-            const deletedId = r.filename.replace('.png', ''); // 取得被刪除的檔案 ID
-            successfullyDeletedIds.push(deletedId); // 將成功刪除的 ID 加入列表
+            successfullyDeletedIds.push(r.file_id);
           } else {
-            // 如果刪除失敗，可以考慮在這裡給使用者一些提示
             console.warn(`檔案 ${r.filename} 刪除失敗: ${r.message || '未知錯誤'}`);
           }
         });
 
         // --- 更新響應式資料 ---
-        // 使用 filter 篩選掉所有已成功刪除的 ID
         this.selectedSet = this.selectedSet.filter(id => !successfullyDeletedIds.includes(id));
-
-        // 更新 allImages：保留那些 ID 不在 successfullyDeletedIds 裡的圖片
         this.allImages = this.allImages.filter(img => !successfullyDeletedIds.includes(img.id));
-
-        // 更新 displayedImages：保留那些 ID 不在 successfullyDeletedIds 裡的圖片
         this.displayedImages = this.displayedImages.filter(img => !successfullyDeletedIds.includes(img.id));
 
       } catch (err) {

@@ -83,6 +83,23 @@ def get_character_file_entry(file_id: str) -> Optional[CharacterFileEntry]:
     return characters_db.get(file_id)
 
 
+def remove_character_file_entry(file_id: str):
+    entry = characters_db.get(file_id)
+    
+    if not entry:
+        logger.error(f"移除失敗:找不到 file_id 為 '{file_id}'")
+        raise ValueError(f"找不到指定的角色資料: {file_id}")
+
+    try:
+        entry.remove_metadata()
+        characters_db.pop(file_id, None)
+        logger.info(f"成功將 {file_id} 從管理系統中移除。")
+        
+    except Exception as e:
+        logger.error(f"移除 Entry {file_id} 時發生錯誤: {e}")
+        raise RuntimeError(f"系統清理失敗: {str(e)}")
+
+
 def get_character_data(file_id: str) -> Optional[CharacterData]:
     entry = get_character_file_entry(file_id)
     return entry.get_character_data() if entry else None
@@ -93,6 +110,7 @@ def update_character_data(file_id: str, main_key: str, sub_key: str, data: any):
     if not entry:
        raise KeyError(f"Character {file_id} not found")
     entry.update_character_data(main_key, sub_key, data)
+
 
 def clear_characters_db():
     characters_db.clear()
@@ -287,29 +305,32 @@ def process_tag_info(file_id: str) -> tuple[str, str]:
     return tag_style, tag_name
 
 
-def get_suggest_file_name(file_id: str) -> str:
+def get_suggest_filename(file_id: str) -> str:
     """
-    根據角色、情境或標籤資料，生成一個建議的檔案名稱。
+    根據角色、情境或標籤資料，生成一個建議的檔案名稱。不包含副檔名。
     
     Args:
         file_id (str): 檔案的唯一 ID。
         
     Returns:
-        str: 包含 '.png' 副檔名的建議檔名。
+        str: 不包含副檔名的建議檔名。
     """
+    # 0. fail file id
+    failed_filename = "未知"
+    
     # 1. 取得檔案條目並檢查其有效性
     file_entry = get_character_file_entry(file_id)
     if not file_entry:
-        return "未知.png"
+        return failed_filename
 
     # 2. 判斷是否有 profile ID
     if file_entry.profile_id is None:
-        return "未知.png"
+        return failed_filename
     
     # 3. 取得 Profile 資料並檢查其有效性
     profile_data = file_entry.get_profile()
     if not profile_data:
-        return "未知.png"
+        return failed_filename
         
     # 4. 根據 file_entry.scenario_id 是否為 None 來分流處理
     if file_entry.scenario_id is None:
@@ -319,10 +340,10 @@ def get_suggest_file_name(file_id: str) -> str:
         logger.debug(f"process tag info : {tag_type}{tag_name}")
         
         if not tag_name:
-            return "未知.png"
+            return failed_filename
         
         profile_name = profile_data.get("name", "")
-        suggested_name = f"「{tag_name}」~{profile_name}.png"
+        suggested_name = f"《{tag_name}》~{profile_name}"
         return suggested_name.strip()
         
     else:
@@ -334,10 +355,10 @@ def get_suggest_file_name(file_id: str) -> str:
             # 即使有 ID，如果資料本身不存在，也回到沒有情境的邏輯
             tag_type, tag_name = get_tag_info(file_id)
             if not tag_name:
-                return "未知.png"
+                return failed_filename
             
             profile_name = profile_data.get("name", "")
-            suggested_name = f"「{tag_name}」~{profile_name}.png"
+            suggested_name = f"《{tag_name}》~{profile_name}"
             return suggested_name.strip()
 
         # 取得年份資料
@@ -355,12 +376,14 @@ def get_suggest_file_name(file_id: str) -> str:
         profile_name = profile_data.get("name", "")
         scenario_title = scenario_data.get("title", "")
         
-        
-        suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
-        
         if not profile_name and not scenario_title:
-             return "未知.png"
-        
+             return failed_filename
+
+        subtitle = file_entry.get_scenario_subtitle()
+        subtitle_part = f"-{subtitle.strip()}" if subtitle and subtitle.strip() else ""
+        suggested_name = f"{profile_name}{age_str}【{scenario_title}{subtitle_part}】"
+        #suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
+                
         return suggested_name.strip()
 
 
