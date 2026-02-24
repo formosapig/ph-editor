@@ -16,6 +16,12 @@ window.addEventListener('DOMContentLoaded', () => {
     activeStatuses: ['draft', 'refinement', 'finalized'],
     globalTagStyles: {},
     
+    // 在 petite-vue 的狀態物件中
+    showWishing: false,
+    wishes: [],
+    newWishType: '📙',
+    newWishContent: '',
+    
     // Computed
     get scanPathDisplay() {
       return this.currentScanPath ? this.shortenPath(this.currentScanPath) : '尚未選擇';
@@ -241,10 +247,7 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     
     async renameSelected() {
-      if (this.selectedSet.length !== 1) {
-        alert('請選擇一個檔案進行重新命名。');
-        return;
-      }
+      if (this.selectedSet.length !== 1) return;
 
       const fileId = this.selectedSet[0];
       //const oldFilename = `${fileId}.png`;
@@ -252,7 +255,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try {
         // 1. 向後端請求建議檔名
         const suggestionRes = await fetch('/suggest_filename', {
-          method: 'POST',
+          method: 'POST', // 似乎應該用 patch
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileId: fileId })
         });
@@ -338,7 +341,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       try {
         const res = await fetch('/copy_file', {
-          method: 'POST',
+          method: 'POST', // 這個用 post 沒問題...
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename })
         });
@@ -371,7 +374,7 @@ window.addEventListener('DOMContentLoaded', () => {
       
       try {
         const res = await fetch('/delete_files', {
-          method: 'POST',
+          method: 'POST', // 這個直接用 delete ...
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ file_ids })
         });
@@ -402,16 +405,51 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     },
     
-    // 時空因果矩陣 Chronos Causality Matrix 
-    openCCM() {
-      window.open('/ccm', 'EditCCM');
-    },
 
     // 全域設定
     openGeneral() {
       window.open('/general', 'EditGeneralSetting');
     },
     
+    // 時空因果矩陣 Chronos Causality Matrix 
+    openCCM() {
+      window.open('/ccm', 'EditCCM');
+    },
+
+    // 歲月編輯器
+    openEpoch() {
+    },
+    
+    // 許願噴泉
+    openWishing() {
+    },
+
+    async openWishing() {
+      this.showWishing = !this.showWishing;
+      if (this.showWishing) {
+        const res = await fetch('/wishes');
+        this.wishes = await res.json();
+      }
+    },
+
+    async submitWish() {
+      if (!this.newWishContent.trim()) return;
+      const res = await fetch('/wishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: this.newWishType, content: this.newWishContent })
+      });
+      const saved = await res.json();
+      this.wishes.unshift(saved);
+      this.newWishContent = ''; // 清空輸入框
+    },
+
+    async deleteWish(id) {
+      if (!confirm('確定要移除這個願望？')) return;
+      await fetch(`/wishes/${id}`, { method: 'DELETE' });
+      this.wishes = this.wishes.filter(w => w.id !== id);
+    },
+
     isSelected(id) {
       return this.selectedSet.includes(id);
     },

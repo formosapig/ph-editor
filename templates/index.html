@@ -20,7 +20,7 @@
           <button @click="arrangeSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="排列">📋️</button>		  
           <button @click="editSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="編輯">✏️</button>
           <button @click="renameSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="改名">🅰️</button>
-          <button @click="copySelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="複製">🛒️</button>
+          <button @click="copySelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="複製">💾</button>
           <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
         </div>
 		    <div class="center-status-toggle">
@@ -38,8 +38,10 @@
           </label>
         </div>
         <div class="right-button">
-		      <button @click="openCCM" :disabled="!currentScanPath" title="時空因果矩陣">🌌️</button>
-          <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📚</button>
+		      <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📚</button>
+          <button @click="openCCM" :disabled="!currentScanPath" title="時空因果">🌌️</button>
+          <button @click="openEpoch" :disabled="!currentScanPath" title="歲月">⏳</button>
+          <button @click="openWishing" :disabled="!currentScanPath" title="許願噴泉">⛲</button>
         </div>
       </div>
       <div class="status-bar">
@@ -104,6 +106,32 @@
       <input type="text" v-model="filterKeyword" placeholder="輸入關鍵字..." />
     </div>
 	
+    <div v-if="showWishing" class="wish-fountain">
+      <div class="wish-list">
+        <div v-for="w in wishes" :key="w.id" class="wish-item">
+          <div class="wish-header">
+            <span>{{ w.type }} {{ w.date }}</span>
+            <span class="delete-btn" @click="deleteWish(w.id)">✕</span>
+          </div>
+          <div class="wish-content">{{ w.content }}</div>
+        </div>
+      </div>
+
+      <div class="wish-input-area">
+        <select v-model="newWishType" style="width: 100%; margin-bottom: 5px;">
+          <option value="📕">📕 錯誤</option>
+          <option value="📗">📗 優化</option>
+          <option value="📘">📘 重構</option>
+          <option value="📙">📙 功能</option>
+        </select>
+        <textarea v-model="newWishContent" placeholder="隨手記下想法..." 
+                    style="width: 100%; height: 60px; resize: none;"></textarea>
+        <button @click="submitWish" style="width: 100%; margin-top: 5px; cursor: pointer;">
+          投進噴泉 ⛲
+        </button>
+      </div>
+    </div>
+  
   </div>
 
   <script src="[[ url_for('static', filename='app.js') ]]"></script>

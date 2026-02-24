@@ -15,7 +15,7 @@ html, body {
   left: 0;
   right: 0;
   /*background: white;*/
-  padding: 10px 20px;
+  padding: 8px 18px;
   border-bottom: 1px solid #ccc;
   display: flex;
   flex-direction: column;
@@ -99,7 +99,7 @@ html, body {
 
 /* 按鈕統一樣式 */
 .action-bar button {
-  padding: 6px 10px;
+  padding: 4px 8px;
   font-size: 16px;
   cursor: pointer;
   border: 1px solid #aaa;
@@ -211,6 +211,7 @@ button.active {
   justify-content: flex-start;
   cursor: default;
 }
+
 .thumb-container {
   position: relative; /* 方便放勾選 */
   display: inline-block;
@@ -236,6 +237,7 @@ button.active {
   order: 0 !important; /* 強制覆蓋可能的動態 order */
   float: none !important;
 }
+
 .thumb-container:hover {
     transform: translateY(-2px); /* 稍微調整上浮效果 */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* 陰影稍微加深 */
@@ -246,6 +248,7 @@ button.active {
   width: 252px;
   height: 352px;
 }
+
 .thumb {
   display: block;
   margin-bottom: 5px;
@@ -256,6 +259,7 @@ button.active {
   object-fit: contain;
   user-select: none;
 }
+
 /* 勾選框 */
 .checkmark {
   position: absolute;
@@ -269,11 +273,13 @@ button.active {
   pointer-events: none;
   z-index: 12; /* 加上這行！ */
 }
+
 .thumb-container.selected .checkmark {
   color: #2ecc71; /* 綠色 */
   text-shadow: 0 0 5px #27ae60;
   pointer-events: auto;
 }
+
 .profile-badge {
   position: absolute;
   bottom: 2px;
@@ -294,6 +300,7 @@ button.active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .tag-label {
     position: absolute;
     bottom: 2px; /* 保持距離頂部 */
@@ -308,6 +315,7 @@ button.active {
     /* 添加一個小小的陰影，讓它更突出但不搶眼 */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
+
 .scenario-badge {
   position: absolute;
   top: -10px;
@@ -329,6 +337,7 @@ button.active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .filename-label {
   /* 關鍵：調整這個 margin-top 以確保與 profile-badge 不重疊 */
   /* 這個值需要大於 profile-badge 突出圖片的高度，再加上您想要的文字與徽章間距 */
@@ -374,3 +383,20 @@ button.active {
   background: rgba(255,255,255,0.1); /* 点击反馈 */
   background-color: yellow; /* 暫時設為亮黃色來測試，非常明顯 */
 }
+
+.wish-fountain {
+    position: fixed; bottom: 2px; right: 20px;
+    width: 300px; height: 450px;
+    background: white; border: 1px solid #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex; flex-direction: column; z-index: 999;
+    border-radius: 8px; overflow: hidden; font-family: sans-serif;
+    opacity: 0.9;
+    user-select: none;
+}
+.wish-list { flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; }
+.wish-item { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; position: relative; }
+.wish-header { font-size: 0.85em; color: #666; display: flex; justify-content: space-between; }
+.wish-content { font-size: 0.95em; margin-top: 4px; white-space: pre-wrap; word-break: break-all; }
+.wish-input-area { padding: 10px; border-top: 1px solid #eee; background: white; }
+.delete-btn { cursor: pointer; color: #ff4d4f; font-size: 12px; }
