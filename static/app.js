@@ -421,9 +421,6 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     
     // 許願噴泉
-    openWishing() {
-    },
-
     async openWishing() {
       this.showWishing = !this.showWishing;
       if (this.showWishing) {
@@ -440,8 +437,22 @@ window.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ type: this.newWishType, content: this.newWishContent })
       });
       const saved = await res.json();
-      this.wishes.unshift(saved);
+      //console.log("Saved:", saved);
+      console.log("原本第一筆:", this.wishes[0]?.content);
+      this.wishes.push(saved);
+      console.log("現在第一筆:", this.wishes[0]?.content);
+      
+      console.log("新資料 ID 類型:", typeof saved.id);
+      console.log("舊資料 ID 類型:", typeof this.wishes[1]?.id);
+      
+      
       this.newWishContent = ''; // 清空輸入框
+      
+      // 選擇性：自動捲動到底部，讓使用者看到剛投進去的願望
+  this.$nextTick(() => {
+    const el = document.querySelector('.wish-list');
+    if (el) el.scrollTop = el.scrollHeight;
+  });
     },
 
     async deleteWish(id) {

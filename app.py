@@ -29,6 +29,9 @@ from core.shared_data import (
     get_general_data,
     get_character_file_entry,
     remove_character_file_entry,
+    get_wish_list,
+    add_wish,
+    delete_wish as delete_wish_service,
 )
 from core.user_config_manager import UserConfigManager
 from web.arrange_bp import arrange_bp
@@ -447,29 +450,23 @@ def delete_files():
     return jsonify({"results": results})
 
 
-DB_FILE = 'wishes.json'
-def load_data():
-    if not os.path.exists(DB_FILE): return []
-    with open(DB_FILE, 'r', encoding='utf-8') as f: return json.load(f)
-
 @app.route('/wishes', methods=['GET', 'POST'])
 def handle_wishes():
-    wishes = load_data()
     if request.method == 'POST':
         new_wish = request.json # 預期：{type, content}
-        new_wish['id'] = int(time.time() * 1000)
-        new_wish['date'] = time.strftime("%Y-%m-%d %H:%M")
-        wishes.insert(0, new_wish) # 新的排在前面
-        with open(DB_FILE, 'w', encoding='utf-8') as f:
-            json.dump(wishes, f, ensure_ascii=False)
-        return jsonify(new_wish)
+        saved_wish = add_wish(new_wish)
+    
+        return jsonify(saved_wish)
+        
+    #logger.debug("準備寫入全域資料了!!")
+    #logger.debug(json.dumps(wishes, ensure_ascii = False, indent = 4))
+    wishes = get_wish_list()    
     return jsonify(wishes)
+
 
 @app.route('/wishes/<int:wish_id>', methods=['DELETE'])
 def delete_wish(wish_id):
-    wishes = [w for w in load_data() if w['id'] != wish_id]
-    with open(DB_FILE, 'w', encoding='utf-8') as f:
-        json.dump(wishes, f, ensure_ascii=False)
+    delete_wish_service(wish_id)
     return jsonify({"status": "ok"})
 
 

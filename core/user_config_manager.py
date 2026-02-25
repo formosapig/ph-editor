@@ -15,6 +15,7 @@ class UserConfigManager:
     profile_file = os.path.join(config_dir, "profile.json")
     scenario_file = os.path.join(config_dir, "scenario.json")
     metadata_file = os.path.join(config_dir, "metadata.json")
+    wish_file = os.path.join(config_dir, "wish.json")
 
     # 注意, makedirs 在目錄己存在時,不會報錯且執行效率高,一直亂呼叫也沒什麼成本.
     @staticmethod
@@ -64,6 +65,11 @@ class UserConfigManager:
         return UserConfigManager.metadata_file
     
     @staticmethod
+    def get_wish_file_path() -> str:
+        UserConfigManager.ensure_dir()
+        return UserConfigManager.wish_file
+    
+    @staticmethod
     def load_json_file(file_path: str) -> dict:
         """載入指定路徑的 JSON 檔案，若失敗則拋出異常。"""
         if not os.path.exists(file_path):
@@ -101,7 +107,7 @@ class UserConfigManager:
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 # 使用 indent 讓檔案更易讀
-                json.dump(converted_data, f, indent=2, ensure_ascii=False)
+                json.dump(converted_data, f, indent=4, ensure_ascii=False)
             logger.info(f"檔案已成功儲存: {file_path}")
         except IOError as e:
             logger.error(f"儲存檔案失敗: {file_path} -> {e}")

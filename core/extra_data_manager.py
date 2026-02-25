@@ -33,8 +33,7 @@ DEFAULT_PROFILE_TEMPLATE = {
     "about": "關於角色",
 }
 
-DEFAULT_PROFILE_ORDER = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
-
+ORDER_PROFILE = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
 
 DEFAULT_SCENARIO_TEMPLATE = {
     "!id": 0,
@@ -42,7 +41,7 @@ DEFAULT_SCENARIO_TEMPLATE = {
     "year": 1911,
 }
 
-DEFAULT_SCENARIO_ORDER = ["!id", "title", "year", "session", "plot", "notes"]
+ORDER_SCENARIO = ["!id", "title", "year", "session", "plot", "notes"]
 
 DEFAULT_BACKSTAGE_TEMPLATE = {
     "!tag_id": 1,
@@ -53,15 +52,6 @@ DEFAULT_BACKSTAGE_TEMPLATE = {
     "shadow": "熱情",
 }
 
-# --- 新增的 metadata 模板 ---
-DEFAULT_METADATA_TEMPLATE = {
-    "!profile_id": 0,
-    "!scenario_id": 0,
-    "backstage": DEFAULT_BACKSTAGE_TEMPLATE
-}
-
-ORDER_METADATA = ["!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
-
 ORDER_BACKSTAGE = ["subtitle", "tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "notes"]
 
 ORDER_EPOCH = [] # 暫時先空著...
@@ -71,6 +61,15 @@ SUB_ORDER_MAP = {
     "epoch": ORDER_EPOCH
 }
 
+# --- metadata 模版需要在 backstage 模版之後
+DEFAULT_METADATA_TEMPLATE = {
+    "!profile_id": 0,
+    "!scenario_id": 0,
+    "backstage": DEFAULT_BACKSTAGE_TEMPLATE
+}
+
+ORDER_METADATA = ["!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
+
 class ExtraDataManager():
     def __init__(self):
         # 記憶體中的快取資料，將所有資料集中管理
@@ -78,6 +77,7 @@ class ExtraDataManager():
         self._profile_map: Dict[int, Dict[str, Any]] = {}
         self._scenario_map: Dict[int, Dict[str, Any]] = {}
         self._metadata_map: Dict[str, Dict[str, Any]] = {}  # 每個 file_id 對應的獨有資料
+        self._wish_list: List[Dict[Str, Any]] = []
         
     def _load_or_create(self, file_path_func, default_template, key_type=None):
         """
@@ -96,17 +96,14 @@ class ExtraDataManager():
             data = UserConfigManager.load_json_file(file_path)
             
             # 檢查是否為字典，如果不是，則資料格式不正確
-            if not isinstance(data, dict):
-                raise TypeError("載入的資料不是字典格式。")
-
-            # 根據 key_type 進行鍵轉換
-            if key_type == int:
-                return {int(k): v for k, v in data.items()}
-            elif key_type == str:
-                return {str(k): v for k, v in data.items()}
-            else:
-                # key_type 為 None，不做任何轉換，直接返回
-                return data
+            if isinstance(data, dict) and key_type is not None:
+                if key_type == int:
+                    return {int(k): v for k, v in data.items()}
+                elif key_type == str:
+                    return {str(k): v for k, v in data.items()}
+            
+            # List 或不需要轉換 key
+            return data
                 
         except (FileNotFoundError, IOError, json.JSONDecodeError, TypeError, ValueError) as e:
             logger.info(f"載入檔案失敗 ({e})，使用預設模板。檔案路徑: {file_path}")
@@ -135,6 +132,10 @@ class ExtraDataManager():
             UserConfigManager.get_metadata_file_path, {}, key_type=str
         )
         
+        self._wish_list = self._load_or_create(
+            UserConfigManager.get_wish_file_path, [], key_type=None
+        )
+        
     def reload(self):
         """清除並重新載入所有資料。"""
         logger.info("開始重新載入 ExtraDataManager 資料...")
@@ -143,6 +144,7 @@ class ExtraDataManager():
         self._profile_map = {}
         self._scenario_map = {}
         self._metadata_map = {}
+        self._wish_list = []
         
         # 重新載入所有資料
         self.initialize_data()
@@ -175,7 +177,13 @@ class ExtraDataManager():
         if self._metadata_map:
             UserConfigManager.save_json_file(
                 UserConfigManager.get_metadata_file_path(), self._metadata_map
-            )    
+            )
+            
+    def _save_wish_data(self):
+        if self._wish_list:
+            UserConfigManager.save_json_file(
+                UserConfigManager.get_wish_file_path(), self._wish_list
+            )
     
     # IDataAccessor
     def get_profile(self, profile_id: int) -> Dict[str, Any]:
@@ -202,6 +210,9 @@ class ExtraDataManager():
         
     def get_metadata_map(self) -> Dict[str, Dict[str, Any]]:
         return self._metadata_map    
+            
+    def get_wish_list(self) -> List[Dict[str, Any]]:
+        return self._wish_list
             
     # --- 對外提供的更新介面 (會由 CharacterFileEntry 呼叫) ---
     
@@ -279,15 +290,11 @@ class ExtraDataManager():
         return True
         
     def _commit_profile(self, profile_id: int, profile_data: Dict[str, Any]):
-        """
-        【私有核心：統一提交】
-        負責排序、深拷貝、存入記憶體並觸發存檔。
-        """
         # 排序
-        profile_data = {k: profile_data[k] for k in DEFAULT_PROFILE_ORDER if k in profile_data}
+        ordered_data = self._deep_sort(scenario_data, ORDER_PROFILE)
         
         # 執行深拷貝以維持封裝性
-        copy_data = copy.deepcopy(profile_data)
+        copy_data = copy.deepcopy(ordered_data)
         
         # 存入記憶體地圖
         self._profile_map[profile_id] = copy_data
@@ -345,10 +352,10 @@ class ExtraDataManager():
         
     def _commit_scenario(self, scenario_id: int, scenario_data: Dict[str, Any]):
         # 排序
-        scenario_data = {k: scenario_data[k] for k in DEFAULT_SCENARIO_ORDER if k in scenario_data}
-        
+        ordered_data = self._deep_sort(scenario_data, ORDER_SCENARIO)
+
         # 執行深拷貝以維持封裝性
-        copy_data = copy.deepcopy(scenario_data)
+        copy_data = copy.deepcopy(ordered_data)
         
         # 存入記憶體地圖
         self._scenario_map[scenario_id] = copy_data
@@ -384,6 +391,9 @@ class ExtraDataManager():
         self._metadata_map[file_id] = ordered_data
         self._save_metadata_data()
         logger.info(f"Metadata {file_id} 提交成功並存檔。")        
+    
+    def update_wish_list(self):
+        self._save_wish_data()
     
     # --- 簡化版的 get_default_backstage 方法 ---
     def get_dafault_profile(self) -> Dict[str, Any]:
@@ -435,7 +445,6 @@ class ExtraDataManager():
             del self._metadata_map[file_id]
             self._save_metadata_data()
             logger.info(f"metadata {file_id} removed.")
-    
         
     def dump_all_data(self) -> None:
         """

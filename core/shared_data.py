@@ -3,6 +3,7 @@ import copy
 import json
 import threading
 import logging
+import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 # 假設這些是從其他模組引入的
@@ -57,6 +58,8 @@ def get_metadata_map() -> Dict[str, Dict[str, Any]]:
 def get_default_backstage() -> dict:    
     return _extra_data_manager.get_default_backstage()
     
+def get_wish_list() -> List[Dict[str, Any]]:
+    return _extra_data_manager.get_wish_list()    
 
 # ---- 其他的唷~~~ -----
 def add_or_update_character_with_path(scan_path: str, file_id: str) -> Optional[CharacterFileEntry]:
@@ -403,7 +406,19 @@ def find_fild_id_by_scenario_id(
     # 如果遍歷完畢都沒有找到，則回傳 None
     return None
     
-
+def add_wish(data: Dict[str, Any]):
+    wishes = get_wish_list()
+    data['id'] = int(time.time() * 1000)
+    data['date'] =time.strftime("%Y-%m-%d %H:%M")
+    wishes.insert(0, data)
+    _extra_data_manager.update_wish_list()    
+    return data
+    
+def delete_wish(wish_id: int):
+    wishes = get_wish_list()
+    wishes[:] = [w for w in wishes if w['id'] != wish_id]
+    _extra_data_manager.update_wish_list()
+    
 
 
     
