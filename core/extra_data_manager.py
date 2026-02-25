@@ -29,17 +29,20 @@ DEFAULT_GENERAL_TEMPLATE = {
 
 DEFAULT_PROFILE_TEMPLATE = {
     "!id": 0,
-    "!version": 1,
     "name": "新角色",
     "about": "關於角色",
 }
 
+DEFAULT_PROFILE_ORDER = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
+
+
 DEFAULT_SCENARIO_TEMPLATE = {
     "!id": 0,
-    "!version": 1,
     "title": "新場景",
     "year": 1911,
 }
+
+DEFAULT_SCENARIO_ORDER = ["!id", "title", "year", "session", "plot", "notes"]
 
 DEFAULT_BACKSTAGE_TEMPLATE = {
     "!tag_id": 1,
@@ -57,6 +60,16 @@ DEFAULT_METADATA_TEMPLATE = {
     "backstage": DEFAULT_BACKSTAGE_TEMPLATE
 }
 
+ORDER_METADATA = ["!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
+
+ORDER_BACKSTAGE = ["subtitle", "tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "notes"]
+
+ORDER_EPOCH = [] # 暫時先空著...
+
+SUB_ORDER_MAP = {
+    "backstage": ORDER_BACKSTAGE,
+    "epoch": ORDER_EPOCH
+}
 
 class ExtraDataManager():
     def __init__(self):
@@ -192,7 +205,7 @@ class ExtraDataManager():
             
     # --- 對外提供的更新介面 (會由 CharacterFileEntry 呼叫) ---
     
-    def _is_data_changed_without_version(
+    def _is_data_changed(
         self, current_data: Dict[str, Any], updated_data: Dict[str, Any]
     ) -> bool:
         # 檢查 !id 是否一致，若不一致拋出嚴重錯誤
@@ -201,15 +214,8 @@ class ExtraDataManager():
         if current_id != updated_id:
             raise ValueError(f"[ERROR] ID mismatch: current !id={current_id}, updated !id={updated_id}")
 
-        # 去除 !version 欄位
-        def strip_version(data: Dict[str, Any]) -> Dict[str, Any]:
-            return {k: v for k, v in data.items() if k != "!version"}
-
-        logger.debug(f"current: {strip_version(current_data)}")
-        logger.debug(f"updated: {strip_version(updated_data)}")
-
         # 比較是否相同
-        if strip_version(current_data) != strip_version(updated_data):
+        if current_data != updated_data:
             return True
 
         # 無不同
@@ -235,7 +241,7 @@ class ExtraDataManager():
     def add_profile(self, updated_profile: Dict[str, Any]) -> bool:
         ''' 新增一個 profile data, 並返回是否新增成功 '''
         # 1. 檢查跟 default 是不是一樣, 一樣返回 false.
-        if not self._is_data_changed_without_version(
+        if not self._is_data_changed(
             DEFAULT_PROFILE_TEMPLATE,
             updated_profile
         ):
@@ -245,9 +251,6 @@ class ExtraDataManager():
         if updated_profile.get("!id") == 0:
             new_id = max(self._profile_map.keys(), default = 0) + 1
             updated_profile["!id"] = new_id # 重要!!這邊更新 profile_id 成新的.
-            #copy_updated = copy.deepcopy(updated_profile) # 注意,做一個深層複製來維持封裝性.
-            #self._profile_map[new_id] = copy_updated
-            #self._save_profile_data() # 永遠即時儲存
             self._commit_profile(new_id, updated_profile)
             return True
         else:
@@ -268,14 +271,10 @@ class ExtraDataManager():
             raise KeyError(f"更新失敗：找不到 ID 為 '{updated_profile_id}' 的 profile。")
                 
         # 資料都沒變, 但是外部需要成功, 來執行 character_file_entry <-> profile_id 的更新喔! 
-        if not self._is_data_changed_without_version(current_profile, updated_profile):
+        if not self._is_data_changed(current_profile, updated_profile):
             logger.info("資料沒有變動，無需更新。")
             return True 
 
-        #updated = copy.deepcopy(updated_profile)
-        #self._profile_map[updated_profile_id] = updated
-        
-        #self._save_profile_data()
         self._commit_profile(updated_profile_id, updated_profile) 
         return True
         
@@ -284,10 +283,8 @@ class ExtraDataManager():
         【私有核心：統一提交】
         負責排序、深拷貝、存入記憶體並觸發存檔。
         """
-        # 如果你想做排序，就在這裡做，這樣 add 和 update 都能受益
-        # ordered_data = self._sort_profile_keys(profile_data) 
-        order = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
-        profile_data = {k: profile_data[k] for k in order if k in profile_data}
+        # 排序
+        profile_data = {k: profile_data[k] for k in DEFAULT_PROFILE_ORDER if k in profile_data}
         
         # 執行深拷貝以維持封裝性
         copy_data = copy.deepcopy(profile_data)
@@ -304,13 +301,12 @@ class ExtraDataManager():
         # 要修改內容,直接內部讀取
         metadata = self._metadata_map.get(file_id, {})
         metadata['!profile_id'] = profile_id;
-        self._metadata_map[file_id] = metadata
-        self._save_metadata_data()
+        self._commit_metadata(file_id, metadata)
         
     def add_scenario(self, updated_scenario: Dict[str, Any]) -> bool:
         ''' 新增一個 scenario data, 並返回是否新增成功 '''
         # 1. 檢查跟 default 是不是一樣, 一樣返回 false.
-        if not self._is_data_changed_without_version(
+        if not self._is_data_changed(
             DEFAULT_SCENARIO_TEMPLATE,
             updated_scenario
         ):
@@ -320,9 +316,7 @@ class ExtraDataManager():
         if updated_scenario.get("!id") == 0:
             new_id = max(self._scenario_map.keys(), default = 0) + 1
             updated_scenario["!id"] = new_id # 重要!!這邊更新 profile_id 成新的.
-            copy_updated = copy.deepcopy(updated_scenario) # 注意,做一個深層複製來維持封裝性.
-            self._scenario_map[new_id] = copy_updated
-            self._save_scenario_data() # 永遠即時儲存
+            self._commit_scenario(new_id, updated_scenario)
             return True
         else:
             logger.error(f"無效的 SCENARIO_ID: {updated_scenario.get('!id')}")
@@ -342,43 +336,55 @@ class ExtraDataManager():
             raise KeyError(f"更新失敗：找不到 ID 為 '{updated_scenario_id}' 的 scenario。")
                 
         # 資料都沒變, 但是外部需要成功, 來執行 character_file_entry <-> scenario_id 的更新喔! 
-        if not self._is_data_changed_without_version(current_scenario, updated_scenario):
+        if not self._is_data_changed(current_scenario, updated_scenario):
             logger.info("資料沒有變動，無需更新。")
             return True 
 
-        updated = copy.deepcopy(updated_scenario)
-        self._scenario_map[updated_scenario_id] = updated
-        
-        self._save_scenario_data()
-
+        self._commit_scenario(updated_scenario_id, updated_scenario)
         return True
+        
+    def _commit_scenario(self, scenario_id: int, scenario_data: Dict[str, Any]):
+        # 排序
+        scenario_data = {k: scenario_data[k] for k in DEFAULT_SCENARIO_ORDER if k in scenario_data}
+        
+        # 執行深拷貝以維持封裝性
+        copy_data = copy.deepcopy(scenario_data)
+        
+        # 存入記憶體地圖
+        self._scenario_map[scenario_id] = copy_data
+        
+        # 執行即時儲存
+        self._save_scenario_data()
+        logger.info(f"Scenario {scenario_id} 提交成功並存檔。")        
         
     def update_scenario_id(self, file_id: str, scenario_id: int):
         logger.debug(f"update SCENARIO_ID: ${scenario_id} to ${file_id}")
         # 要修改內容,直接內部讀取
         metadata = self._metadata_map.get(file_id, {})
         metadata['!scenario_id'] = scenario_id;
-        self._metadata_map[file_id] = metadata
-        self._save_metadata_data()
+        self._commit_metadata(file_id, metadata)
         
     def update_backstage(self, file_id: str, backstage_data: dict):
         metadata = self._metadata_map.get(file_id, {})
         metadata['backstage'] = backstage_data
-        self._metadata_map[file_id] = metadata
-        self._save_metadata_data()
+        self._commit_metadata(file_id, metadata)
 
     def update_remark(self, file_id: str, remark: str):
         metadata = self._metadata_map.get(file_id, {})
         metadata['!remark'] = remark
-        self._metadata_map[file_id] = metadata
-        self._save_metadata_data()
+        self._commit_metadata(file_id, metadata)
 
     def update_status(self, file_id: str, status: str):
         metadata = self._metadata_map.get(file_id, {})
         metadata['!status'] = status
-        self._metadata_map[file_id] = metadata
-        self._save_metadata_data()
+        self._commit_metadata(file_id, metadata)
 
+    def _commit_metadata(self, file_id: str, metadata_data: Dict[str, Any]):
+        ordered_data = self._deep_sort(metadata_data, ORDER_METADATA)
+        self._metadata_map[file_id] = ordered_data
+        self._save_metadata_data()
+        logger.info(f"Metadata {file_id} 提交成功並存檔。")        
+    
     # --- 簡化版的 get_default_backstage 方法 ---
     def get_dafault_profile(self) -> Dict[str, Any]:
         return DEFAULT_PROFILE_TEMPLATE
@@ -479,3 +485,23 @@ class ExtraDataManager():
             logger.debug("Scenario Map: None") # 實際上 scenario_map 通常不會是 None 因為有預設值
 
         logger.debug("\n--- Dump Complete ---")
+
+    def _deep_sort(self, data: Dict[str, Any], order_list: List[str]) -> Dict[str, Any]:
+        sorted_dict = {}
+        
+        # 1. 依照目前的 order_list 進行第一層排序
+        for key in order_list:
+            if key not in data:
+                continue
+                
+            value = data[key]
+            
+            # 2. 檢查是否有子層級需要排序 (遞迴點)
+            if isinstance(value, dict) and key in SUB_ORDER_MAP:
+                # 遞迴呼叫：傳入子層的數據與子層的 order_list
+                sorted_dict[key] = self._deep_sort(value, SUB_ORDER_MAP[key])
+            else:
+                # 一般值或未定義順序的字典，直接放入
+                sorted_dict[key] = value
+                
+        return sorted_dict

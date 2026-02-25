@@ -119,31 +119,6 @@ def clear_characters_db():
     logger.info("額外資料已重讀。")
 
 
-def is_data_changed_without_version(
-    current_data: Dict[str, Any], updated_data: Dict[str, Any]
-) -> bool:
-    # 檢查 !id 是否一致，若不一致拋出嚴重錯誤
-    current_id = current_data.get("!id")
-    updated_id = updated_data.get("!id")
-    if current_id != updated_id:
-        raise ValueError(f"[ERROR] ID mismatch: current !id={current_id}, updated !id={updated_id}")
-
-    # 去除 !version 欄位
-    def strip_version(data: Dict[str, Any]) -> Dict[str, Any]:
-        return {k: v for k, v in data.items() if k != "!version"}
-
-    logger.debug(f"current: {strip_version(current_data)}")
-    logger.debug(f"updated: {strip_version(updated_data)}")
-
-    # 比較是否相同
-    if strip_version(current_data) != strip_version(updated_data):
-        return True
-
-    # 無不同
-    logger.warning(f"ID {current_id} not changed.")
-    return False
-
-
 def process_profile_data(
     file_id: str, updated_profile: Dict[str, Any]
 ) -> Tuple[bool, Optional[int]]:
