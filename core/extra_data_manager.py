@@ -291,7 +291,7 @@ class ExtraDataManager():
         
     def _commit_profile(self, profile_id: int, profile_data: Dict[str, Any]):
         # 排序
-        ordered_data = self._deep_sort(scenario_data, ORDER_PROFILE)
+        ordered_data = self._deep_sort(profile_data, ORDER_PROFILE)
         
         # 執行深拷貝以維持封裝性
         copy_data = copy.deepcopy(ordered_data)
