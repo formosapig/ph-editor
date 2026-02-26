@@ -1,10 +1,8 @@
 # ph-editor/core/shared_data.py
-import copy
 import json
-import threading
 import logging
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # 假設這些是從其他模組引入的
 from .character_data import CharacterData
@@ -24,10 +22,7 @@ characters_db: Dict[str, CharacterFileEntry] = {}
 _extra_data_manager: Optional[ExtraDataManager] = None
 
 def initialize_extra_data():
-    """
-    初始化並載入所有額外數據（general, profile, scenario, extra），
-    並在完成後將數據輸出到日誌。
-    """
+    """ 初始化並載入所有額外數據（general, profile, scenario, extra），並在完成後將數據輸出到日誌。 """
     global _extra_data_manager
     if _extra_data_manager is None:
         _extra_data_manager = ExtraDataManager()
@@ -52,14 +47,18 @@ def get_profile_map() -> Dict[int, Dict[str, Any]]:
 def get_scenario_map() -> Dict[int, Dict[str, Any]]:
     return _extra_data_manager.get_scenario_map()
 
+
 def get_metadata_map() -> Dict[str, Dict[str, Any]]:
     return _extra_data_manager.get_metadata_map()
 
+
 def get_default_backstage() -> dict:    
     return _extra_data_manager.get_default_backstage()
-    
+
+
 def get_wish_list() -> List[Dict[str, Any]]:
     return _extra_data_manager.get_wish_list()    
+
 
 # ---- 其他的唷~~~ -----
 def add_or_update_character_with_path(scan_path: str, file_id: str) -> Optional[CharacterFileEntry]:
@@ -150,38 +149,6 @@ def process_profile_data(
     return success, new_profile_id
 
 
-def get_profile(profile_id: int) -> Dict[str, Any]:
-    profile = profile_map.get(profile_id)
-    if profile is None:
-        raise ValueError(f"shared_data.py -> profile_id {profile_id} 不存在")
-    return profile
-
-
-def get_profile_name(file_id: str) -> str:
-    entry = get_character_file_entry(file_id)
-    if not entry:
-        raise ValueError(f"❌ 找不到角色檔案。 FILE ID = {file_id}")
-
-    if entry.profile_id is None:
-        return ""  # 沒綁定 profile 是正常的情況
-
-    profile = get_profile(entry.profile_id)
-    if not profile:
-        raise ValueError(
-            f"❌ 找不到 profile："
-            f"PROFILE ID = {entry.profile_id}, FILE ID = {file_id}"
-        )
-
-    name = profile.get("name")
-    if not isinstance(name, str) or not name.strip():
-        raise ValueError(
-            f"❌ profile['name'] 無效或為空："
-            f"PROFILE ID = {entry.profile_id}, FILE ID = {file_id}"
-        )
-
-    return name.strip()
-
-
 def process_scenario_data(
     file_id: str, updated_scenario: Dict[str, Any]
 ) -> Tuple[bool, Optional[int]]:
@@ -208,14 +175,7 @@ def process_scenario_data(
         character_file_entry_obj.update_scenario_id(updated_scenario_id)
             
     return success, new_scenario_id
-
-    
-def get_scenario(scenario_id: int) -> Dict[str, Any]:
-    scenario = scenario_map.get(scenario_id)
-    if scenario is None:
-        raise ValueError(f"SCENARIO ID {scenario_id} 不存在。")
-    return scenario
-
+  
     
 def update_backstage_data(
     file_id: str, updated_backstage: Dict[str, Any]
@@ -331,7 +291,7 @@ def get_suggest_filename(file_id: str) -> str:
         # 再次檢查情境資料是否成功取得
         if not scenario_data:
             # 即使有 ID，如果資料本身不存在，也回到沒有情境的邏輯
-            tag_type, tag_name = get_tag_info(file_id)
+            tag_type, tag_name = process_tag_info(file_id)
             if not tag_name:
                 return failed_filename
             
@@ -363,10 +323,6 @@ def get_suggest_filename(file_id: str) -> str:
         #suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
                 
         return suggested_name.strip()
-
-
-def dump_profile_id():
-    logger.debug(f"shared_data.py: profile_map 的 ID: {id(profile_map)}")    
 
 
 def find_fild_id_by_scenario_id(

@@ -41,7 +41,7 @@ DEFAULT_SCENARIO_TEMPLATE = {
     "year": 1911,
 }
 
-ORDER_SCENARIO = ["!id", "title", "year", "session", "plot", "notes"]
+ORDER_SCENARIO = ["!id", "title", "year", "season", "plot", "notes"]
 
 DEFAULT_BACKSTAGE_TEMPLATE = {
     "!tag_id": 1,
@@ -61,7 +61,7 @@ SUB_ORDER_MAP = {
     "epoch": ORDER_EPOCH
 }
 
-# --- metadata 模版需要在 backstage 模版之後
+# --- metadata 模版需要在 backstage 模版之後，不然會讀不到
 DEFAULT_METADATA_TEMPLATE = {
     "!profile_id": 0,
     "!scenario_id": 0,
@@ -77,7 +77,7 @@ class ExtraDataManager():
         self._profile_map: Dict[int, Dict[str, Any]] = {}
         self._scenario_map: Dict[int, Dict[str, Any]] = {}
         self._metadata_map: Dict[str, Dict[str, Any]] = {}  # 每個 file_id 對應的獨有資料
-        self._wish_list: List[Dict[Str, Any]] = []
+        self._wish_list: List[Dict[str, Any]] = []
         
     def _load_or_create(self, file_path_func, default_template, key_type=None):
         """
@@ -290,16 +290,9 @@ class ExtraDataManager():
         return True
         
     def _commit_profile(self, profile_id: int, profile_data: Dict[str, Any]):
-        # 排序
         ordered_data = self._deep_sort(profile_data, ORDER_PROFILE)
+        self._profile_map[profile_id] = copy.deepcopy(ordered_data)
         
-        # 執行深拷貝以維持封裝性
-        copy_data = copy.deepcopy(ordered_data)
-        
-        # 存入記憶體地圖
-        self._profile_map[profile_id] = copy_data
-        
-        # 執行即時儲存
         self._save_profile_data()
         logger.info(f"Profile {profile_id} 提交成功並存檔。")
     

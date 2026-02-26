@@ -1,7 +1,6 @@
 # ph-editor/core/character_file_entry.py
 import logging
 import os
-import hashlib
 import copy
 
 from typing import Dict, Any
@@ -13,25 +12,22 @@ from .extra_data_manager import ExtraDataManager
 logger = logging.getLogger(__name__)
 #logger.disabled = True
 
+'''
+    sn: 7Z87BCA2 唯一識別碼，在所有的附加資料內使用
+    file_id: 物理識別碼， save / load 及遊戲內辨識使用
+    filename: scanpath//[file_id].png 完整檔名...看是不是要先存起來...
+
+'''
+
 
 class CharacterFileEntry:
-    """
-    封裝單一角色檔案資訊，包含角色 ID、完整檔案路徑、角色資料，以及快取的元數據。
-    """
+    """ 封裝單一角色檔案資訊，包含角色 ID、完整檔案路徑、角色資料，以及快取的元數據。 """
     #_sha256_map = {}
 
     def __init__(
         self, file_id: str, scan_path: str, character_data: CharacterData,
         data_accessor: ExtraDataManager
     ):
-        # 取得 int 小函式
-        def _get_int(data, *keys):
-            for key in keys:
-                if not isinstance(data, dict):
-                    return None
-                data = data.get(key)
-            return data if isinstance(data, int) else None
-
         if not isinstance(character_data, CharacterData):
             raise TypeError("character_data 必須是 CharacterData 類型的實例。")
 
@@ -66,25 +62,17 @@ class CharacterFileEntry:
         
     ''' 以下是一堆 getter '''
     def get_profile_name(self) -> str:
-        """從關聯的 Profile 資料中取得名稱。"""
-        # 檢查 profile_id 是否存在
+        """ Profile 資料中取得 name """
         if self.profile_id is None:
             return ""
 
-        # 這裡假設 self.data_source.get_profile 
-        # 在找不到資料時會回傳空字典 {}
         profile_data: Dict[str, Any] = self.data_source.get_profile(self.profile_id)
-        
-        # 檢查回傳的字典是否為空
         if not profile_data:
             raise ValueError(
                 f"❌ 無法從 Profile ID '{self.profile_id}' 取得有效的 Profile 資料。"
             )
 
-        # 安全地取得名稱，如果不存在則回傳 None
         name = profile_data.get("name")
-        
-        # 檢查名稱是否為有效的字串，並處理空白字串
         if not isinstance(name, str) or not name.strip():
             raise ValueError(
                 f"❌ Profile ID '{self.profile_id}' 的 'name' 欄位無效或為空。"
@@ -93,25 +81,17 @@ class CharacterFileEntry:
         return name.strip()
     
     def get_scenario_title(self) -> str:
-        """從關聯的 Scenario 資料中取得名稱。"""
-        # 檢查 scenario_id 是否存在
+        """ Scenario 資料中取得 title """
         if self.scenario_id is None:
             return ""
 
-        # 這裡假設 self.data_source.get_scenario
-        # 在找不到資料時會回傳空字典 {}
         scenario_data: Dict[str, Any] = self.data_source.get_scenario(self.scenario_id)
-        
-        # 檢查回傳的字典是否為空
         if not scenario_data:
             raise ValueError(
                 f"❌ 無法從 Scenario ID '{self.scenario_id}' 取得有效的 Scenario 資料。"
             )
 
-        # 安全地取得名稱，如果不存在則回傳 None
         title = scenario_data.get("title")
-        
-        # 檢查名稱是否為有效的字串，並處理空白字串
         if not isinstance(title, str) or not title.strip():
             raise ValueError(
                 f"❌ Scenario ID '{self.scenario_id}' 的 'title' 欄位無效或為空。"
@@ -120,10 +100,8 @@ class CharacterFileEntry:
         return title.strip()
 
     def get_scenario_subtitle(self) -> str:
-        """從關聯的 Backstage 資料中取得名稱。"""
-        # 在找不到資料時會回傳空字典 {}
+        """ scenario 的 subtitle 存放在 metadta.backstage """
         metadata:Dict[str, any] = self.data_source.get_metadata(self.file_id)
-        
         if metadata is None:
             return ""
         else:
@@ -133,21 +111,14 @@ class CharacterFileEntry:
         return self.filename
 
     def get_character_data(self) -> dict:
-        """
-        獲取並整合角色所有相關資料為一個字典。
-        """
-        # 創建 parsed_data 的深度複製，避免修改原始資料。
-        # dict 本身沒有 deep_copy 方法，需要使用 copy 模組。
+        """ 獲取並整合角色所有相關資料為一個字典，供前端使用。 """
         full_data = copy.deepcopy(self.character_data.parsed_data)
 
-        # 建立一個新的字典來存放故事相關資料
         story = {
             'profile': self.data_source.get_profile(self.profile_id),
             'scenario': self.data_source.get_scenario(self.scenario_id),
             'backstage': self.data_source.get_metadata(self.file_id).get('backstage', {})
         }
-
-        # 將故事字典合併到主字典中
         full_data['story'] = story
 
         return full_data
@@ -272,9 +243,7 @@ class CharacterFileEntry:
     def load(
         cls, scan_path: str, file_id: str, data_accessor: ExtraDataManager
     ) -> "CharacterFileEntry":
-        """
-        從檔案讀取角色資料，建立並回傳 CharacterFileEntry 實例。
-        """
+        """ 從檔案讀取角色資料，建立並回傳 CharacterFileEntry 實例。 """
         file_name_with_ext = file_id + ".png"
         file_path = os.path.join(scan_path, file_name_with_ext)
 

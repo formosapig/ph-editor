@@ -66,58 +66,6 @@ def get_dropdown_options(tab, subTab):
     return jsonify({"dropdowns": dropdowns})
 
 
-'''
-@api_ui_config_bp.route("/profiles", methods=["GET"])
-def get_profile_list():
-    profile_map = get_profile_map()
-    
-    options = []
-
-    # 提前取出 id=0 的 profile（若存在）
-    zero_profile = profile_map.get(0)
-
-    # 除去 0 的 profile
-    other_profiles = {k: v for k, v in profile_map.items() if k != 0}
-
-    locale.setlocale(locale.LC_COLLATE, "zh_TW.UTF-8")
-    # 將其轉為 options 並根據 name 中文排序
-    sorted_profiles = sorted(
-        other_profiles.values(), key=lambda p: locale.strxfrm(p.get("name", ""))
-    )
-
-    # 初始選項
-    options.append({"label": "請選擇", "value": ""})
-
-    # 第二順位是 id = 0 的 profile（若有）
-    if zero_profile:
-        options.append(
-            {
-                "label": zero_profile.get("name", f"id:{zero_profile.get('!id', '')}"),
-                "value": zero_profile.get("!id", ""),
-            }
-        )
-
-    # 加入剩下排序後的 options
-    for profile in sorted_profiles:
-        options.append(
-            {
-                "label": profile.get("name", f"id:{profile.get('!id', '')}"),
-                "value": profile.get("!id", ""),
-            }
-        )
-
-    dropdown_config = [{
-        "displayLabel": "角色選擇",
-        "dataKey": "!id",
-        "labelKey": "name",
-        "options": options,
-        "defaultValue": ""
-    }]
-
-    return jsonify({"dropdowns": dropdown_config})
-'''
-
-
 @api_ui_config_bp.route("/profiles", methods=["GET"])
 def get_profile_list():
     profile_map = get_profile_map()
@@ -268,13 +216,32 @@ def get_scenario_list():
             }
         )
 
-    dropdown_config = [{
-        "displayLabel": "場景選擇",
-        "dataKey": "!id",
-        "labelKey": "title",
-        "options": options,
-        "defaultValue": ""
-    }]
+    season_options = [
+        {"label": "無", "value": ""},
+        {"label": "🌸春", "value": "spring"},
+        {"label": "☀️夏", "value": "summer"},
+        {"label": "🍁秋", "value": "autumn"},
+        {"label": "❄️冬", "value": "winter"}
+    ]
+
+
+
+    dropdown_config = [
+        {
+            "displayLabel": "場景選擇",
+            "dataKey": "!id",
+            "labelKey": "title",
+            "options": options,
+            "defaultValue": ""
+        },
+        {
+            "displayLabel": "季節",
+            "dataKey": "season",
+            "labelKey": "",
+            "options": season_options,
+            "defaultValue": ""
+        }
+    ]
 
     return jsonify({"dropdowns": dropdown_config})
 

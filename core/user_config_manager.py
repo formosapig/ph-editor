@@ -82,7 +82,6 @@ class UserConfigManager:
             logger.error(f"讀取或解析 JSON 檔案失敗: {file_path} -> {e}")
             raise e
 
-    # ✅ 新增的儲存方法
     @staticmethod
     def save_json_file(file_path: str, data: dict):
         """
@@ -91,7 +90,6 @@ class UserConfigManager:
             file_path: 檔案路徑。
             data: 要儲存的字典資料。
         """
-        # 在寫入前確保目錄存在
         UserConfigManager.ensure_dir()
         
         # 檢查資料鍵的類型，如果為 int，則轉換為 str

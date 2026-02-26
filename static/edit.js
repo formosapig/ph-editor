@@ -633,7 +633,7 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
  * @param {string} mainTab - 主 tab 的 key。
  * @param {string} subTab - 子 tab 的 key。
  */
-async function fetchAndRenderDropdowns(mainTab, subTab) {
+/*async function fetchAndRenderDropdowns(mainTab, subTab) {
   // 判斷是否為 profile 或 scenario 路由
   let apiUrl = `/api/ui_config/options/${mainTab}/${subTab}`;
   const isProfileDropdown = (mainTab === 'story' && subTab === 'profile');
@@ -860,8 +860,177 @@ async function fetchAndRenderDropdowns(mainTab, subTab) {
     //console.log('嘗試定位下拉選單。'); // 新增日誌
     positionDropdown();
   }
-}
+}*/
 // END: 修改
+
+async function fetchAndRenderDropdowns(mainTab, subTab) {
+    const context = { mainTab, subTab };
+    let apiUrl = getApiUrl(mainTab, subTab);
+    
+    // 初始化 UI
+    resetDropdownUI();
+    showMessage(`正在載入 ${mainTab}/${subTab} 的選單...`);
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`HTTP 錯誤: ${response.status}`);
+        const result = await response.json();
+
+        // 根據類型分流處理
+        if (mainTab === 'story' && subTab === 'backstage') {
+            await handleBackstageDropdown(result, context);
+        } else if (mainTab === 'story' && subTab === 'profile') {
+            await handleProfileDropdown(result, context);
+        } else if (mainTab === 'story' && subTab === 'scenario') {
+            await handleScenarioDropdown(result, context);
+        } else {
+            await handleDefaultDropdown(result, context);
+        }
+
+    } catch (error) {
+        showMessage(`載入失敗：${error.message}`, 'error');
+        console.error('Dropdown Error:', error);
+    } finally {
+        positionDropdown();
+    }
+}
+
+function getApiUrl(mainTab, subTab) {
+  // 判斷是否為 profile 或 scenario 路由
+  let apiUrl = `/api/ui_config/options/${mainTab}/${subTab}`;
+  const isProfileDropdown = (mainTab === 'story' && subTab === 'profile');
+  const isScenarioDropdown = (mainTab === 'story' && subTab === 'scenario');
+  const isBackstageDropdown = (mainTab === 'story' && subTab === 'backstage');
+
+  if (isProfileDropdown) {
+    apiUrl = `/api/ui_config/profiles`;
+  } else if (isScenarioDropdown) {	  
+    apiUrl = `/api/ui_config/scenarios`;
+  } else if (isBackstageDropdown) {
+    apiUrl = `/api/ui_config/backstage_options`;
+  }
+  return apiUrl;
+}
+
+function resetDropdownUI() {
+  // 清空並隱藏所有下拉選單插槽
+  dropdownSlotIds.forEach(slotId => {
+      const slot = document.getElementById(slotId);
+      if (slot) {
+          slot.innerHTML = ''; // 清空內容
+          slot.style.display = 'none'; // 隱藏插槽
+      }
+  });
+  document.getElementById('dropdown-container').classList.remove('show');
+}
+
+async function handleBackstageDropdown(result, { mainTab, subTab }) {
+    if (result.defaultScenario && isDataEmpty(mainTab, subTab)) {
+        globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultScenario));
+        updateMainContent(globalParsedData[mainTab][subTab], true);
+    }
+    renderDropdownSlots(result.dropdowns, { mainTab, subTab });
+}
+
+/*function isDataEmpty(mainTab, subTab) {
+    return (
+        !globalParsedData[mainTab] || 
+        !globalParsedData[mainTab][subTab] || 
+        Object.keys(globalParsedData[mainTab][subTab]).length === 0
+    );
+}*/
+
+async function handleProfileDropdown(result, { mainTab, subTab }) {
+    renderDropdownSlots(result.dropdowns, { mainTab, subTab }, async (dropdownConfig, selected) => {
+        if (dropdownConfig.dataKey === "!id" && selected.value !== "") {
+            const res = await fetch(`/api/profile/detail/${selected.value}`);
+            const detailData = await res.json();
+            globalParsedData[mainTab][subTab] = detailData;
+            updateMainContent(detailData, true);
+        } else {
+            genericUpdate(dropdownConfig, selected, mainTab, subTab);
+        }
+    });
+}
+
+async function handleScenarioDropdown(result, { mainTab, subTab }) {
+    renderDropdownSlots(result.dropdowns, { mainTab, subTab }, async (dropdownConfig, selected) => {
+        if (dropdownConfig.dataKey === "!id" && selected.value !== "") {
+            const res = await fetch(`/api/scenario/detail/${selected.value}`);
+            const detailData = await res.json();
+            globalParsedData[mainTab][subTab] = detailData;
+            updateMainContent(detailData, true);
+        } else {
+            // 處理季節或其他通用選單 (解決你上次提到的值覆蓋問題)
+            genericUpdate(dropdownConfig, selected, mainTab, subTab);
+        }
+    });
+}
+
+async function handleDefaultDropdown(result, { mainTab, subTab }) {
+    renderDropdownSlots(result.dropdowns, { mainTab, subTab });
+}
+
+// 通用的資料更新邏輯：解決 Key/Label 覆蓋問題
+function genericUpdate(config, selected, mainTab, subTab) {
+    const dataRef = globalParsedData[mainTab][subTab];
+    
+    if (selected.value === "") {
+        // 如果選的是「無」("")，則刪除該欄位
+        delete dataRef[config.dataKey];
+        if (config.labelKey) delete dataRef[config.labelKey];
+        console.log(`已刪除欄位: ${config.dataKey}`);
+    } else {
+        // 正常寫入 Value
+        dataRef[config.dataKey] = selected.value;
+        
+        // 只有當 labelKey 存在且不等於 dataKey 時才寫入 Label (避免覆蓋)
+        if (config.labelKey && config.labelKey !== config.dataKey) {
+            dataRef[config.labelKey] = selected.label;
+        }
+        console.log(`已更新欄位: ${config.dataKey} = ${selected.value}`);
+    }
+    
+    // 同步更新畫面上的 JSON 顯示
+    updateMainContent(dataRef, true);
+}
+
+// 統一渲染 Select 槽位
+function renderDropdownSlots(dropdowns, { mainTab, subTab }, onSelectCallback = null) {
+    if (!dropdowns || !Array.isArray(dropdowns) || dropdowns.length === 0) {
+      console.log("沒有可渲染的下拉選單選項。");
+      return;
+    }
+    document.getElementById('dropdown-container').classList.add('show');
+
+    dropdowns.forEach((config, index) => {
+        if (index >= dropdownSlotIds.length) return;
+
+        const slot = document.getElementById(dropdownSlotIds[index]);
+        const currentValue = globalParsedData?.[mainTab]?.[subTab]?.[config.dataKey];
+
+        const label = document.createElement('label');
+        label.textContent = config.displayLabel;
+
+        const select = createSelect(
+            `${dropdownSlotIds[index]}-${config.dataKey}`,
+            config.options,
+            currentValue || config.defaultValue,
+            (selected) => {
+                if (onSelectCallback) {
+                    onSelectCallback(config, selected);
+                } else {
+                    genericUpdate(config, selected, mainTab, subTab);
+                }
+            }
+        );
+
+        slot.innerHTML = '';
+        slot.appendChild(label);
+        slot.appendChild(select);
+        slot.style.display = 'flex';
+    });
+}
 
 function positionDropdown() {
   const dropdown = document.getElementById('dropdown-container');
