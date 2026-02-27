@@ -237,15 +237,15 @@ window.addEventListener('DOMContentLoaded', () => {
         window.open(`/arrange?files=${files}`, 'ArrangeSelectedFile');
       }
     },
-    
+
     editSelected() {
       if (this.selectedSet.length === 1) {
-        const fileId = this.selectedSet[0];
-        const windowName = `edit_file_${fileId}`;
-        window.open(`/edit?file_id=${encodeURIComponent(fileId)}`, windowName);
+        const sn = this.selectedSet[0];
+        const windowName = `edit_file_${sn}`;
+        window.open(`/edit/${encodeURIComponent(sn)}`, windowName);
       }
     },
-    
+
     async renameSelected() {
       if (this.selectedSet.length !== 1) return;
 
@@ -536,48 +536,39 @@ window.addEventListener('DOMContentLoaded', () => {
       adjustGalleryTop();
     },
 
-    // --- 修改開始：新增 reload 單個檔案函式 ---
-    reloadFile(fileId) {
-      // 檢查 fileId 是否為空，避免發送無效請求
-      if (!fileId) {
-         console.error("無法重新載入檔案：缺少 fileId。");
-         return;
-      }
+        
+        // 經由 bc 傳來要更新某一個 character ...
+        async refrechCharacter(sn) {
+            if (!sn) {
+                console.error("無法重新載入檔案，沒有 sn 。");
+                return;
+            }
 
-      fetch(`/reload_file/${encodeURIComponent(fileId)}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(newData => {
-          // 直接更新原始資料,然後重跑 filter
-      // 1. 更新唯一的真理來源：allImages
-          const allIndex = this.allImages.findIndex(c => c.id === fileId);
+            try {
+                const url = `/api/character/${encodeURIComponent(sn)}/refresh?view=gallery`;
+                const response = await fetch(url, {method: 'GET'});
+                if (!response.ok) {
+                    throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}`);
+                }
 
-          if (allIndex !== -1) {
-            console.log(`[Sync] 更新原始資料 allImages[${allIndex}]，狀態為: ${newData.status}`);
-            this.allImages[allIndex] = newData;
-      
-            // 2. 讓過濾器根據最新的 allImages 重新產生 displayedImages
-            // 這樣不管狀態是變更、隱藏還是排序，都會一次到位
-            this.applyFilter(this.filterKey);
-          } else {
-            console.error(`[Sync] 在原始資料庫中找不到 ID: ${fileId}，同步失敗。`);
-          }
-      
-          // 在 displayedImages 中找到對應的物件
-          //const index = this.displayedImages.findIndex(c => c.id === fileId);
+                const newData = await response.json();
+                const allIndex = this.allImages.findIndex(c => c.sn === sn);
+                
+                if (allIndex !== -1) {
+                    console.log(`[Sync] 更新原始資料 allImages[${allIndex}]，狀態為: ${newData.status}`);
+                    this.allImages[allIndex] = { ...this.allImages[allIndex], ...newData };
+                    this.applyFilter(this.filterKey);
+                    return true;
+                } else {
+                    console.error(`在原始資料庫中找不到 SN: ${sn}，同步失敗。`);
+                    return false;
+                }
 
-          //if (index !== -1) {
-          //  this.displayedImages[index] = newData;
-          //}
-        })
-        .catch(error => {
-          console.error(`重新載入檔案 ${fileId} 失敗:`, error);
-        });
-    },
+            } catch (error) {
+                console.error(`重新載入 SN: ${sn} 失敗:`, error);
+                return false;
+            }
+        }, // refreshCharacter
     
     toggleStatus() {
       // 透過 setTimeout 讓執行順序排在 v-model 寫入變數之後
@@ -587,29 +578,16 @@ window.addEventListener('DOMContentLoaded', () => {
     },
 });
 
-
-  // --- 修改開始：加入 postMessage 監聽 ---
-  window.addEventListener("message", (event) => {
-    // 確認訊息來源安全
-    if (event.origin !== window.location.origin) return;
-
-    const { file_id, action } = event.data;
-    if (action === "updated") {
-      app.reloadFile(file_id);
-	  //window.location.reload();
-    }
-  });
-  
-  // 接收 editor 資料
-  const bc = new BroadcastChannel('edit_file_sync_bus');
-  bc.onmessage = (e) => {
-    const {file_id, action} = e.data;
-    if (action === "updated") {
-      app.reloadFile(file_id);
-    }
-  };
+    // 接收 editor 資料
+    const bc = new BroadcastChannel('edit_file_sync_bus');
+    bc.onmessage = (e) => {
+        console.log("bus data:", e.data);
+        const {sn, action} = e.data;
+        if (action === "updated") {
+            app.refrechCharacter(sn);
+        }
+    };
   
   // inital petiteVue
   PetiteVue.createApp(app).mount('[v-scope]');
-
 });

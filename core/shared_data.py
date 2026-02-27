@@ -63,26 +63,19 @@ def get_wish_list() -> List[Dict[str, Any]]:
 # ---- 其他的唷~~~ -----
 def add_or_update_character_with_path(scan_path: str, file_id: str) -> Optional[CharacterFileEntry]:
     try:
-        # 嘗試透過 CharacterFileEntry 讀取檔案並解析
         character_file_entry_obj = (
             CharacterFileEntry.load(scan_path, file_id, _extra_data_manager)
         )
-            
-        # 將新的 CharacterFileEntry 存入或更新 characters_db
-        characters_db[file_id] = character_file_entry_obj
-
-        #logger.debug(character_file_entry_obj)
-
+        characters_db[character_file_entry_obj.sn] = character_file_entry_obj
         return character_file_entry_obj
 
     except Exception as e:
-        # 若讀取或解析失敗，清理 characters_db 和對應映射
         logger.error(f"處理 FILE ID '{file_id}' 時發生例外：{e}")
-        return None # 失敗時明確回傳 None
+        return None
 
 
-def get_character_file_entry(file_id: str) -> Optional[CharacterFileEntry]:
-    return characters_db.get(file_id)
+def get_character_file_entry(sn: str) -> Optional[CharacterFileEntry]:
+    return characters_db.get(sn)
 
 
 def remove_character_file_entry(file_id: str):
@@ -102,15 +95,15 @@ def remove_character_file_entry(file_id: str):
         raise RuntimeError(f"系統清理失敗: {str(e)}")
 
 
-def get_character_data(file_id: str) -> Optional[CharacterData]:
-    entry = get_character_file_entry(file_id)
+def get_character_data(sn: str) -> Optional[CharacterData]:
+    entry = get_character_file_entry(sn)
     return entry.get_character_data() if entry else None
 
 
-def update_character_data(file_id: str, main_key: str, sub_key: str, data: any):
-    entry = get_character_file_entry(file_id)
+def update_character_data(sn: str, main_key: str, sub_key: str, data: any):
+    entry = get_character_file_entry(sn)
     if not entry:
-       raise KeyError(f"Character {file_id} not found")
+       raise KeyError(f"Character {sn} not found")
     entry.update_character_data(main_key, sub_key, data)
 
 
@@ -122,7 +115,7 @@ def clear_characters_db():
 
 
 def process_profile_data(
-    file_id: str, updated_profile: Dict[str, Any]
+    sn: str, updated_profile: Dict[str, Any]
 ) -> Tuple[bool, Optional[int]]:
     profile_id = updated_profile.get("!id")
     success = False
@@ -133,14 +126,11 @@ def process_profile_data(
         new_profile_id = updated_profile.get("!id", None) if success else None
     else:
         success = _extra_data_manager.update_profile(updated_profile)
-        # 更新時, 不參考前端的 !version , updated_profile 也不會更新 !version
 
     if success: # 成功時,才更新 character_file_entry 的資料...
-        character_file_entry_obj = get_character_file_entry(file_id)
+        character_file_entry_obj = get_character_file_entry(sn)
         if character_file_entry_obj is None:
-            print(
-                f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry"
-            )
+            logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry")
             return False, None
         updated_profile_id = updated_profile.get("!id")
         logger.debug(f"PROFILE_ID: ${updated_profile_id}")
@@ -150,25 +140,21 @@ def process_profile_data(
 
 
 def process_scenario_data(
-    file_id: str, updated_scenario: Dict[str, Any]
+    sn: str, updated_scenario: Dict[str, Any]
 ) -> Tuple[bool, Optional[int]]:
     scenario_id = updated_scenario.get("!id")
     success = False
     new_scenario_id = None
-        
     if scenario_id == 0:
         success = _extra_data_manager.add_scenario(updated_scenario)
         new_scenario_id = updated_scenario.get("!id", None) if success else None
     else:
         success = _extra_data_manager.update_scenario(updated_scenario)
-        # 更新時, 不參考前端的 !version , updated_profile 也不會更新 !version
 
     if success: # 成功時,才更新 character_file_entry 的資料...
-        character_file_entry_obj = get_character_file_entry(file_id)
+        character_file_entry_obj = get_character_file_entry(sn)
         if character_file_entry_obj is None:
-            print(
-                f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry"
-            )
+            logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry。")
             return False, None
         updated_scenario_id = updated_scenario.get("!id")
         logger.debug(f"SCENARIO_ID: ${updated_scenario_id}")
@@ -178,68 +164,61 @@ def process_scenario_data(
   
     
 def update_backstage_data(
-    file_id: str, updated_backstage: Dict[str, Any]
+    sn: str, updated_backstage: Dict[str, Any]
 ) -> bool:
     # 更新 backstage 資料永遠成功.
-    _extra_data_manager.update_backstage(file_id, updated_backstage)
+    _extra_data_manager.update_backstage(sn, updated_backstage)
         
-    character_file_entry_obj = get_character_file_entry(file_id)
+    character_file_entry_obj = get_character_file_entry(sn)
     if character_file_entry_obj is None:
-        raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
+        raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
     if '!tag_id' in updated_backstage:
         character_file_entry_obj.update_tag_id(updated_backstage['!tag_id'])
             
     return True
     
     
-def update_remark_data(file_id: str, remark: str) -> bool:
-    character_file_entry_obj = get_character_file_entry(file_id)
+def update_remark_data(sn: str, remark: str) -> bool:
+    character_file_entry_obj = get_character_file_entry(sn)
     if character_file_entry_obj is None:
-        raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
+        raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
     character_file_entry_obj.update_remark(remark)
-
     return True    
     
-def update_status_data(file_id: str, status: str) -> bool:
-    character_file_entry_obj = get_character_file_entry(file_id)
+def update_status_data(sn: str, status: str) -> bool:
+    character_file_entry_obj = get_character_file_entry(sn)
     if character_file_entry_obj is None:
-        raise KeyError(f"[ERROR] file_id {file_id} 找不到對應的 CharacterFileEntry")
+        raise KeyError(f"[ERROR] SM:{sn} 找不到對應的 CharacterFileEntry")
     character_file_entry_obj.update_status(status)
-
     return True    
 
-def process_tag_info(file_id: str) -> tuple[str, str]:
+def process_tag_info(sn: str) -> tuple[str, str]:
     tag_style = ""
     tag_name = ""
 
-    entry = get_character_file_entry(file_id)
+    entry = get_character_file_entry(sn)
     if not entry:
-        raise ValueError(f"❌ 找不到角色檔案 ：'{file_id}'。")
+        raise ValueError(f"❌ 找不到角色檔案 ：'{sn}'。")
 
     tag_id = entry.tag_id
-
     if tag_id is None:
         return tag_style, tag_name
 
     general_data = _extra_data_manager.get_general_data()
     all_tags_list = general_data.get('tag_list', [])
-
-    # 遍歷列表尋找匹配的 tag_id
     found_tag_data = None
     for tag_item in all_tags_list:
         if isinstance(tag_item, dict) and tag_item.get('id') == tag_id:
             found_tag_data = tag_item
             break
-
     if not found_tag_data:
         raise ValueError(
             f"無法在全域標籤資料中找到 tag_id "
-            f"'{tag_id}' (角色ID: '{file_id}') 的資訊。"
+            f"'{tag_id}' (角色SN: '{sn}') 的資訊。"
         )
 
     tag_style = found_tag_data.get('type', "")
     tag_name = found_tag_data.get('name', {}).get('zh', "")
-
     return tag_style, tag_name
 
 
@@ -325,41 +304,23 @@ def get_suggest_filename(file_id: str) -> str:
         return suggested_name.strip()
 
 
-def find_fild_id_by_scenario_id(
+def find_another_file_id_by_scenario_id(
     scenario_id: int,
-    file_id_to_exclude: str
+    sn_to_exclude: str
 ) -> Optional[str]:
     """
     掃描 characters_db，找出符合特定 scenario_id，
-    但其 file_id 不等於 file_id_to_exclude 的第一個 file_id。
-
-    Args:
-        scenario_id: 目標情境 ID。
-        file_id_to_exclude: 要排除的 file_id (即主角的 file_id)。
-        characters_db: 存有 CharacterFileEntry 物件的字典。
-
-    Returns:
-        找到的 file_id (配角的 file_id)，如果找不到則回傳 None。
+    但其 sn 不等於 sn_to_exclude 的第一個 sn。找不到則回傳 None。
     """
-    
-    # 增加檢查：如果任一關鍵輸入參數為 None，則立即回傳 None
-    if scenario_id is None or file_id_to_exclude is None:
+    if scenario_id is None or sn_to_exclude is None:
         return None
     
-    # 遍歷字典中的所有值 (CharacterFileEntry 物件)
     for entry in characters_db.values():
-        
-        # 條件一：scenario_id 必須匹配
         scenario_match = (entry.scenario_id == scenario_id)
-        
-        # 條件二：file_id 必須不等於要排除的 file_id
-        file_id_mismatch = (entry.file_id != file_id_to_exclude)
-        
-        if scenario_match and file_id_mismatch:
-            # 找到符合條件的第一個 file_id，立即回傳
+        sn_mismatch = (entry.sn != sn_to_exclude)
+        if scenario_match and sn_mismatch:
             return entry.file_id
             
-    # 如果遍歷完畢都沒有找到，則回傳 None
     return None
     
 def add_wish(data: Dict[str, Any]):

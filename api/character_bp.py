@@ -13,6 +13,7 @@ from core.shared_data import (
     
     process_profile_data,
     process_scenario_data,
+    process_tag_info,
     update_backstage_data,
     update_character_data,
     update_remark_data,
@@ -50,6 +51,45 @@ def reload_file():
         return jsonify({"error": f"內部錯誤: {e}"}), 500
 
 
+@api_character_bp.get("/<sn>/refresh")
+def refresh_character_data(sn):
+    """
+    刷新角色資料，讓前端能同步。
+    """
+    try:
+        entry = get_character_file_entry(sn)
+        if not entry:
+            logger.warning(f"刷新角色 '{sn}' 失敗。")
+            return jsonify({"error": "找不到指定的角色"}), 404
+        
+        view_mode = request.args.get('view', 'gallery')
+        
+        tag_style, tag_name = process_tag_info(sn)
+
+        if view_mode == 'gallery':        
+
+            data = {
+                "sn": entry.sn,
+                "file_id": entry.file_id,
+                "thumb": f"thumb_{entry.file_id}.jpg",
+                "profile_name": entry.get_profile_name(),
+                "scenario_title": entry.get_scenario_title(),
+                "remark": entry.get_remark(),
+                "status": entry.get_status(),
+                "tag_style": tag_style,
+                "tag_name": tag_name
+            }
+
+        else:
+            return jsonify({"error": f"不支援的視圖模式: {view_mode}"}), 400
+
+        return jsonify(data)
+
+    except Exception as e:
+        logger.exception(f"處理檔案 '{sn}' 時發生內部錯誤。")
+        return jsonify({"error": f"處理檔案時發生內部錯誤: {str(e)}"}), 500
+    
+
 @api_character_bp.route("/save", methods=["POST"])
 def save_file():
     """ 由前端傳來 fild_id 進行儲存 """
@@ -80,62 +120,11 @@ def save_file():
         return jsonify({"error": f"發生未知錯誤：{str(e)}"}), 500
 
 
-'''
-@api_character_bp.route("/ping_pong_sync", methods=["POST"])
-def ping_pong_sync():
-    """
-    掃描 characters_db 找第一個 sync_flag 為 True 的角色，呼叫其 save() 儲存。
-    回傳成功或錯誤 JSON。
-    """
-    saved_file_id: str | None = None
-
-    try:
-        with characters_db_lock:
-            for file_id, character_file_entry in characters_db.items():
-                if character_file_entry.needs_syncing():
-                    character_file_entry.save()
-                    # character_file_entry.set_sync_flag(False) 上一行的 save 內會做.
-                    saved_file_id = file_id
-                    break
-
-        if saved_file_id:
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "message": f"成功儲存角色: {saved_file_id}",
-                        "file_id": saved_file_id,
-                    }
-                ),
-                200,
-            )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "沒有找到待儲存的角色。",
-                        "file_id": None,
-                    }
-                ),
-                200,
-            )
-
-    except FileNotFoundError as e:
-        return jsonify({"error": f"檔案不存在: {str(e)}"}), 404
-    except ValueError as e:
-        return jsonify({"error": f"資料格式錯誤: {str(e)}"}), 400
-    except IOError as e:
-        return jsonify({"error": f"寫入檔案失敗: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"發生未知錯誤: {str(e)}"}), 500'''
-
-
-@api_character_bp.route("/update/<main_tab>/<sub_tab>", methods=["PUT"])
-def update_data(main_tab, sub_tab):
+@api_character_bp.patch("/<sn>/data/<main_tab>/<sub_tab>")
+def patch_data(sn, main_tab, sub_tab):
     """
     更新當前角色 parsed_data 指定節點：
-    URL 參數提供 main_tab 和 sub_tab，
+    URL 參數提供 sn， main_tab， sub_tab，
     JSON body 提供要更新的 data。
     """
     data = request.get_json()
@@ -146,18 +135,14 @@ def update_data(main_tab, sub_tab):
     if new_data is None:
         return jsonify({"error": "缺少 data 欄位。"}), 400
 
-    file_id = data.get("file_id")
-    if not file_id:
-        return jsonify({'error': '缺少 file_id'}), 400
-
     # 新增：印出前端傳來的資料 json 字串到後端日誌
-    logger.debug(f"{file_id} update {main_tab}/{sub_tab} ：")
-    logger.debug("\n" + json.dumps(new_data, ensure_ascii=False, indent=2))
+    logger.debug(f"{sn} patch {main_tab}/{sub_tab} ：")
+    logger.debug("\n" + json.dumps(new_data, ensure_ascii = False, indent = 4))
 
-    character_data_obj = get_character_data(file_id)
+    character_data_obj = get_character_data(sn)
     if not character_data_obj:
         return (
-            jsonify({"error": f"找不到角色數據: {file_id}。請重新載入檔案。"}),
+            jsonify({"error": f"找不到角色數據: {sn}。請重新載入檔案。"}),
             404,
         )
 
@@ -170,15 +155,10 @@ def update_data(main_tab, sub_tab):
         new_profile_id = None
         new_scenario_id = None
         need_save_all = False
-
-        # 全域資料檢查...
-        if main_tab == "story" and sub_tab == "general":
-            update_general_data(new_data)
             
         # 簡介資料檢查...
         if main_tab == "story" and sub_tab == "profile":
-            success, new_profile_id = process_profile_data(file_id, new_data)
-
+            success, new_profile_id = process_profile_data(sn, new_data)
             if not success:
                 return jsonify(
                     {
@@ -191,8 +171,7 @@ def update_data(main_tab, sub_tab):
 
         # 場景資料檢查...
         if main_tab == "story" and sub_tab == "scenario":
-            success, new_scenario_id = process_scenario_data(file_id, new_data)
-
+            success, new_scenario_id = process_scenario_data(sn, new_data)
             if not success:
                 return jsonify(
                     {
@@ -205,8 +184,7 @@ def update_data(main_tab, sub_tab):
 
         # 幕後資料檢查
         if main_tab == "story" and sub_tab == "backstage":
-            success = update_backstage_data(file_id, new_data)
-
+            success = update_backstage_data(sn, new_data)
             if not success:
                 return jsonify(
                     {
@@ -217,11 +195,11 @@ def update_data(main_tab, sub_tab):
 
         # 新增：印出前端傳來的資料 json 字串到後端日誌
         logger.debug("結果：")
-        logger.debug(json.dumps(new_data, ensure_ascii=False, indent=2))
+        logger.debug(json.dumps(new_data, ensure_ascii = False, indent = 2))
 
         # 更新子節點
         if main_tab != "story":
-            update_character_data(file_id, main_tab, sub_tab, new_data)
+            update_character_data(sn, main_tab, sub_tab, new_data)
 
         response_data = {
             "success": True,
@@ -247,31 +225,30 @@ def update_data(main_tab, sub_tab):
         return jsonify({"error": f"更新失敗: {str(e)}"}), 500
 
 
-@api_character_bp.route("/<file_id>/remark", methods=["PATCH"])
-def patch_character_remark(file_id):
-    """ 根據 file_id 更新角色的備註 """
+@api_character_bp.patch("/<sn>/remark")
+def patch_character_remark(sn):
+    """ 更新角色的備註 """
     data = request.get_json()
     if not data:
         return jsonify({"error": "請求內容必須是 JSON 格式。"}), 400
-
     remark = data.get("remark")
     if remark is None:
-        return jsonify({"error": "缺少 data 欄位。"}), 400
+        return jsonify({"error": "缺少 remark 。"}), 400
 
     try:
-        success = update_remark_data(file_id, remark)
+        success = update_remark_data(sn, remark)
         
         if not success:
             return jsonify(
                 {
                     "success": False,
-                    "message": f"角色資料節點 [{main_tab}][{sub_tab}] 不需要更新。",
+                    "message": f"更新角色 {sn} 備註 {remark} 失敗。",
                 }
             )
         
         return jsonify({
             "success": True,
-            "message": f"更新檔案註解(REMARK)成功。",
+            "message": f"更新角色註解(REMARK)成功。",
         })
             
     except Exception as e:
@@ -279,17 +256,18 @@ def patch_character_remark(file_id):
         return jsonify({"error": f"更新失敗: {str(e)}"}), 500
 
     
-@api_character_bp.route("/<file_id>/status", methods=["PATCH"])
-def patch_character_status(file_id):
-    """ 根據 file_id 更新角色的狀態 """
+@api_character_bp.patch("/<sn>/status")
+def patch_character_status(sn):
+    """ 更新角色的狀態 """
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "請求內容必須是 JSON 格式。"}), 400
     new_status = data.get('status')
-
     if not new_status:
         return jsonify({"error": "缺少 status 。"}), 400
 
     try:
-        update_status_data(file_id, new_status)
+        update_status_data(sn, new_status)
         
         return jsonify({
             "success": True,
@@ -299,10 +277,3 @@ def patch_character_status(file_id):
     except Exception as e:
         logger.error(e)
         return jsonify({"error": f"更新失敗: {str(e)}"}), 500
-        
-        
-@api_character_bp.route("/<file_id>/remark", methods=["GET"])
-def get_character_remark():
-    """ 由前端傳來 fild_id 進行儲存 """
-    #data = request.get_json()
-    file_id = data.get('file_id')    

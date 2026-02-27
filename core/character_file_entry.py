@@ -32,24 +32,25 @@ class CharacterFileEntry:
             raise TypeError("character_data 必須是 CharacterData 類型的實例。")
 
         self.file_id: str = file_id
-        self.filename: str = os.path.join(
-            scan_path, file_id + ".png"
-        )  # 組成完整檔案路徑
+        #self.filename: str = os.path.join(
+        #    scan_path, file_id + ".png"
+        #)  # 組成完整檔案路徑
         self.character_data: CharacterData = character_data
         
         #if not self.scenario_id is None:
         #logger.debug("\n" + repr(self))
         self.data_source = data_accessor
         
-        metadata = self.data_source.get_metadata(self.file_id)
-        
+        #metadata = self.data_source.get_metadata(self.file_id)
+        sn, metadata = self.data_source.find_metadata_by_file_id(self.file_id)
+        self.sn = sn
         if metadata is None:
             # metadata 為 None 時的處理方式
             self.profile_id = None
             self.scenario_id = None
             self.remark = "" # 空字串...
-            self.tag_id = None
             self.status = "draft"
+            self.tag_id = None
         else:
             # 使用 .get() 方法安全地存取字典鍵值，避免 KeyError
             self.profile_id = metadata.get('!profile_id')
@@ -117,7 +118,7 @@ class CharacterFileEntry:
         story = {
             'profile': self.data_source.get_profile(self.profile_id),
             'scenario': self.data_source.get_scenario(self.scenario_id),
-            'backstage': self.data_source.get_metadata(self.file_id).get('backstage', {})
+            'backstage': self.data_source.get_metadata(self.sn).get('backstage', {})
         }
         full_data['story'] = story
 
@@ -146,24 +147,22 @@ class CharacterFileEntry:
 
     def update_remark(self, remark: str):
         self.remark = remark
-        self.data_source.update_remark(self.file_id, remark)
+        self.data_source.update_remark(self.sn, remark)
 
     def get_remark(self) -> str:
         return self.remark
 
-    def get_status(self) -> str:
-        """取得目前檔案的製作狀態 (draft, refinement, finalized)。"""
-        return self.status
-
     def update_status(self, status: str):
-        """更新製作狀態。"""
         valid_statuses = ["archived", "draft", "refinement", "finalized"]
         if status not in valid_statuses:
             logger.warning(f"嘗試設定無效的狀態: {status}，已忽略。")
             return
-            
         self.status = status
-        self.data_source.update_status(self.file_id, status)
+        self.data_source.update_status(self.sn, status)
+
+    def get_status(self) -> str:
+        """取得目前檔案的製作狀態 (draft, refinement, finalized)。"""
+        return self.status
 
     def change_filename(self, new_name: str):
         """
@@ -203,8 +202,9 @@ class CharacterFileEntry:
 
     def __repr__(self):
         lines = [
+            f"{'SN':>14}: {self.sn}",
             f"{'File ID':>14}: {self.file_id}",
-            f"{'Filename':>14}: {self.filename}",
+            #f"{'Filename':>14}: {self.filename}",
             f"{'Profile ID':>14}: {self.profile_id}",
             f"{'Scenario ID':>14}: {self.scenario_id}",
             f"{'Tag ID':>14}: {self.tag_id}",

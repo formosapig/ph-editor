@@ -52,15 +52,15 @@
 
     <div id="gallery" class="clickable-area" @click="handleGalleryClick">
       <div v-for="item in displayedImages" 
-           :key="`${item.id}-${sortAscending}`"
+           :key="`${item.sn}-${sortAscending}`"
            class="thumb-container"
-           :class="{ selected: isSelected(item.id) }"
-           @click="toggleSelect(item.id, $event)">
+           :class="{ selected: isSelected(item.sn) }"
+           @click="toggleSelect(item.sn, $event)">
         <div class="checkmark">✅</div>
         <div class="thumb-wrapper">
-          <img :src="'/cache/' + item.thumb" 
-               class="thumb" 
-               :alt="item.id" 
+          <img :src="'/cache/' + item.thumb"
+               class="thumb"
+               :alt="item.file_id"
                width="252" 
                height="352" 
                draggable="false">
@@ -78,7 +78,7 @@
 		    <span v-if="item.status === 'draft'" title="草稿">🧩</span>
             <span v-if="item.status === 'refinement'" title="潤飾">🎨</span>
             <span v-if="item.status === 'finalized'" title="定稿">📌</span>
-			{{ item.id }}
+			{{ item.file_id }}
           </div>
 		  <div v-if="item.remark" class="file-id-remark">{{ item.remark }}</div>
 		</div>
@@ -87,7 +87,7 @@
 
 	<!-- 排序選單 -->
     <div v-if="showSortMenu" id="sortMenu" class="float-menu horizontal" @click.stop>
-      <div class="option" :class="{ active: sortKey === 'id' }" @click="applySort('id')">📄 檔名</div>
+      <div class="option" :class="{ active: sortKey === 'file_id' }" @click="applySort('file_id')">📄 檔名</div>
       <div class="option" :class="{ active: sortKey === 'profile_name' }" @click="applySort('profile_name')">👤 人名</div>
       <div class="option" :class="{ active: sortKey === 'scenario_title' }" @click="applySort('scenario_title')">🎬 場景</div>	  
       <div class="option" :class="{ active: sortKey === 'tag_name' }" @click="applySort('tag_name')">🏷️ 標籤</div>
@@ -97,7 +97,7 @@
 
     <!-- 篩選選單 -->
     <div v-if="showFilterMenu" class="float-menu horizontal" @click.stop>
-      <div class="option" :class="{ active: filterKey === 'id' }" @click="applyFilter('id')">📄 檔名</div>
+      <div class="option" :class="{ active: filterKey === 'file_id' }" @click="applyFilter('file_id')">📄 檔名</div>
       <div class="option" :class="{ active: filterKey === 'profile_name' }" @click="applyFilter('profile_name')">👤 人名</div>
       <div class="option" :class="{ active: filterKey === 'scenario_title' }" @click="applyFilter('scenario_title')">🎬 場景</div>
       <div class="option" :class="{ active: filterKey === 'tag_name' }" @click="applyFilter('tag_name')">🏷️ 標籤</div>

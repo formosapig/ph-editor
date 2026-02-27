@@ -1,7 +1,6 @@
 # ph-editor/app.py
-import json
 import logging
-import os, time, shutil
+import os, shutil
 import re
 
 from flask import (
@@ -205,7 +204,7 @@ def scan_folder():
                 
                 remark = character_file_obj.get_remark()
 
-                tag_style, tag_name = process_tag_info(file_id)
+                tag_style, tag_name = process_tag_info(character_file_obj.sn)
                 #logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
 
                 status = character_file_obj.get_status()
@@ -214,8 +213,9 @@ def scan_folder():
 
                 character_list.append(
                     {
+                        "sn": character_file_obj.sn,
+                        "file_id": file_id,
                         "thumb": thumbnail_name,
-                        "id": file_id,
                         "profile_name": profile_name,  # 若無資料則為空字串
                         "scenario_title": scenario_title,  # 有可能為空字串
                         "tag_style": tag_style,  # 可能為 ""

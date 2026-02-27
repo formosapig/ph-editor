@@ -8,6 +8,20 @@
 		"files.exclude": {
 			"**/__pycache__": true,
 			"**/*.pyc": true
-		}
+		},
+		"editor.tabSize": 4,              // 全域設定 Tab 為 4 格
+  		"editor.insertSpaces": true,      // 將 Tab 轉換為空白
+  		"editor.detectIndentation": false, // 關閉自動偵測（防止它被舊檔案的 2 格帶跑）
+  
+  		// 針對特定語言強制執行
+  		"[html]": {
+    		"editor.tabSize": 4
+  		},
+  		"[javascript]": {
+    		"editor.tabSize": 4
+  		},
+  		"[css]": {
+    		"editor.tabSize": 4
+  		}
 	}
 }

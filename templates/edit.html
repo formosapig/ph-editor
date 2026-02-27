@@ -6,16 +6,7 @@
   <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
 </head>
 <body>
-  <!--
-  <div class="top-right-button-container">
-    <!-- <button type="button" onclick="pingPongSync()">乒乓</button> - ->
-    <button type="button" onclick="reloadFile()">重讀</button>
-    <button id="saveButton" type="button" onclick="saveFile()" disabled>儲存</button>
-    <!-- <button type="button" onclick="window.close()">結束</button> - ->
-  </div>
-  -->
-  
-  <div style="display: flex; align-items; center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
+  <div style="display: flex; align-items: center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
     <!-- 角色縮圖 
     <img src="/cache/thumb_[[ file_id ]].jpg"
          alt="角色縮圖"
@@ -120,16 +111,15 @@
 	</div>
 	
     <!-- <div id="main-content" contenteditable="true"></div> -->
-  </div>
+    </div>
   
   <div id="result-message"></div>
   
-  <script>
-    const fileId = [[ file_id |　tojson | safe ]];
-	const remarkData = [[ remark | tojson | safe ]];
-	const statusData = [[ status | tojson | safe ]];
-	const characterData = [[ data | safe ]];
-  </script>
-  <script src="[[ url_for('static', filename='edit.js') ]]"></script>
+    <script>
+        const sn = [[ sn | tojson | safe ]];
+        //const fileId = [[ file_id | tojson | safe ]];
+	    const characterData = [[ data | safe ]];
+    </script>
+    <script src="[[ url_for('static', filename='edit.js') ]]"></script>
 </body>
 </html>

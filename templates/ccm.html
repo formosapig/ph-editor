@@ -136,7 +136,7 @@
               <span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
             </aside>
 
-            <summary><!-- 右邊, 人物主要屬性, 說明 -->
+            <div class="info-summary"><!-- 右邊, 人物主要屬性, 說明 -->
         
               <!-- 人物主要屬性 -->
               <div class="info-top">
@@ -156,7 +156,7 @@
               
               <!-- 說明 -->
               <div v-if="char.notes" class="info-bottom">{{ char.notes }}</div>
-            </summary>
+            </div>
           </div>
         </section>
       </main>

@@ -1,9 +1,9 @@
 # ph-editor/core/extra_data_manager.py
-import os
 import json
 import logging
 import copy
-from typing import Any, Dict, List, Optional, Set
+import nanoid
+from typing import Any, Dict, List, Optional, Tuple
 
 # 假設 UserConfigManager 已經存在，且負責提供檔案路徑
 from core.user_config_manager import UserConfigManager
@@ -68,7 +68,7 @@ DEFAULT_METADATA_TEMPLATE = {
     "backstage": DEFAULT_BACKSTAGE_TEMPLATE
 }
 
-ORDER_METADATA = ["!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
+ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
 
 class ExtraDataManager():
     def __init__(self):
@@ -175,6 +175,7 @@ class ExtraDataManager():
     def _save_metadata_data(self):
         """儲存後台資料。"""
         if self._metadata_map:
+            #self._ensure_permanent_id()
             UserConfigManager.save_json_file(
                 UserConfigManager.get_metadata_file_path(), self._metadata_map
             )
@@ -185,6 +186,49 @@ class ExtraDataManager():
                 UserConfigManager.get_wish_file_path(), self._wish_list
             )
     
+    ''' 奇怪的一次性的函式, 把 file_id 抽掉換成 sn '''
+    def _ensure_permanent_id(self):
+        """
+        確保所有資料都有唯一的永久 SN 作為 Key。
+        1. 遍歷 metadata_map。
+        2. 若發現舊格式 (以 file_id 為 Key)，則轉換為 SN。
+        3. 這是為了支援 file_id 可變更性及 epoch (檔案指向) 功能。
+        """
+        # 排除容易混淆的字元，共 32 碼
+        alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+        new_map = {}
+        modified = False
+
+        # 建立現有的 key 集合（包含已經是 SN 的項目）用於碰撞檢查
+        current_keys = set(self._metadata_map.keys())
+
+        for key, value in self._metadata_map.items():
+            # 判斷邏輯：如果內容裡沒有 file_id，說明目前的 key 就是原始 ID
+            if isinstance(value, dict) and "file_id" not in value:
+                # 產生唯一的 8 碼 SN
+                while True:
+                    sn = nanoid.generate(alphabet, size=8)
+                    if sn not in current_keys and sn not in new_map:
+                        break
+                
+                # 執行搬移：將舊 key 存入內容，新 SN 成為索引
+                value["file_id"] = key
+                
+                # 【預留優化】：如果之後要做 epoch，建議在此初始化指向欄位
+                if "next_epoch_sn" not in value:
+                    value["next_epoch_sn"] = None
+                    
+                new_map[sn] = value
+                modified = True
+            else:
+                # 已經轉換過或者是正確格式的資料
+                new_map[key] = value
+
+        if modified:
+            self._metadata_map = new_map
+
+
+
     # IDataAccessor
     def get_profile(self, profile_id: int) -> Dict[str, Any]:
         return self._profile_map.get(profile_id, {})
@@ -192,9 +236,29 @@ class ExtraDataManager():
     def get_scenario(self, scenario_id: int) -> Dict[str, Any]:
         return self._scenario_map.get(scenario_id, {})
 
-    def get_metadata(self, file_id: str) -> Dict[str, Any]:
-        return self._metadata_map.get(file_id, {})
+    def get_metadata(self, sn: str) -> Dict[str, Any]:
+        return self._metadata_map.get(sn, {})
     
+    def find_metadata_by_file_id(self, file_id: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        透過 file_id 尋找資料。
+        若找不到，則自動建立一組帶有新 SN 的初始資料。
+        回傳: (sn, metadata_dict)
+        """
+        for existing_sn, data in self._metadata_map.items():
+            if data.get("!file_id") == file_id:
+                return existing_sn, data
+
+        alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+        while True:
+            new_sn = nanoid.generate(alphabet, size=8)
+            if new_sn not in self._metadata_map:
+                break
+                
+        new_data = {"!file_id": file_id}
+        self._metadata_map[new_sn] = new_data
+        return new_sn, new_data
+
     # --- 對外提供的資料存取介面 ---
     def get_general_data(self) -> Dict[str, Any]:
         """獲取全域 general 資料。"""
@@ -233,12 +297,6 @@ class ExtraDataManager():
         logger.warning(f"ID {current_id} not changed.")
         return False
     
-    def update_extra_data(self, file_id: str, new_extra_data: Dict[str, Any]):
-        """更新特定檔案的獨有資料。"""
-        self._backstage_map[file_id] = new_extra_data
-        # TODO: 這裡可以選擇立即儲存或標記為需要儲存
-        self.save_backstage_data()
-
     def update_general_data(self, new_data: Dict[str, Any]):
         """更新全域 general 資料。"""
         logger.debug("準備寫入全域資料了!!")
@@ -364,26 +422,29 @@ class ExtraDataManager():
         metadata['!scenario_id'] = scenario_id;
         self._commit_metadata(file_id, metadata)
         
-    def update_backstage(self, file_id: str, backstage_data: dict):
-        metadata = self._metadata_map.get(file_id, {})
+    def update_backstage(self, sn: str, backstage_data: dict):
+        metadata = self._metadata_map.get(sn, {})
         metadata['backstage'] = backstage_data
-        self._commit_metadata(file_id, metadata)
+        self._commit_metadata(sn, metadata)
 
-    def update_remark(self, file_id: str, remark: str):
-        metadata = self._metadata_map.get(file_id, {})
+    def update_remark(self, sn: str, remark: str):
+        metadata = self._metadata_map.get(sn, {})
         metadata['!remark'] = remark
-        self._commit_metadata(file_id, metadata)
+        self._commit_metadata(sn, metadata)
 
-    def update_status(self, file_id: str, status: str):
-        metadata = self._metadata_map.get(file_id, {})
+    def update_status(self, sn: str, status: str):
+        metadata = self._metadata_map.get(sn, {})
         metadata['!status'] = status
-        self._commit_metadata(file_id, metadata)
+        self._commit_metadata(sn, metadata)
 
-    def _commit_metadata(self, file_id: str, metadata_data: Dict[str, Any]):
+    def _commit_metadata(self, sn: str, metadata_data: Dict[str, Any]):
+        if "!file_id" not in metadata_data:
+            logger.error(f"SN:{sn} 的資料沒有 file_id 。")
+            return
         ordered_data = self._deep_sort(metadata_data, ORDER_METADATA)
-        self._metadata_map[file_id] = ordered_data
+        self._metadata_map[sn] = ordered_data
         self._save_metadata_data()
-        logger.info(f"Metadata {file_id} 提交成功並存檔。")        
+        logger.info(f"SN:{sn} 儲存 metadata 成功。")        
     
     def update_wish_list(self):
         self._save_wish_data()

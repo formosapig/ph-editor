@@ -336,7 +336,7 @@ th:not(.corner-cell), .matrix-cell {
       
     } /* aside */
     
-    summary {
+    .info-summary {
       flex-grow: 1;
       display: flex;
       flex-direction: column; /* 讓上下兩排垂直排列 */
@@ -349,7 +349,7 @@ th:not(.corner-cell), .matrix-cell {
         gap: 6px;
         
         .char-name-highlight { color: #fff; }
-        .char-age-dim { font-size: 0.85em; font-wegiht: 600; color: #ddd; opacity: 0.8; }
+        .char-age-dim { font-size: 0.85em; font-weight: 600; color: #ddd; opacity: 0.8; }
         .meta-badge { padding: 0 6px; border-radius: 4px; font-size: 11px; border: 1px solid; }
       }
       
@@ -364,7 +364,7 @@ th:not(.corner-cell), .matrix-cell {
         display: block;
       }
       
-    } /* summary */
+    } /* info-summary */
     
   } /* main > section > .char-row-container */
   

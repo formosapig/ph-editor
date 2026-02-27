@@ -330,129 +330,146 @@ function renderSubTabContent(mainTabKey, subTabKey) {
  * 自動儲存目前 main-content 的資料，傳回後端更新
  */
 function autoSaveData() {
-  console.log('執行 autoSaveData 函數。');
-  const mainContent = document.getElementById('main-content');
-  const mainTabKey = mainContent.dataset.mainTabKey;
-  const subTabKey = mainContent.dataset.subTabKey;
+    console.log('執行 autoSaveData 函數。');
+    const mainContent = document.getElementById('main-content');
+    const mainTabKey = mainContent.dataset.mainTabKey;
+    const subTabKey = mainContent.dataset.subTabKey;
 
-  if (!mainTabKey || !subTabKey) {
-    showMessage('無法儲存：無效的 tab 鍵值', 'error');
-    console.error('autoSaveData: 無效的 tab 鍵值。');
-    return;
-  }
-
-  let newData;
-  try {
-    newData = JSON.parse(mainContent.textContent);
-  } catch (err) {
-    showMessage('JSON 格式錯誤，無法儲存', 'error');
-    console.error('autoSaveData: JSON 格式錯誤。', err);
-    return;
-  }
-
-  // ← 【修改點】從 globalParsedData 補回 ! 開頭的 key
-  if (globalParsedData && globalParsedData[mainTabKey] && globalParsedData[mainTabKey][subTabKey]) {
-    const originalData = globalParsedData[mainTabKey][subTabKey];
-    for (const key in originalData) {
-      if (key.startsWith('!')) {
-        newData[key] = originalData[key];
-      }
+    if (!mainTabKey || !subTabKey) {
+        showMessage('無法儲存：無效的 tab 鍵值', 'error');
+        console.error('autoSaveData: 無效的 tab 鍵值。');
+        return;
     }
-  }
 
-  showMessage(`正在儲存 ${mainTabKey} / ${subTabKey} ...`);
+    let newData;
+    try {
+        newData = JSON.parse(mainContent.textContent);
+    } catch (err) {
+        showMessage('JSON 格式錯誤，無法儲存', 'error');
+        console.error('autoSaveData: JSON 格式錯誤。', err);
+        return;
+    }
 
-  fetch(`/api/character/update/${encodeURIComponent(mainTabKey)}/${encodeURIComponent(subTabKey)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      file_id: fileId,
-      data: newData
-    })
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(err => {
-        throw new Error(err.error || `HTTP 錯誤: ${response.status}`);
-      }).catch(() => {
-        throw new Error(`HTTP 錯誤: ${response.status}`);
-      });
+    // ← 【修改點】從 globalParsedData 補回 ! 開頭的 key
+    if (globalParsedData && globalParsedData[mainTabKey] && globalParsedData[mainTabKey][subTabKey]) {
+        const originalData = globalParsedData[mainTabKey][subTabKey];
+        for (const key in originalData) {
+            if (key.startsWith('!')) {
+                newData[key] = originalData[key];
+            }
+        }
     }
-    return response.json();
-  })
-  .then(result => {
-    showMessage(result.message || '更新成功！');
-    console.log('autoSaveData: 更新成功。', result);
-	
-	// ✅ 如果後端有給新的 profile ID，先更新到 newData 上
-    if (result.new_profile_id) {
-      newData["!id"] = result.new_profile_id;
-    } else if (result.new_scenario_id) {
-      newData["!id"] = result.new_scenario_id;
-	}
-    
-	if (globalParsedData && globalParsedData[mainTabKey]) {
-      globalParsedData[mainTabKey][subTabKey] = newData;
-    }
-	
-	notifyParent();
-	
-    if (result.need_update_profile_dropdown) {
-	  fetchAndRenderDropdowns("story", "profile");
-    } else if (result.need_update_scenario_dropdown) {
-      fetchAndRenderDropdowns("story", "scenario");
-	}
-  })
-  .catch(error => {
-    showMessage('儲存失敗：' + error.message, 'error');
-    console.error('autoSaveData: 儲存失敗。', error);
-  });
+
+    _updateCharacterData(mainTabKey, subTabKey, sn, newData);
 }
 
-// 定義後端傳送函數 (fetch 範例)
-function updateRemark(remark) {
-  console.log("update remark: " + remark);
-  fetch(`/api/character/${encodeURIComponent(fileId)}/remark`, {
-    method: 'PATCH',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ remark: remark })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('更新成功:', data);
-	showMessage(`更新成功。`);
-	notifyParent();
-  })
-  .catch(err => {
-    console.error('更新失敗:', err);
-    showMessage(`更新失敗。`, 'error');
-  });
+async function _updateCharacterData(mainTabKey, subTabKey, sn, newData) {
+    console.log(`正在自動儲存: ${mainTabKey}/${subTabKey}`);
+
+    try {
+        const url = `/api/character/` +
+            `${encodeURIComponent(sn)}/data/` +
+            `${encodeURIComponent(mainTabKey)}/` +
+            `${encodeURIComponent(subTabKey)}`;
+
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                data: newData
+            })
+        });
+
+        if (!response.ok) {
+            let errorMsg = `HTTP 錯誤: ${response.status}`;
+            try {
+                const errData = await response.json();
+                errorMsg = errData.error || errorMsg;
+            } catch (e) {
+                /* 忽略解析 JSON 失敗的錯誤 */
+            }
+            throw new Error(errorMsg);
+        }
+
+        const result = await response.json();
+
+        if (result.new_profile_id) {
+            newData["!id"] = result.new_profile_id;
+        } else if (result.new_scenario_id) {
+            newData["!id"] = result.new_scenario_id;
+        }
+
+        if (globalParsedData?.[mainTabKey]) {
+            globalParsedData[mainTabKey][subTabKey] = newData;
+        }
+
+        showMessage(result.message || '更新成功！');
+        console.log('autoSaveData: 更新成功。', result);
+
+        notifyParent();
+
+        if (result.need_update_profile_dropdown) {
+            await fetchAndRenderDropdowns("story", "profile");
+        } else if (result.need_update_scenario_dropdown) {
+            await fetchAndRenderDropdowns("story", "scenario");
+        }
+
+    } catch (error) {
+        showMessage('儲存失敗：' + error.message, 'error');
+        console.error('autoSaveData: 儲存失敗。', error);
+    }
 }
 
-/**
- * 更新狀態並通知後端
- */
-function updateStatus(status) {
-  showMessage(`正在更新狀態為 ${status}...`);
-  
-  fetch(`/api/character/${encodeURIComponent(fileId)}/status`, {
-    method: 'PATCH',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ status: status })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('狀態更新成功:', data);
-    showMessage(`狀態已更新為：${status}`);
-    
-    // 通知父頁面 (Gallery) 重新讀取，這樣 Emoji 才會變
-	notifyParent();
-  })
-  .catch(err => {
-    console.error('狀態更新失敗:', err);
-    showMessage(`狀態更新失敗。`, 'error');
-  });
-}
+
+// 更新角色備註(remark)
+async function updateRemark(remark) {
+    try {
+        const url = `/api/character/${encodeURIComponent(sn)}/remark`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ remark: remark })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || `更新失敗 (${response.status})`);
+        }
+
+        console.log('更新成功:', data);
+        showMessage(`更新成功。`);
+        notifyParent();
+    } catch (error) {
+        console.error('更新失敗:', error);
+        showMessage(`更新失敗。`, 'error');
+    }
+} // updateRemark
+
+// 更新狀態(status)
+async function updateStatus(status) {
+    try {
+        const url = `/api/character/${encodeURIComponent(sn)}/status`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status: status }) 
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || `更新失敗 (${response.status})`);
+        }
+
+        console.log('更新成功:', data);
+        showMessage(`更新成功。`);
+        notifyParent();
+    } catch (error) {
+        console.error('更新失敗:', error);
+        showMessage(`更新失敗。`, 'error');
+    }  
+} // updateStatus
 
 
 /**
@@ -1072,27 +1089,14 @@ function showMessage(text, type = 'success') {
 }
 
 const bc = new BroadcastChannel('edit_file_sync_bus');
-
 function notifyParent() {
-  // --- 新增 postMessage 通知父頁 ---
-  //if (window.opener && !window.opener.closed && fileId) {
-  //  window.opener.postMessage(
-  //    { action: "updated", file_id: fileId },
-  //    window.location.origin
-  //  );
-  //}
-
-  // 大吼大叫...
-  //new BroadcastChannel('edit_file_sync_bus').postMessage('reload_all');
-  
-  // 用 channel 通知檔案更新
-  if (fileId) {
-    bc.postMessage({ action: "updated", file_id: fileId });
-  }
+    if (sn) {
+        bc.postMessage({sn: sn, action: "updated"});
+    }
 }
 
-window.reloadFile = reloadFile;
-window.saveFile = saveFile;
+//window.reloadFile = reloadFile;
+//window.saveFile = saveFile;
 
 window.addEventListener('load', positionDropdown);
 window.addEventListener('resize', positionDropdown);
