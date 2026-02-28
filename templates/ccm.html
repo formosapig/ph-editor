@@ -78,7 +78,7 @@
                 
                 <!-- 場景參與者的 tag -->
                 <div class="tags-container">
-                  <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.id" style="display: contents">
+                  <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.sn" style="display: contents">
                     <div v-if="getTagInfo(bg.tag_id)" class="sc-tag"
                          :style="{ 
                            color: getTagInfo(bg.tag_id).style.color, 
@@ -128,7 +128,7 @@
             <aside><!-- 左邊, 小圖示及標籤 -->
               
               <!-- 人物縮圖 -->
-              <div class="char-avatar-box" @click="openFile(char.fileId)">
+              <div class="char-avatar-box" @click="openFile(char.sn)">
                 <img :src="char.avatar" @error="(e) => e.target.src='/cache/default.jpg'">
               </div>
               

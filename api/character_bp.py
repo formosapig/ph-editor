@@ -8,6 +8,7 @@ import shutil
 from typing import Any, Dict, Tuple, Union
 from PIL import Image
 from flask import Blueprint, Response, current_app, jsonify, request, send_file, session
+from send2trash import send2trash
 from core.character_file_entry import CharacterFileEntry
 from core.shared_data import (
     add_or_update_character_with_path,
@@ -59,7 +60,8 @@ def bulk_delete_characters(scan_path):
         logger.debug(f"Delete {full_path_original}")
         try:
             if os.path.exists(full_path_original):
-                os.remove(full_path_original)
+                # os.remove(full_path_original) 太兇殘了.
+                send2trash(full_path_original)
                 logger.info(f"刪除原始檔案: {full_path_original}")
                 remove_character_file_entry(sn)
                 results.append({"sn": sn, "status": "success"})
@@ -146,19 +148,7 @@ def refresh_character_data(sn):
         tag_style, tag_name = process_tag_info(sn)
 
         if view_mode == 'gallery':        
-
-            data = {
-                "sn": entry.sn,
-                "file_id": entry.file_id,
-                "thumb": f"thumb_{entry.file_id}.jpg",
-                "profile_name": entry.get_profile_name(),
-                "scenario_title": entry.get_scenario_title(),
-                "remark": entry.get_remark(),
-                "status": entry.get_status(),
-                "tag_style": tag_style,
-                "tag_name": tag_name
-            }
-
+            data = entry.to_dict(process_tag_info)
         else:
             return jsonify({"error": f"不支援的視圖模式: {view_mode}"}), 400
 

@@ -1,33 +1,33 @@
 window.addEventListener('DOMContentLoaded', () => {
-  const { profiles, scenarios, metadatas, tag_styles, tag_list, profile_group } = window.rawData;
+    const { profiles, scenarios, metadatas, tag_styles, tag_list, profile_group } = window.rawData;
 
-  const app = PetiteVue.reactive({
-    profiles,
-    scenarios,
-    metadatas,
-    tag_styles,
-    tag_list,
-    profile_group,
+    const app = PetiteVue.reactive({
+        profiles,
+        scenarios,
+        metadatas,
+        tag_styles,
+        tag_list,
+        profile_group,
 
-    hoveredScenarioId: null,
-    hoveredTitle: '',
-    hoveredYear: '',
-    hoveredPlot: '',
-    basePlot: '',
-    hoveredCharacters: [],
-    isLocked: false,
-    // 預設全部收縮...
-    collapsedGroups: profile_group.map(g => g.id), //[], //
-    version: 0,
+        hoveredScenarioId: null,
+        hoveredTitle: '',
+        hoveredYear: '',
+        hoveredPlot: '',
+        basePlot: '',
+        hoveredCharacters: [],
+        isLocked: false,
+        // 預設全部收縮...
+        collapsedGroups: profile_group.map(g => g.id), //[], //
+        version: 0,
 
 
-    get sortedGroups() {
-      return this.profile_group
-        .filter(group => {
-          return true;
-        })
-        .sort((a, b) => a.order - b.order);		
-    },
+        get sortedGroups() {
+        return this.profile_group
+            .filter(group => {
+            return true;
+            })
+            .sort((a, b) => a.order - b.order);		
+        },
 
 
     toggleGroup(groupId) {
@@ -129,75 +129,76 @@ window.addEventListener('DOMContentLoaded', () => {
       this.hoveredPlot = combinedPlot;
     },*/
     
-    _updateHoverState(scId = null) {
-  const sc = this.scenarios[scId];
-  this.hoveredScenarioId = scId;
-  this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
-  this.hoveredYear = sc 
-  ? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] || '') 
-  : '';
+        _updateHoverState(scId = null) {
+            const sc = this.scenarios[scId];
+            this.hoveredScenarioId = scId;
+            this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
+            this.hoveredYear = sc 
+            ? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] || '') 
+            : '';
 
-  //this.hoveredYear = sc 
-  //? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] ? ' ' + {"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] : '') 
-  //: '';
-  // 1. 處理基礎劇情
-  this.basePlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
+            //this.hoveredYear = sc 
+            //? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] ? ' ' + {"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] : '') 
+            //: '';
+            // 1. 處理基礎劇情
+            this.basePlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
 
-  // 2. 準備角色清單 (不再拼接字串)
-  this.hoveredCharacters = [];
-  if (scId && this.metadatas) {
-    this.hoveredCharacters = Object.entries(this.metadatas)
-      .filter(([_, meta]) => String(meta["!scenario_id"]) === String(scId))
-      .map(([metaKey, meta]) => {
-        const bg = meta.backstage || {};
-        const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
-        const tagInfo = this.getTagInfo(bg["!tag_id"]);
+            // 2. 準備角色清單 (不再拼接字串)
+            this.hoveredCharacters = [];
+            if (scId && this.metadatas) {
+                this.hoveredCharacters = Object.entries(this.metadatas)
+                .filter(([_, meta]) => String(meta["!scenario_id"]) === String(scId))
+                .map(([sn, meta]) => {
+                    const bg = meta.backstage || {};
+                    const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
+                    const tagInfo = this.getTagInfo(bg["!tag_id"]);
 
-        // 預先計算好所有顯示邏輯
-        return {
-          fileId: metaKey,
-          name: profile ? profile.name : "未知角色",
-          avatar: `/cache/thumb_${metaKey}.jpg`,
-          age: (profile?.born && sc?.year) ? (parseInt(sc.year) - parseInt(profile.born || 0)) : null,
-          // 標籤樣式物件
-          tag: (tagInfo && tagInfo.name?.zh !== "未設定") ? {
-            name: tagInfo.name.zh,
-            style: {
-              background: tagInfo.style?.background || 'transparent',
-              color: tagInfo.style?.color || '#ccc',
-              borderColor: tagInfo.style?.color || '#ccc'
+                    // 預先計算好所有顯示邏輯
+                    return {
+                        sn: sn,
+                        //fileId: sn,
+                        name: profile ? profile.name : "未知角色",
+                        avatar: `/api/characters/${encodeURIComponent(sn)}/thumbnail`,
+                        age: (profile?.born && sc?.year) ? (parseInt(sc.year) - parseInt(profile.born || 0)) : null,
+                        // 標籤樣式物件
+                        tag: (tagInfo && tagInfo.name?.zh !== "未設定") ? {
+                            name: tagInfo.name.zh,
+                            style: {
+                                background: tagInfo.style?.background || 'transparent',
+                                color: tagInfo.style?.color || '#ccc',
+                                borderColor: tagInfo.style?.color || '#ccc'
+                            }
+                        } : null,
+                        persona: bg.persona || null,
+                        pColor: bg["!persona_code"] || '#B87333',
+                        shadow: bg.shadow || null,
+                        sColor: bg["!shadow_code"] || '#43AD2B',
+                        notes: bg.notes || ''
+                    };
+                });
             }
-          } : null,
-          persona: bg.persona || null,
-          pColor: bg["!persona_code"] || '#B87333',
-          shadow: bg.shadow || null,
-          sColor: bg["!shadow_code"] || '#43AD2B',
-          notes: bg.notes || ''
-        };
-      });
-  }
-},
+        }, // _updateHoverState
 
-getBadgeStyle(color) {
-  if (!color) return {};
-  return {
-    background: `${color}22`,
-    color: color,
-    border: `1px solid ${color};`
-  };
-},
+        getBadgeStyle(color) {
+            if (!color) return {};
+            return {
+                background: `${color}22`,
+                color: color,
+                border: `1px solid ${color};`
+            };
+        },
 
-    // 在 petite-vue 的 app 物件內
-openFile(fileId) {
-  if (!fileId) {
-    alert('無效的檔案 ID');
-    return;
-  }
-  const windowName = `edit_file_${fileId}`;
-  const url = `/edit?file_id=${encodeURIComponent(fileId)}`;
-  console.log(`開啟編輯: ${fileId}`);
-  window.open(url, windowName);
-},
+        // 在 petite-vue 的 app 物件內
+        openFile(sn) {
+            if (!sn) {
+                alert('無效的檔案 ID');
+                return;
+            }
+            const windowName = `edit_file_${sn}`;
+            const url = `/edit/${encodeURIComponent(sn)}`;
+            console.log(`開啟編輯: ${sn}`);
+            window.open(url, windowName);
+        },
 
 
     handleMouseEnter(scId) {
@@ -236,20 +237,19 @@ openFile(fileId) {
       }
     },
     
-    getBackstagesByScenario(scId) {
-      const matchedMetas = Object.entries(this.metadatas ||	{}).filter(
-        ([fileId, meta]) => meta["!scenario_id"] === scId
-      ).flatMap(([fileId, meta]) => {
-        const backstage = meta.backstage || {};
-        return {
-          file_id: fileId,
-          tag_id: backstage["!tag_id"],
-          profile_id: meta["!profile_id"]
-        };
-      });
-  
-      return matchedMetas;
-    },		
+        getBackstagesByScenario(scId) {
+            const matchedMetas = Object.entries(this.metadatas || {}).filter(
+                ([sn, meta]) => meta["!scenario_id"] === scId
+            ).flatMap(([sn, meta]) => {
+                const backstage = meta.backstage || {};
+                return {
+                    sn: sn,
+                    tag_id: backstage["!tag_id"],
+                    profile_id: meta["!profile_id"]
+                };
+            });
+            return matchedMetas;
+        },		
 
     // 輔助函式：透過 tag_id 取得完整的 tag 物件與樣式
     getTagInfo(tagId) {
@@ -275,12 +275,6 @@ openFile(fileId) {
     // 判斷該 event-box 內的 backstage 資訊是否屬於目前這一橫行的 profile
     isCurrentProfile(backstageItem, currentProfileId) {
       return backstageItem.profile_id === currentProfileId;
-    },
-
-    openEditor(fileId, canEdit) {
-      if (!canEdit) return;
-      console.log("正在開啟編輯器:", fileId);
-      // window.open('editor_url/' + fileId);
     },
 
     // 處理點擊標籤開啟檔案

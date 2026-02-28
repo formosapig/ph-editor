@@ -284,38 +284,6 @@ def reload_file(file_id):
         return jsonify({"error": f"處理檔案時發生內部錯誤: {str(e)}"}), 500
 
 
-@app.route("/delete_files", methods=["POST"])
-def delete_files():
-    data = request.get_json()
-    filenames_to_delete = data.get("file_ids", [])  # 改為接收多個檔名（list）
-
-    if not filenames_to_delete or not isinstance(filenames_to_delete, list):
-        return jsonify({"status": "error", "message": "未提供檔案清單或格式錯誤"}), 400
-
-    scan_path = UserConfigManager.load_scan_path()
-    if not scan_path:
-        return jsonify({"status": "error", "message": "請先掃描一個資料夾"}), 400
-
-    results = []
-    for filename_to_delete in filenames_to_delete:
-        full_path_original = os.path.join(scan_path, f"{filename_to_delete}.png")
-        logger.debug(f"Delete {full_path_original}")
-        try:
-            if os.path.exists(full_path_original):
-                os.remove(full_path_original)
-                print(f"刪除原始檔案: {full_path_original}")
-                remove_character_file_entry(filename_to_delete)
-                results.append({"file_id": filename_to_delete, "status": "success"})
-            else:
-                results.append({"file_id": filename_to_delete, "status": "not_found"})
-        except Exception as e:
-            results.append(
-                {"file_id": filename_to_delete, "status": "error", "message": str(e)}
-            )
-
-    return jsonify({"results": results})
-
-
 @app.route('/wishes', methods=['GET', 'POST'])
 def handle_wishes():
     if request.method == 'POST':

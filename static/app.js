@@ -228,10 +228,10 @@ window.addEventListener('DOMContentLoaded', () => {
         },
         
         compareSelected() {
-        if (this.selectedSet.length >= 2) {
-            const files = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
-            window.open(`/compare?files=${files}`, 'CompareSelectedFile');
-        }
+            if (this.selectedSet.length >= 2) {
+                const serial_numbers = this.selectedSet.map(f => encodeURIComponent(f)).join(',');
+                window.open(`/compare?serial_numbers=${serial_numbers}`, 'CompareSelectedFile');
+            }
         },
         
         arrangeSelected() {
@@ -258,7 +258,7 @@ window.addEventListener('DOMContentLoaded', () => {
             
             try {
                 // 1. 向後端請求建議檔名
-                const suggestionRes = await fetch(`api/character/${encodeURIComponent(sn)}/suggest`, {method: 'GET'});
+                const suggestionRes = await fetch(`api/characters/${encodeURIComponent(sn)}/suggest`, {method: 'GET'});
 
                 if (!suggestionRes.ok) {
                     this.showMessage('無法取得建議檔名: ' + (suggestionRes.error || suggestionRes.statusText));
@@ -334,6 +334,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     this.displayedImages.push(newChar);
                 }
 
+                this.selectedSet = [newChar.sn];
                 this.showMessage(`複製成功: ${newChar.file_id}`)
             } catch (err) {
                 this.showMessage(err.displayMessage || '系統錯誤');

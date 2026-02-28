@@ -59,53 +59,54 @@ compare_bp = Blueprint("compare_bp", __name__)
 
 @compare_bp.route("/compare")
 def compare():
-    file_ids_str = request.args.get("files")
+    serial_numbers = request.args.get("serial_numbers")
+    if not serial_numbers:
+        return jsonify({"stauts": "error", "message": "serial_numbers missing"}), 400
     
     selected_characters_processed = []
+    sn_list = [f.strip() for f in serial_numbers.split(',') if f.strip()]
 
-    if file_ids_str:
-        file_ids = [f.strip() for f in file_ids_str.split(',') if f.strip()]
+    for sn in sn_list:
+        try:
+            logger.debug(f"轉換 {sn} 的資料。")
+            character_entry = get_character_file_entry(sn)
 
-        for file_id in file_ids:
-            try:
-                logger.debug(f"轉換 {file_id} 的資料。")
-                character_entry = get_character_file_entry(file_id)
+            if character_entry is None:
+                logger.debug(f"檔案 ID: {sn} 的 character_entry 不存在，跳過轉換。")
+                continue
 
-                if character_entry is None:
-                    logger.debug(f"檔案 ID: {file_id} 的 character_entry 不存在，跳過轉換。")
-                    continue
+            if not hasattr(character_entry, 'character_data'):
+                logger.debug(f"檔案 ID: {sn} 的 character_entry 沒有 'character_data' 屬性，跳過轉換。")
+                continue
 
-                if not hasattr(character_entry, 'character_data'):
-                    logger.debug(f"檔案 ID: {file_id} 的 character_entry 沒有 'character_data' 屬性，跳過轉換。")
-                    continue
+            full_character_data = character_entry.get_character_data()
 
-                full_character_data = character_entry.get_character_data()
+            if not isinstance(full_character_data, dict):
+                logger.debug(f"檔案 ID: {sn} 的 character_data 不是字典類型，而是 {type(full_character_data).__name__}，跳過轉換。")
+                continue
 
-                if not isinstance(full_character_data, dict):
-                    logger.debug(f"檔案 ID: {file_id} 的 character_data 不是字典類型，而是 {type(full_character_data).__name__}，跳過轉換。")
-                    continue
+            logger.debug(f"檔案 ID: {sn} 的所有資料檢查通過，開始進行轉換處理。")
 
-                logger.debug(f"檔案 ID: {file_id} 的所有資料檢查通過，開始進行轉換處理。")
+            final_flat_data = {}
+            final_flat_data['sn'] = sn
+            final_flat_data['file_id'] = character_entry.file_id
+            final_flat_data['remark'] = character_entry.get_remark()
+            
+            # 依次合併
+            final_flat_data.update(flatten_basic_data(full_character_data))
+            final_flat_data.update(flatten_hair_data(full_character_data))
+            final_flat_data.update(flatten_face_data(full_character_data))
+            final_flat_data.update(flatten_body_data(full_character_data))
+            final_flat_data.update(flatten_clothing_data(full_character_data))
+            final_flat_data.update(flatten_accessory_data(full_character_data))
 
-                final_flat_data = {}
-                final_flat_data['file_id'] = file_id
-                final_flat_data['remark'] = character_entry.get_remark()
-                
-                # 依次合併
-                final_flat_data.update(flatten_basic_data(full_character_data))
-                final_flat_data.update(flatten_hair_data(full_character_data))
-                final_flat_data.update(flatten_face_data(full_character_data))
-                final_flat_data.update(flatten_body_data(full_character_data))
-                final_flat_data.update(flatten_clothing_data(full_character_data))
-                final_flat_data.update(flatten_accessory_data(full_character_data))
+            selected_characters_processed.append(final_flat_data)
 
-                selected_characters_processed.append(final_flat_data)
-
-            except Exception as e:
-                # 這裡假設你的 logger 來自 Flask 的 current_app.logger
-                # 如果是獨立的 logger，直接用 logger.error 即可
-                logger.error(f"處理 file_id: {file_id} 時發生錯誤: {e}\n{traceback.format_exc()}")
-                selected_characters_processed.append({"file_id": file_id, "error": f"資料載入失敗: {e}"})
+        except Exception as e:
+            # 這裡假設你的 logger 來自 Flask 的 current_app.logger
+            # 如果是獨立的 logger，直接用 logger.error 即可
+            logger.error(f"處理 file_id: {sn} 時發生錯誤: {e}\n{traceback.format_exc()}")
+            selected_characters_processed.append({"file_id": sn, "error": f"資料載入失敗: {e}"})
 
     # 將 attribute_name_map 的所有 key 依序抽出，填入 attributes_list
     ALL_KEY_NAME_MAP = {}

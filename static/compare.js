@@ -13,10 +13,10 @@ window.addEventListener('DOMContentLoaded', () => {
       return this.attributes.filter(attr => attr !== 'file_id');
     },
 	
-    openEditWindow(fileId) {
-      const windowName = `edit_file_${fileId}`;
-      window.open(`/edit?file_id=${encodeURIComponent(fileId)}`, windowName);
-    },
+        openEditWindow(sn) {
+            const windowName = `edit_file_${sn}`;
+            window.open(`/edit/${encodeURIComponent(sn)}`, windowName);
+        },
 	
     getAttributeBlockClass(attr) {
       const blockType = this.attrBlockMap[attr];

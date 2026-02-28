@@ -34,13 +34,13 @@
     <thead>
       <tr>
         <th class="corner-cell">屬性</th>
-        <th v-for="char in characters" :key="char.file_id"
+        <th v-for="char in characters" :key="char.sn"
             class="file-id-col">
-          <a :href="`/edit?file_id=${encodeURIComponent(char.file_id)}`"
-             :target="`edit_file_${char.file_id}`"
-             @click.prevent="openEditWindow(char.file_id)"
+          <a :href="`/edit/${encodeURIComponent(char.sn)}`"
+             :target="`edit_file_${char.sn}`"
+             @click.prevent="openEditWindow(char.sn)"
              class="file-id-link-content">
-            <img :src="`/cache/thumb_${char.file_id}.jpg`"
+            <img :src="`/api/characters/${char.sn}/thumbnail`"
                  class="file-id-thumbnail" alt="角色縮圖" draggable="false">
             <!--<span class="truncated-file-id">{{ truncateFileId(char.file_id) }}</span>-->
 			<span class="file-id-text">

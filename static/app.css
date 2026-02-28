@@ -395,3 +395,9 @@ button.active {
 .wish-content { font-size: 0.95em; margin-top: 4px; white-space: pre-wrap; word-break: break-all; }
 .wish-input-area { padding: 10px; border-top: 1px solid #eee; background: white; }
 .delete-btn { cursor: pointer; color: #ff4d4f; font-size: 12px; }
+
+
+/* 是不是放最後比較好 */
+[v-cloak] {
+  display: none;
+}
