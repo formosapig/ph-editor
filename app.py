@@ -14,7 +14,7 @@ from flask import (
 )
 from PIL import Image
 
-from api.character_bp import api_character_bp
+from api.character_bp import api_characters_bp
 from api.profile import api_profile_bp
 from api.scenario import api_scenario_bp
 from api.ui_config import api_ui_config_bp
@@ -57,7 +57,7 @@ app.register_blueprint(ccm_bp)
 app.register_blueprint(compare_bp)
 app.register_blueprint(edit_bp)
 app.register_blueprint(general_bp)
-app.register_blueprint(api_character_bp)
+app.register_blueprint(api_characters_bp)
 app.register_blueprint(api_profile_bp)
 app.register_blueprint(api_scenario_bp)
 app.register_blueprint(api_ui_config_bp)
@@ -109,56 +109,6 @@ def index():
 @app.route("/cache/<path:filename>")
 def serve_cache(filename):
     return send_from_directory(CACHE_DIR, filename)
-
-
-@app.get("/cache/sn/<sn>")
-def serve_cache_by_sn(sn):
-    entry = get_character_file_entry(sn)
-    if not entry:
-        return f"Character with SN {sn} not found", 404
-    
-    scan_path = UserConfigManager.load_scan_path()
-    if not scan_path:
-        return "Scan path not configured", 500
-    
-    file_path = os.path.join(scan_path, f"{entry.file_id}.png")
-    if not os.path.exists(file_path):
-        return f"File {entry.file_id}.png not found on disk", 404
-    
-    try:
-        # 取得原始檔的最後修改時間
-        original_mtime = os.path.getmtime(file_path)
-        
-        # 3. 讀取並處理圖片
-        # 注意：這裡雖然每次請求都會進入，但我們可以透過 max_age 讓瀏覽器在 v 沒變時不發請求
-        with Image.open(file_path) as img:
-            # 轉換為 RGB（因為 Play Home 原圖可能有 Alpha 通道，轉 JPG 需移除）
-            img = img.convert("RGB")
-            
-            # 設定縮圖尺寸 (依據你之前的註解 189, 264)
-            #img.thumbnail((189, 264))
-            
-            # 4. 寫入記憶體流 (BytesIO)
-            img_io = io.BytesIO()
-            # 這裡用 JPEG 以節省傳輸頻寬（25kb 左右），若要原始品質可用 PNG
-            img.save(img_io, 'JPEG', quality=85)
-            img_io.seek(0)
-
-        # 5. 回傳記憶體圖檔
-        # 使用 send_file 並指定 last_modified，這能讓瀏覽器處理 If-Modified-Since 標頭
-        logger.debug(f"create thumbnail for {sn}")
-        return send_file(
-            img_io,
-            mimetype='image/jpeg',
-            as_attachment=False,
-            download_name=f"{sn}.jpg",
-            last_modified=original_mtime, # 關鍵：告訴瀏覽器這張圖的最後修改時間
-            max_age=31536000 # 告訴瀏覽器可以快取一年，只要 URL 參數變了就會失效
-        )
-
-    except Exception as e:
-        logger.error(f" [動態縮圖錯誤] {sn} 處理失敗: {e}")
-        return "Internal Server Error", 500
 
 
 @app.route("/get_scan_path", methods=["GET"])
@@ -249,35 +199,9 @@ def scan_folder():
                         f"  [錯誤] 載入或解析檔案 '{file_name_with_ext}' 的角色數據時發生錯誤: {e}"
                     )
                     continue  # 繼續處理下一個檔案
-
-                # 將資料整理好放進 character_list
-                profile_name = character_file_obj.get_profile_name()
-                #logger.debug(f"PROFILE NAME = {profile_name}")
                 
-                scenario_title = character_file_obj.get_scenario_title()
-                #logger.debug(f"SCENARIO TITLE = {scenario_title}")
-                
-                remark = character_file_obj.get_remark()
-
-                tag_style, tag_name = process_tag_info(character_file_obj.sn)
-                #logger.debug(f"tag style : {tag_style}, tag name : {tag_name}")
-
-                status = character_file_obj.get_status()
-                if not status:
-                    status = "draft"
-
                 character_list.append(
-                    {
-                        "sn": character_file_obj.sn,
-                        "file_id": file_id,
-                        "thumb": thumbnail_name,
-                        "profile_name": profile_name,  # 若無資料則為空字串
-                        "scenario_title": scenario_title,  # 有可能為空字串
-                        "tag_style": tag_style,  # 可能為 ""
-                        "tag_name": tag_name,  # 可能為　""
-                        "remark": remark, # 可能為 ""
-                        "status": status,
-                    }
+                    character_file_obj.to_dict(process_tag_info)
                 )
 
     # 1. 掃描完成後, 才有確定的 tag 資料
@@ -358,119 +282,6 @@ def reload_file(file_id):
         # 6. 統一處理所有未預期的錯誤
         logger.exception(f"處理檔案 '{file_id}' 時發生內部錯誤。")
         return jsonify({"error": f"處理檔案時發生內部錯誤: {str(e)}"}), 500
-   
-    
-#@app.route("/suggest_filename", methods=["POST"])
-#def suggest_filename():
-#    data = request.get_json()
-#    file_id = data.get("fileId")
-
-#    logger.debug(f"rename {file_id}")
-    
-#    suggest_filename = get_suggest_filename(file_id)
-    
-#    logger.debug(f"suggest filename : {suggest_filename}")
-
-#    return jsonify({"success": True, "suggested_filename": suggest_filename})
-
-
-@app.route("/rename_file", methods=["POST"])
-def rename_file():
-    """
-    接收舊檔名和新檔名，並重新命名檔案。注意,都未包含副檔名...
-    """
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "error": "請求的 JSON 資料無效"}), 400
-
-    # 1. 取得並檢查必要的參數
-    old_name = data.get("old_filename")
-    new_name = data.get("new_filename")
-
-    if not old_name or not new_name:
-        return jsonify({"success": False, "error": "缺少舊檔名或新檔名"}), 400
-
-    # 2. 取得掃描路徑並安全地組合完整路徑
-    if not scan_path:
-        return jsonify({"success": False, "error": "掃描路徑未設定"}), 500
-
-    # 使用 os.path.join 組合路徑，避免路徑拼接錯誤
-    old_path_full = os.path.join(scan_path, f"{old_name}.png")
-    new_path_full = os.path.join(scan_path, f"{new_name}.png")
-
-    logger.debug(f"{old_path_full} -> {new_path_full}")
-
-    # 3. 增加安全性檢查，防止路徑遍歷攻擊
-    # 確保新舊路徑都在掃描目錄下
-    if not old_path_full.startswith(scan_path) or not new_path_full.startswith(scan_path):
-        return jsonify({"success": False, "error": "不允許的操作：路徑超出掃描目錄範圍"}), 403
-
-    # 4. 進行檔案存在性檢查
-    if not os.path.isfile(old_path_full):
-        # 紀錄錯誤訊息，以便偵錯
-        logger.error(f"檔案不存在：{old_path_full}")
-        return jsonify({"success": False, "error": "舊檔案不存在"}), 404
-
-    # 5. 執行重新命名操作並處理潛在錯誤
-    try:
-        # 檢查新檔名是否已存在，避免覆蓋
-        if os.path.exists(new_path_full):
-             raise FileExistsError(f"目標檔案已存在: {new_name}")
-
-        os.rename(old_path_full, new_path_full)
-        logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
-        
-        # 6. 成功更名後，修改記憶體及常駐資料...
-        file_entry = get_character_file_entry(old_name)
-        if not file_entry:
-            # 【關鍵改動】如果記憶體更新失敗，手動觸發回滾
-            logger.error(f"記憶體缺失，正在回滾檔案名稱: {new_name} -> {old_name}")
-            os.rename(new_path_full, old_path_full) # 改回來
-            raise ValueError(f"找不到對應的 File Entry : {old_name}")
-            
-        file_entry.change_filename(new_name)    
-        
-        return jsonify({"success": True})
-    except FileExistsError:
-        # 如果新檔名已存在
-        logger.error(f"重新命名失敗：新檔案已存在：{new_path_full}")
-        return jsonify({"success": False, "error": "新檔名已存在"}), 409
-    except ValueError as e:
-        # 【標註：改動點】專門捕捉找不到 file_entry 的錯誤
-        logger.error(f"資料一致性錯誤：{e}")
-        return jsonify({"success": False, "error": str(e)}), 404
-    except Exception as e:
-        # 捕捉其他可能的錯誤，例如權限問題等
-        logger.error(f"重新命名時發生錯誤：{e}")
-        return jsonify({"success": False, "error": f"重新命名失敗：{str(e)}"}), 500
-
-
-@app.route("/copy_file", methods=["POST"])
-def copy_file():
-    data = request.get_json()
-    filename = data.get("filename")
-    scan_path = UserConfigManager.load_scan_path()
-
-    if not filename or not scan_path:
-        return jsonify({"status": "error", "message": "參數缺失"}), 400
-
-    src = os.path.join(scan_path, filename)
-    name, ext = os.path.splitext(filename)
-
-    # 核心邏輯：若結尾有 (n)，數字+1；否則加 (1)
-    match = re.search(r"\((\d+)\)$", name)
-    if match:
-        new_name = re.sub(r"\((\d+)\)$", f"({int(match.group(1)) + 1})", name)
-    else:
-        new_name = f"{name}(1)"
-
-    dest = os.path.join(scan_path, f"{new_name}{ext}")
-    
-    try:
-        shutil.copy2(src, dest)
-        return jsonify({"status": "success", "new_file": f"{new_name}{ext}"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/delete_files", methods=["POST"])
