@@ -367,7 +367,7 @@ async function _updateCharacterData(mainTabKey, subTabKey, sn, newData) {
     console.log(`正在自動儲存: ${mainTabKey}/${subTabKey}`);
 
     try {
-        const url = `/api/character/` +
+        const url = `/api/characters/` +
             `${encodeURIComponent(sn)}/data/` +
             `${encodeURIComponent(mainTabKey)}/` +
             `${encodeURIComponent(subTabKey)}`;
@@ -424,7 +424,7 @@ async function _updateCharacterData(mainTabKey, subTabKey, sn, newData) {
 // 更新角色備註(remark)
 async function updateRemark(remark) {
     try {
-        const url = `/api/character/${encodeURIComponent(sn)}/remark`;
+        const url = `/api/characters/${encodeURIComponent(sn)}/remark`;
         const response = await fetch(url, {
             method: 'PATCH',
             headers: {'Content-Type': 'application/json'},
@@ -449,7 +449,7 @@ async function updateRemark(remark) {
 // 更新狀態(status)
 async function updateStatus(status) {
     try {
-        const url = `/api/character/${encodeURIComponent(sn)}/status`;
+        const url = `/api/characters/${encodeURIComponent(sn)}/status`;
         const response = await fetch(url, {
             method: 'PATCH',
             headers: {'Content-Type': 'application/json'},
@@ -483,7 +483,7 @@ function reloadFile() {
   showMessage('正在重新載入檔案數據...');
   //hexDisplay.textContent = '正在重新載入檔案數據...';
 
-  fetch(`/api/character/reload?file_id=${encodeURIComponent(fileId)}`)
+  fetch(`/api/characters/reload?file_id=${encodeURIComponent(fileId)}`)
     .then(response => {
       if (!response.ok) {
         return response.json().then(errData => {
@@ -536,7 +536,7 @@ function saveFile() {
   showMessage('正在儲存資料...');
   //hexDisplay.textContent = '正在儲存資料...';
 
-  fetch('/api/character/save', {
+  fetch('s/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

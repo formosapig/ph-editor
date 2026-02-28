@@ -11,7 +11,7 @@ from flask import (
 # get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
     add_or_update_character_with_path,
-    find_another_file_id_by_scenario_id,
+    find_another_sn_by_scenario_id,
     get_character_file_entry,
 )
 from utils.character_file_utils import (
@@ -38,13 +38,13 @@ def edit(sn):
         result_content = entry.get_character_data()
         append_general_data(result_content)
 
-        sub_file_id = find_another_file_id_by_scenario_id(entry.scenario_id, sn)
+        sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
         
         return render_template(
             "edit.html",
             sn = sn,
+            sub_sn = sub_sn,  # sub file 我們並不編輯它，只秀截圖
             file_id = entry.file_id,
-            sub_file_id = sub_file_id,  # sub file 我們並不編輯它，只秀截圖
             remark = entry.get_remark(),
             status = entry.get_status(),
             data = json.dumps(result_content),

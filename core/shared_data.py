@@ -78,20 +78,20 @@ def get_character_file_entry(sn: str) -> Optional[CharacterFileEntry]:
     return characters_db.get(sn)
 
 
-def remove_character_file_entry(file_id: str):
-    entry = characters_db.get(file_id)
+def remove_character_file_entry(sn: str):
+    entry = characters_db.get(sn)
     
     if not entry:
-        logger.error(f"移除失敗:找不到 file_id 為 '{file_id}'")
-        raise ValueError(f"找不到指定的角色資料: {file_id}")
+        logger.error(f"移除失敗:找不到 SN:'{sn}'")
+        raise ValueError(f"找不到指定的角色資料: {sn}")
 
     try:
         entry.remove_metadata()
-        characters_db.pop(file_id, None)
-        logger.info(f"成功將 {file_id} 從管理系統中移除。")
+        characters_db.pop(sn, None)
+        logger.info(f"成功將 SN:{sn} 從管理系統中移除。")
         
     except Exception as e:
-        logger.error(f"移除 Entry {file_id} 時發生錯誤: {e}")
+        logger.error(f"移除 Entry SN:{sn} 時發生錯誤: {e}")
         raise RuntimeError(f"系統清理失敗: {str(e)}")
 
 
@@ -279,7 +279,7 @@ def get_suggest_file_id(sn: str) -> str:
     return suggested_file_id.strip()
 
 
-def find_another_file_id_by_scenario_id(
+def find_another_sn_by_scenario_id(
     scenario_id: int,
     sn_to_exclude: str
 ) -> Optional[str]:
@@ -294,7 +294,7 @@ def find_another_file_id_by_scenario_id(
         scenario_match = (entry.scenario_id == scenario_id)
         sn_mismatch = (entry.sn != sn_to_exclude)
         if scenario_match and sn_mismatch:
-            return entry.file_id
+            return entry.sn
             
     return None
     
