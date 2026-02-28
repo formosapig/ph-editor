@@ -138,7 +138,7 @@ class ExtraDataManager():
         
     def reload(self):
         """清除並重新載入所有資料。"""
-        logger.info("開始重新載入 ExtraDataManager 資料...")
+        #logger.info("開始重新載入 ExtraDataManager 資料...")
         # 清除現有資料
         self._general_data = None
         self._profile_map = {}
@@ -148,7 +148,7 @@ class ExtraDataManager():
         
         # 重新載入所有資料
         self.initialize_data()
-        logger.info("ExtraDataManager 資料重新載入完成。")
+        #logger.info("ExtraDataManager 資料重新載入完成。")
         
     # 分別儲存各類資料的方法
     def _save_general_data(self):
@@ -354,12 +354,12 @@ class ExtraDataManager():
         self._save_profile_data()
         logger.info(f"Profile {profile_id} 提交成功並存檔。")
     
-    def update_profile_id(self, file_id: str, profile_id: int):
-        logger.debug(f"update PROFILE_ID: ${profile_id} to ${file_id}")
+    def update_profile_id(self, sn: str, profile_id: int):
+        logger.debug(f"update PROFILE_ID: ${profile_id} to ${sn}")
         # 要修改內容,直接內部讀取
-        metadata = self._metadata_map.get(file_id, {})
+        metadata = self._metadata_map.get(sn, {})
         metadata['!profile_id'] = profile_id;
-        self._commit_metadata(file_id, metadata)
+        self._commit_metadata(sn, metadata)
         
     def add_scenario(self, updated_scenario: Dict[str, Any]) -> bool:
         ''' 新增一個 scenario data, 並返回是否新增成功 '''
@@ -415,12 +415,12 @@ class ExtraDataManager():
         self._save_scenario_data()
         logger.info(f"Scenario {scenario_id} 提交成功並存檔。")        
         
-    def update_scenario_id(self, file_id: str, scenario_id: int):
-        logger.debug(f"update SCENARIO_ID: ${scenario_id} to ${file_id}")
+    def update_scenario_id(self, sn: str, scenario_id: int):
+        logger.debug(f"update SCENARIO_ID: ${scenario_id} to ${sn}")
         # 要修改內容,直接內部讀取
-        metadata = self._metadata_map.get(file_id, {})
+        metadata = self._metadata_map.get(sn, {})
         metadata['!scenario_id'] = scenario_id;
-        self._commit_metadata(file_id, metadata)
+        self._commit_metadata(sn, metadata)
         
     def update_backstage(self, sn: str, backstage_data: dict):
         metadata = self._metadata_map.get(sn, {})

@@ -4,3 +4,26 @@
 
 
 }
+
+/* toast */
+.toast-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999; /* 確保在最上層 */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast-message {
+    background: rgba(0, 0, 0, 0.85); /* 帶一點透明度更高級 */
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px; /* 膠囊形狀 */
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: fadeInUp 0.3s ease-out; /* 進入動畫 */
+}
+

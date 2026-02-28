@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <title>PH editor</title>
+  <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
+  <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='app.css') ]]" />
   <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
 </head>
 <body>
-  <div v-scope v-cloak>
+  <div v-scope>
     <div v-effect="onMounted()"></div>
     <div id="actionButtons" class="action-bar">
       <div class="buttons-row">
@@ -58,11 +60,12 @@
            @click="toggleSelect(item.sn, $event)">
         <div class="checkmark">✅</div>
         <div class="thumb-wrapper">
-          <img :src="'/cache/' + item.thumb"
+          <img :src="'/cache/sn/' + item.sn"
                class="thumb"
-               :alt="item.file_id"
-               width="252" 
-               height="352" 
+               :alt="item.sn"
+               width="252"
+               height="352"
+               loading="lazy"
                draggable="false">
           <div v-if="item.profile_name" class="profile-badge">{{ item.profile_name }}</div>
           <div v-if="item.tag_name" 
@@ -132,8 +135,15 @@
       </div>
     </div>
   
-  </div>
+        <!-- show message -->
+        <div class="toast-container">
+            <div v-for="msg in messages" :key="msg.id" class="toast-message">
+                {{ msg.text }}
+            </div>
+        </div>
 
-  <script src="[[ url_for('static', filename='app.js') ]]"></script>
+    </div> <!-- v-scope -->
+
+    <script src="[[ url_for('static', filename='app.js') ]]"></script>
 </body>
 </html>

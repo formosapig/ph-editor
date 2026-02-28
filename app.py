@@ -1,4 +1,5 @@
 # ph-editor/app.py
+import io
 import logging
 import os, shutil
 import re
@@ -8,6 +9,7 @@ from flask import (
     jsonify,
     render_template,
     request,
+    send_file,
     send_from_directory,
 )
 from PIL import Image
@@ -23,7 +25,7 @@ from core.shared_data import (
     add_or_update_character_with_path,
     clear_characters_db,
     process_tag_info,
-    get_suggest_filename,
+    
     initialize_extra_data,
     get_general_data,
     get_character_file_entry,
@@ -109,6 +111,56 @@ def serve_cache(filename):
     return send_from_directory(CACHE_DIR, filename)
 
 
+@app.get("/cache/sn/<sn>")
+def serve_cache_by_sn(sn):
+    entry = get_character_file_entry(sn)
+    if not entry:
+        return f"Character with SN {sn} not found", 404
+    
+    scan_path = UserConfigManager.load_scan_path()
+    if not scan_path:
+        return "Scan path not configured", 500
+    
+    file_path = os.path.join(scan_path, f"{entry.file_id}.png")
+    if not os.path.exists(file_path):
+        return f"File {entry.file_id}.png not found on disk", 404
+    
+    try:
+        # 取得原始檔的最後修改時間
+        original_mtime = os.path.getmtime(file_path)
+        
+        # 3. 讀取並處理圖片
+        # 注意：這裡雖然每次請求都會進入，但我們可以透過 max_age 讓瀏覽器在 v 沒變時不發請求
+        with Image.open(file_path) as img:
+            # 轉換為 RGB（因為 Play Home 原圖可能有 Alpha 通道，轉 JPG 需移除）
+            img = img.convert("RGB")
+            
+            # 設定縮圖尺寸 (依據你之前的註解 189, 264)
+            #img.thumbnail((189, 264))
+            
+            # 4. 寫入記憶體流 (BytesIO)
+            img_io = io.BytesIO()
+            # 這裡用 JPEG 以節省傳輸頻寬（25kb 左右），若要原始品質可用 PNG
+            img.save(img_io, 'JPEG', quality=85)
+            img_io.seek(0)
+
+        # 5. 回傳記憶體圖檔
+        # 使用 send_file 並指定 last_modified，這能讓瀏覽器處理 If-Modified-Since 標頭
+        logger.debug(f"create thumbnail for {sn}")
+        return send_file(
+            img_io,
+            mimetype='image/jpeg',
+            as_attachment=False,
+            download_name=f"{sn}.jpg",
+            last_modified=original_mtime, # 關鍵：告訴瀏覽器這張圖的最後修改時間
+            max_age=31536000 # 告訴瀏覽器可以快取一年，只要 URL 參數變了就會失效
+        )
+
+    except Exception as e:
+        logger.error(f" [動態縮圖錯誤] {sn} 處理失敗: {e}")
+        return "Internal Server Error", 500
+
+
 @app.route("/get_scan_path", methods=["GET"])
 def get_scan_path():
     path = UserConfigManager.load_scan_path()
@@ -145,7 +197,9 @@ def scan_folder():
                 #logger.debug(f"處理 {file_id}")
 
                 # --- 縮圖生成邏輯 ---
+                
                 thumbnail_name = f"thumb_{file_id}.jpg"
+                '''
                 thumbnail_path = os.path.join(CACHE_DIR, thumbnail_name)
 
                 try:
@@ -181,6 +235,7 @@ def scan_folder():
                     print(f"  [錯誤] 生成縮圖 '{file_name_with_ext}' 失敗: {e}")
                     # 縮圖失敗不影響角色數據載入，繼續
                 # --- 縮圖生成邏輯結束 ---
+                # '''
 
                 # --- 角色數據載入邏輯 ---
                 
@@ -305,18 +360,18 @@ def reload_file(file_id):
         return jsonify({"error": f"處理檔案時發生內部錯誤: {str(e)}"}), 500
    
     
-@app.route("/suggest_filename", methods=["POST"])
-def suggest_filename():
-    data = request.get_json()
-    file_id = data.get("fileId")
+#@app.route("/suggest_filename", methods=["POST"])
+#def suggest_filename():
+#    data = request.get_json()
+#    file_id = data.get("fileId")
 
-    logger.debug(f"rename {file_id}")
+#    logger.debug(f"rename {file_id}")
     
-    suggest_filename = get_suggest_filename(file_id)
+#    suggest_filename = get_suggest_filename(file_id)
     
-    logger.debug(f"suggest filename : {suggest_filename}")
+#    logger.debug(f"suggest filename : {suggest_filename}")
 
-    return jsonify({"success": True, "suggested_filename": suggest_filename})
+#    return jsonify({"success": True, "suggested_filename": suggest_filename})
 
 
 @app.route("/rename_file", methods=["POST"])

@@ -109,9 +109,9 @@ def update_character_data(sn: str, main_key: str, sub_key: str, data: any):
 
 def clear_characters_db():
     characters_db.clear()
-    logger.info("角色數據庫已全部清空。")
+    #logger.info("角色數據庫已全部清空。")
     _extra_data_manager.reload()
-    logger.info("額外資料已重讀。")
+    #logger.info("額外資料已重讀。")
 
 
 def process_profile_data(
@@ -222,7 +222,7 @@ def process_tag_info(sn: str) -> tuple[str, str]:
     return tag_style, tag_name
 
 
-def get_suggest_filename(file_id: str) -> str:
+def get_suggest_file_id(sn: str) -> str:
     """
     根據角色、情境或標籤資料，生成一個建議的檔案名稱。不包含副檔名。
     
@@ -232,76 +232,51 @@ def get_suggest_filename(file_id: str) -> str:
     Returns:
         str: 不包含副檔名的建議檔名。
     """
-    # 0. fail file id
-    failed_filename = "未知"
+    default_file_id = "未知"
     
-    # 1. 取得檔案條目並檢查其有效性
-    file_entry = get_character_file_entry(file_id)
-    if not file_entry:
-        return failed_filename
+    entry = get_character_file_entry(sn)
+    if not entry:
+        return default_file_id
 
-    # 2. 判斷是否有 profile ID
-    if file_entry.profile_id is None:
-        return failed_filename
+    if entry.profile_id is None:
+        return default_file_id
     
-    # 3. 取得 Profile 資料並檢查其有效性
-    profile_data = file_entry.get_profile()
+    profile_data = entry.get_profile()
     if not profile_data:
-        return failed_filename
-        
-    # 4. 根據 file_entry.scenario_id 是否為 None 來分流處理
-    if file_entry.scenario_id is None:
-        # 4a. 如果沒有 Scenario，則嘗試使用 Tag 資料
-        tag_type, tag_name = process_tag_info(file_id)
-        
-        logger.debug(f"process tag info : {tag_type}{tag_name}")
-        
+        return default_file_id
+
+    scenario_data = entry.get_scenario()
+
+    if not scenario_data:
+        tag_type, tag_name = process_tag_info(sn)
         if not tag_name:
-            return failed_filename
+            return default_file_id
         
         profile_name = profile_data.get("name", "")
-        suggested_name = f"《{tag_name}》~{profile_name}"
-        return suggested_name.strip()
-        
-    else:
-        # 4b. 如果有 Scenario ID，則取得情境資料並組合檔名
-        scenario_data = file_entry.get_scenario()
-        
-        # 再次檢查情境資料是否成功取得
-        if not scenario_data:
-            # 即使有 ID，如果資料本身不存在，也回到沒有情境的邏輯
-            tag_type, tag_name = process_tag_info(file_id)
-            if not tag_name:
-                return failed_filename
-            
-            profile_name = profile_data.get("name", "")
-            suggested_name = f"《{tag_name}》~{profile_name}"
-            return suggested_name.strip()
+        suggested_file_id = f"《{tag_name}》~{profile_name}"
+        return suggested_file_id.strip()
 
-        # 取得年份資料
-        born_year = profile_data.get("born")
-        scenario_year = scenario_data.get("year")
-        
-        age_str = ""
-        if born_year and scenario_year and isinstance(born_year, (int, str)) and isinstance(scenario_year, (int, str)):
-            try:
-                age = int(scenario_year) - int(born_year)
-                age_str = f"({age})"
-            except (ValueError, TypeError):
-                pass
+    born_year = profile_data.get("born")
+    scenario_year = scenario_data.get("year")
+    age_str = ""
+    if born_year and scenario_year and isinstance(born_year, (int, str)) and isinstance(scenario_year, (int, str)):
+        try:
+            age = int(scenario_year) - int(born_year)
+            age_str = f"({age})"
+        except (ValueError, TypeError):
+            pass
 
-        profile_name = profile_data.get("name", "")
-        scenario_title = scenario_data.get("title", "")
-        
-        if not profile_name and not scenario_title:
-             return failed_filename
+    profile_name = profile_data.get("name", "")
+    scenario_title = scenario_data.get("title", "")
+    if not profile_name and not scenario_title:
+            return default_file_id
 
-        subtitle = file_entry.get_scenario_subtitle()
-        subtitle_part = f"-{subtitle.strip()}" if subtitle and subtitle.strip() else ""
-        suggested_name = f"{profile_name}{age_str}【{scenario_title}{subtitle_part}】"
-        #suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
-                
-        return suggested_name.strip()
+    subtitle = entry.get_scenario_subtitle()
+    subtitle_part = f"-{subtitle.strip()}" if subtitle and subtitle.strip() else ""
+    suggested_file_id = f"{profile_name}{age_str}【{scenario_title}{subtitle_part}】"
+    #suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
+           
+    return suggested_file_id.strip()
 
 
 def find_another_file_id_by_scenario_id(

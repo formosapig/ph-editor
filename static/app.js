@@ -1,6 +1,6 @@
 window.addEventListener('DOMContentLoaded', () => {
 
-  const app = PetiteVue.reactive({
+    const app = PetiteVue.reactive({
     // State
     currentScanPath: '',
     allImages: [],
@@ -21,6 +21,7 @@ window.addEventListener('DOMContentLoaded', () => {
     wishes: [],
     newWishType: '📙',
     newWishContent: '',
+    messages: [],
     
     // Computed
     get scanPathDisplay() {
@@ -238,66 +239,64 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     },
 
-    editSelected() {
-      if (this.selectedSet.length === 1) {
-        const sn = this.selectedSet[0];
-        const windowName = `edit_file_${sn}`;
-        window.open(`/edit/${encodeURIComponent(sn)}`, windowName);
-      }
-    },
+        // 編輯 character
+        editSelected() {
+            if (this.selectedSet.length === 1) {
+                const sn = this.selectedSet[0];
+                const windowName = `edit_file_${sn}`;
+                window.open(`/edit/${encodeURIComponent(sn)}`, windowName);
+            }
+        },
 
-    async renameSelected() {
-      if (this.selectedSet.length !== 1) return;
-
-      const fileId = this.selectedSet[0];
-      //const oldFilename = `${fileId}.png`;
-
-      try {
-        // 1. 向後端請求建議檔名
-        const suggestionRes = await fetch('/suggest_filename', {
-          method: 'POST', // 似乎應該用 patch
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileId: fileId })
-        });
-
-        if (!suggestionRes.ok) {
-          const err = await suggestionRes.json();
-          alert('無法取得建議檔名: ' + (err.error || suggestionRes.statusText));
-          return;
-        }
-
-        const suggestionData = await suggestionRes.json();
-        const suggestedFilename = suggestionData.suggested_filename;
-        const newFilenameInput = prompt('請輸入新的檔名：', suggestedFilename);
-
-        // 如果使用者取消或輸入空白，則停止
-        if (!newFilenameInput || newFilenameInput.trim() === '') {
-          console.log("取消或空白");
-          return;
-        }
+        // 修改 character 的 檔名(file_id)
+        async renameSelected() {
+            if (this.selectedSet.length !== 1) return;
       
-        // 如果新檔名與舊檔名相同，也停止
-        if (newFilenameInput === fileId) {
-          console.log("新舊同名.");
-          return;
-        }
+            const sn = this.selectedSet[0];
+            
+            try {
+                // 1. 向後端請求建議檔名
+                const suggestionRes = await fetch(`api/character/${encodeURIComponent(sn)}/suggest`, {method: 'GET'});
 
-        const newFilename = newFilenameInput.trim();
+                if (!suggestionRes.ok) {
+                    alert('無法取得建議檔名: ' + (suggestionRes.error || suggestionRes.statusText));
+                    return;
+                }
 
-        console.log("do rename.");
+                const suggestionData = await suggestionRes.json();
+                const suggestedFilename = suggestionData.suggested;
+                const newFilenameInput = prompt('請輸入新的檔名：', suggestedFilename);
 
-        // 2. 向後端發送請求來執行重新命名
-        const renameRes = await fetch('/rename_file', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ old_filename: fileId, new_filename: newFilename })
-        });
+                // 如果使用者取消或輸入空白，則停止
+                if (!newFilenameInput || newFilenameInput.trim() === '') {
+                    console.log("取消或空白");
+                    return;
+                }
+      
+                const oldFileName = allImages.find(img => img.sn === sn).file_id;
+                
+                // 如果新檔名與舊檔名相同，也停止
+                if (newFilenameInput === oldFileName) {
+                    console.log("新舊同名.");
+                    return;
+                }
 
-        if (!renameRes.ok) {
-          const err = await renameRes.json();
-          alert('重新命名失敗: ' + (err.error || renameRes.statusText));
-          return;
-        }
+                const newFilename = newFilenameInput.trim();
+
+                console.log("do rename.");
+
+                // 2. 向後端發送請求來執行重新命名
+                const renameRes = await fetch('/rename_file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_filename: fileId, new_filename: newFilename })
+                });
+
+                if (!renameRes.ok) {
+                    const err = await renameRes.json();
+                    alert('重新命名失敗: ' + (err.error || renameRes.statusText));
+                    return;
+                }
 
         //const renameData = await renameRes.json();
         //const newId = renameData.new_id;
@@ -323,15 +322,14 @@ window.addEventListener('DOMContentLoaded', () => {
         //  this.selectedSet.splice(selectedIndex, 1, newId);
         //}
       
-        alert(`檔案已成功重新命名為：${newFilename}`);
+                alert(`檔案已成功重新命名為：${newFilename}`);
 
-        this.scan(this.currentScanPath);
-
-      } catch (e) {
-        alert('網路或伺服器錯誤');
-        console.error(e);
-      }
-    },
+                this.scan(this.currentScanPath);
+            } catch (e) {
+                this.showMessage('網路或伺服器錯誤');
+                console.error(e);
+            }
+        }, // renameSelected
     
     async copySelected() {
       if (this.selectedSet.length !== 1) return;
@@ -576,7 +574,18 @@ window.addEventListener('DOMContentLoaded', () => {
         this.applyFilter(this.filterKey);
       }, 0);
     },
-});
+
+        showMessage(text) {
+            const id = Date.now();
+            this.messages.push({ id, text });
+
+            // 3秒後自動移除該筆訊息
+            setTimeout(() => {
+                this.messages = this.messages.filter(m => m.id !== id);
+            }, 3000);
+        },
+
+    }); // const app = PetiteVue.reactive({
 
     // 接收 editor 資料
     const bc = new BroadcastChannel('edit_file_sync_bus');
@@ -588,6 +597,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     };
   
-  // inital petiteVue
-  PetiteVue.createApp(app).mount('[v-scope]');
-});
+    // inital petiteVue
+    PetiteVue.createApp(app).mount('[v-scope]');
+
+}); // window.addEventListener('DOMContentLoaded', () => {

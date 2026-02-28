@@ -18,6 +18,8 @@ from core.shared_data import (
     update_character_data,
     update_remark_data,
     update_status_data,
+
+    get_suggest_file_id,
 )
 from utils.character_file_utils import reload_character_data
 
@@ -277,3 +279,87 @@ def patch_character_status(sn):
     except Exception as e:
         logger.error(e)
         return jsonify({"error": f"更新失敗: {str(e)}"}), 500
+
+
+@api_character_bp.get("/<sn>/suggest")
+def get_suggest(sn):
+    """ 取得建議的 file_id ，任何失敗都回傳 未知 """
+    suggest = get_suggest_file_id(sn)
+
+    return jsonify({"success": True, "suggested": suggest})
+
+
+@api_character_bp.patch("/<sn>/rename")
+def patch_rename(sn):
+    """
+    對 sn 指定的檔案進行更改 file_id 的動作，包含 metadata 及 os 層的檔案名稱更改
+    """
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "請求的 JSON 資料無效"}), 400
+
+    # 1. 取得並檢查必要的參數
+    old_name = data.get("old_filename")
+    new_name = data.get("new_filename")
+
+    if not old_name or not new_name:
+        return jsonify({"success": False, "error": "缺少舊檔名或新檔名"}), 400
+
+    # 2. 取得掃描路徑並安全地組合完整路徑
+    if not scan_path:
+        return jsonify({"success": False, "error": "掃描路徑未設定"}), 500
+
+    # 使用 os.path.join 組合路徑，避免路徑拼接錯誤
+    old_path_full = os.path.join(scan_path, f"{old_name}.png")
+    new_path_full = os.path.join(scan_path, f"{new_name}.png")
+
+
+    快取檔案也要更改....
+
+    logger.debug(f"{old_path_full} -> {new_path_full}")
+
+    # 3. 增加安全性檢查，防止路徑遍歷攻擊
+    # 確保新舊路徑都在掃描目錄下
+    if not old_path_full.startswith(scan_path) or not new_path_full.startswith(scan_path):
+        return jsonify({"success": False, "error": "不允許的操作：路徑超出掃描目錄範圍"}), 403
+
+    # 4. 進行檔案存在性檢查
+    if not os.path.isfile(old_path_full):
+        # 紀錄錯誤訊息，以便偵錯
+        logger.error(f"檔案不存在：{old_path_full}")
+        return jsonify({"success": False, "error": "舊檔案不存在"}), 404
+
+    # 5. 執行重新命名操作並處理潛在錯誤
+    try:
+        # 檢查新檔名是否已存在，避免覆蓋
+        if os.path.exists(new_path_full):
+             raise FileExistsError(f"目標檔案已存在: {new_name}")
+
+        os.rename(old_path_full, new_path_full)
+        logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
+        
+        # 6. 成功更名後，修改記憶體及常駐資料...
+        file_entry = get_character_file_entry(old_name)
+        if not file_entry:
+            # 【關鍵改動】如果記憶體更新失敗，手動觸發回滾
+            logger.error(f"記憶體缺失，正在回滾檔案名稱: {new_name} -> {old_name}")
+            os.rename(new_path_full, old_path_full) # 改回來
+            raise ValueError(f"找不到對應的 File Entry : {old_name}")
+            
+        file_entry.change_filename(new_name)    
+        
+        return jsonify({"success": True})
+    except FileExistsError:
+        # 如果新檔名已存在
+        logger.error(f"重新命名失敗：新檔案已存在：{new_path_full}")
+        return jsonify({"success": False, "error": "新檔名已存在"}), 409
+    except ValueError as e:
+        # 【標註：改動點】專門捕捉找不到 file_entry 的錯誤
+        logger.error(f"資料一致性錯誤：{e}")
+        return jsonify({"success": False, "error": str(e)}), 404
+    except Exception as e:
+        # 捕捉其他可能的錯誤，例如權限問題等
+        logger.error(f"重新命名時發生錯誤：{e}")
+        return jsonify({"success": False, "error": f"重新命名失敗：{str(e)}"}), 500
+"""

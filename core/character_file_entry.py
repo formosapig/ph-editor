@@ -132,11 +132,11 @@ class CharacterFileEntry:
         
     def update_profile_id(self, profile_id: int):
         self.profile_id = profile_id
-        self.data_source.update_profile_id(self.file_id, profile_id)
+        self.data_source.update_profile_id(self.sn, profile_id)
         
     def update_scenario_id(self, scenario_id: int):
         self.scenario_id = scenario_id
-        self.data_source.update_scenario_id(self.file_id, scenario_id)
+        self.data_source.update_scenario_id(self.sn, scenario_id)
 
     def update_character_data(self, main_key: str, sub_key: str, data: any):
         self.character_data.update_data(main_key, sub_key, data)
