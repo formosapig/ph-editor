@@ -302,7 +302,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 if (renamedDisplayedImage) {
                     renamedDisplayedImage.file_id = newFilename;
                 }
-      
+
+                this.selectedSet = [];
                 this.showMessage(`檔案已成功重新命名為：${newFilename}`);
             } catch (e) {
                 this.showMessage('網路或伺服器錯誤');
