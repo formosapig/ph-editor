@@ -29,6 +29,7 @@ from core.shared_data import (
 
     get_suggest_file_id,
 )
+from core.user_config_manager import UserConfigManager
 from utils.character_file_utils import reload_character_data
 from utils.decorators import require_scan_path
 
@@ -75,6 +76,7 @@ def bulk_delete_characters(scan_path):
     return jsonify({"results": results})
 
 
+'''
 @api_characters_bp.get("/<sn>/thumbnail")
 @require_scan_path
 def get_thumbnail(sn, scan_path):
@@ -107,7 +109,61 @@ def get_thumbnail(sn, scan_path):
     except Exception as e:
         logger.error(f" [動態縮圖錯誤] {sn} 處理失敗: {e}")
         return "Internal Server Error", 500
+'''
+
+
+@api_characters_bp.get("/<sn>/thumbnail")
+@require_scan_path
+def get_thumbnail(sn, scan_path):
+    entry = get_character_file_entry(sn)
+    if not entry:
+        return f"Character with SN {sn} not found", 404
     
+    # 原始檔案路徑
+    file_path = os.path.join(scan_path, f"{entry.file_id}.png")
+    if not os.path.exists(file_path):
+        return f"File {entry.file_id}.png not found on disk", 404
+
+    # 快取檔案路徑
+    CACHE_DIR = UserConfigManager.get_cache_dir()
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
+    thumbnail_path = os.path.join(CACHE_DIR, f"{sn}.jpg")
+
+    try:
+        original_mtime = os.path.getmtime(file_path)
+        
+        # 檢查快取是否存在，且快取檔比原始檔「新」
+        should_generate = True
+        if os.path.exists(thumbnail_path):
+            cache_mtime = os.path.getmtime(thumbnail_path)
+            if cache_mtime >= original_mtime:
+                should_generate = False
+
+        if should_generate:
+            # 重新生成縮圖並儲存至硬碟
+            logger.debug(f"Generating and saving thumbnail for {sn}")
+            with Image.open(file_path) as img:
+                img = img.convert("RGB")
+                # 如果需要縮小尺寸，可以在這裡加入 img.thumbnail((width, height))
+                img.save(thumbnail_path, "JPEG", quality=85)
+        else:
+            # logger.debug(f"Serving cached thumbnail for {sn}")
+            pass
+
+        # 從硬碟發送檔案
+        return send_file(
+            thumbnail_path,
+            mimetype='image/jpeg',
+            as_attachment=False,
+            download_name=f"{sn}.jpg",
+            last_modified=original_mtime
+        )
+
+    except Exception as e:
+        logger.error(f" [硬碟縮圖錯誤] {sn} 處理失敗: {e}")
+        return "Internal Server Error", 500    
+
 
 @api_characters_bp.route("/reload", methods=["GET"])
 def reload_file():
