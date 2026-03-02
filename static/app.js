@@ -131,54 +131,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         },
     
-    /*applyFilter(key) {
-      this.filterKey = key;
-      const rawKw = this.filterKeyword.trim().toLowerCase();
-      this.selectedSet = [];
-
-      // 如果關鍵字為空，直接顯示所有圖片
-      if (!rawKw || !this.filterKey) {
-        this.displayedImages = [...this.allImages];
-        return;
-      }
-
-      // 1. 解析輸入字串，分離出精確關鍵字和模糊關鍵字
-      const parts = rawKw.match(/"[^"]*"|\S+/g) || [];
-    
-      const searchKeywords = parts.map(part => {
-        // 判斷是否為精確比對
-        const isExact = part.startsWith('"') && part.endsWith('"');
-      
-        return {
-          keyword: isExact ? part.replace(/^"|"$/g, '') : part,
-          isExact: isExact
-        };
-      });
-
-      // 如果處理後的關鍵字陣列為空，直接返回所有圖片
-      if (searchKeywords.length === 0) {
-        this.displayedImages = [...this.allImages];
-        return;
-      }
-
-      // 2. 執行篩選邏輯，使用 OR 邏輯比對
-      this.displayedImages = this.allImages.filter(item => {
-        const val = (item[key] || '').toString().toLowerCase();
-
-        // 使用 .some() 方法來實現 OR 邏輯
-        // 只要 val 包含 searchKeywords 陣列中的任一關鍵字，就回傳 true
-        return searchKeywords.some(searchObj => {
-          if (searchObj.isExact) {
-            // 精確比對邏輯
-            return val === searchObj.keyword;
-          } else {
-            // 模糊比對邏輯
-            return val.includes(searchObj.keyword);
-          }
-        });
-      });
-    },*/
-    
         applyFilter(key) {
         this.filterKey = key;
         const rawKw = this.filterKeyword.trim().toLowerCase();
@@ -375,11 +327,12 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // 時空因果矩陣 Chronos Causality Matrix 
         openCCM() {
-        window.open('/ccm', 'EditCCM');
+            window.open('/ccm', 'EditCCM');
         },
 
         // 歲月編輯器
         openEpoch() {
+            window.open('/epoch', 'EditEpoch');
         },
         
         // 許願噴泉

@@ -1,13 +1,15 @@
-window.addEventListener('DOMContentLoaded', () => {
-  const { characters, attributes, attrNameMap, attrBlockMap } = window.rawCompareData;
+import { request } from './request.js';
 
-  // 🔧 使用 reactive 包裝資料與方法
-  const compareData = PetiteVue.reactive({
-    characters,
-    attributes,
-    attrNameMap,
-    attrBlockMap,
-	visibleBlocks: ["hair", "face", "body", "clothing", "accessory"],
+window.addEventListener('DOMContentLoaded', () => {
+    const { characters, attributes, attrNameMap, attrBlockMap } = window.rawCompareData;
+
+    // 🔧 使用 reactive 包裝資料與方法
+    const compareData = PetiteVue.reactive({
+        characters,
+        attributes,
+        attrNameMap,
+        attrBlockMap,
+	    visibleBlocks: ["hair", "face", "body", "clothing", "accessory"],
 	
 	get displayAttributes() {
       return this.attributes.filter(attr => attr !== 'file_id');
@@ -148,44 +150,35 @@ window.addEventListener('DOMContentLoaded', () => {
 	  this.renderKey++;
     },
 
-    // --- 修改開始：新增 reload 單個檔案函式 ---
-    reloadFile(fileId) {
-      fetch(`/compare/reload?file_id=${encodeURIComponent(fileId)}`)
-        .then(resp => resp.json())
-        .then(newData => {
-          const index = this.characters.findIndex(c => c.file_id === fileId);
-          if (index !== -1) {
-            this.characters[index] = newData;
-          } else {
-            this.characters.push(newData);
-          }
-        })
-        .catch(err => {
-          console.error(`Reload file ${fileId} 失敗:`, err);
-        });
-    },
-  });
+        // --- 修改開始：新增 reload 單個檔案函式 ---
+        async reloadFile(sn) {
+            if (!sn) {
+                console.error('無效的 sn', sn);
+                return;
+            }
 
-  // --- 修改開始：加入 postMessage 監聽 ---
-  //window.addEventListener("message", (event) => {
-  //  // 確認訊息來源安全
-  //  if (event.origin !== window.location.origin) return;
+            try {
+                // TODO : 以後有空整合進 /api/character 內...
+                const url = `/compare/${encodeURIComponent(sn)}/refresh?view=compare`
+                const data = await request(url);
+                const index = this.characters.findIndex(c => c.sn === sn);
+                if (index !== -1) {
+                    this.characters[index] = data;
+                }   
+            } catch (error) {
+                console.error(`Reload file ${sn} 失敗:`, error.displayMessage);
+            }
+        },
+    }); // const compareData = PetiteVue.reactive({
 
-  //  const { file_id, action } = event.data;
-  //  if (action === "updated") {
-  //    compareData.reloadFile(file_id);
-	  //window.location.reload();
-  //  }
-  //});
-
-  // 接收 editor 資料
-  const bc = new BroadcastChannel('edit_file_sync_bus');
-  bc.onmessage = (e) => {
-    const {file_id, action} = e.data;
-    if (action === "updated") {
-      compareData.reloadFile(file_id);
-    }
-  };
+    // 接收 editor 資料
+    const bc = new BroadcastChannel('edit_file_sync_bus');
+    bc.onmessage = (e) => {
+        const {sn, action} = e.data;
+        if (action === "updated") {
+            compareData.reloadFile(sn);
+        }
+    };
   
-  PetiteVue.createApp(compareData).mount('[v-scope]');
+    PetiteVue.createApp(compareData).mount('[v-scope]');
 });

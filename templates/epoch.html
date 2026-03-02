@@ -1,0 +1,159 @@
+<div id="app" v-scope="EpochManager()" @mounted="init()">
+    <main class="dashboard">
+        <aside class="sidebar">
+            <section class="profile-selector">
+                <select v-model="selectedProfile" @change="fetchCharacters">
+                    <option v-for="opt in profile_options" :value="opt.id">{{ opt.name }}</option>
+                </select>
+            </section>
+
+            <section class="character-list" @scroll="onScroll">
+                <div 
+                    v-for="char in characters" 
+                    :key="char.sn"
+                    class="character-card"
+                    draggable="true"
+                    @dragstart="handleDragStart($event, char)"
+                    :class="{ 'has-parent': char.parent_sn }"
+                >
+                    <div class="thumb-wrapper">
+                        <img :src="'/path/to/thumb/' + char.file_id" alt="thumb">
+                    </div>
+                    <span class="file-id">{{ char.file_id }}</span>
+                </div>
+            </section>
+        </aside>
+
+        <section class="main-content">
+            <header class="drop-zones">
+                <div class="zone red-zone" 
+                     @dragover.prevent 
+                     @drop="handleDrop($event, 'red')">
+                    <h3>紅區 (終點回溯)</h3>
+                </div>
+                <div class="zone blue-zone" 
+                     @dragover.prevent 
+                     @drop="handleDrop($event, 'blue')">
+                    <div class="epoch-chain">
+                        <div v-for="node in epochChain" class="chain-node">
+                            <img :src="'/path/to/thumb/' + node.file_id">
+                            <span>{{ node.file_id }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <article class="data-display">
+                <table v-if="epochChain.length > 0">
+                    <thead>
+                        <tr><th>欄位</th><th>詳情 (待補)</th></tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+                <div v-else class="placeholder">請拖曳角色至藍區以開始歲月管理</div>
+            </article>
+        </section>
+    </main>
+</div>
+
+<style>
+    :root {
+        --card-w: 126px;
+        --card-h: 176px;
+    }
+
+    .dashboard {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* 側欄樣式 */
+    .sidebar {
+        width: 300px;
+        border-right: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .character-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, var(--card-w));
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .character-card {
+        width: var(--card-w);
+        height: var(--card-h);
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+        text-align: center;
+        cursor: grab;
+    }
+
+    .character-card.has-parent {
+        border: 2px dashed #ffa500; /* 有父代時用橘色虛線標示 */
+    }
+
+    .thumb-wrapper {
+        height: 140px;
+        background: #eee;
+    }
+
+    .file-id {
+        font-size: 12px;
+        line-height: 36px;
+        display: block;
+    }
+
+    /* 右側區域 */
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .drop-zones {
+        height: 200px;
+        display: flex;
+    }
+
+    .zone {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: 0.3s;
+    }
+
+    .red-zone { background-color: #ff4d4d; }
+    .blue-zone { background-color: #4d79ff; }
+
+    .epoch-chain {
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .chain-node {
+        width: 60px; /* 縮小展示 */
+        text-align: center;
+        background: white;
+        color: black;
+        font-size: 10px;
+    }
+
+    .data-display {
+        flex: 1;
+        padding: 20px;
+        background: #fff;
+        overflow-y: auto;
+    }
+</style>

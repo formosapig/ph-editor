@@ -53,7 +53,7 @@ import logging
 from collections import defaultdict 
 
 logger = logging.getLogger(__name__)
-logger.disabled = True
+#logger.disabled = True
 
 compare_bp = Blueprint("compare_bp", __name__)
 
@@ -136,35 +136,36 @@ def compare():
         attribute_block_map=ALL_KEY_BLOCK_MAP,
     )
 
-@compare_bp.route("/compare/reload")
-def compare_reload():
-    file_id = request.args.get("file_id")
-    
-    if not file_id:
-        return jsonify({"error": "file_id missing"}), 400
+@compare_bp.get("/compare/<sn>/refresh")
+def get_refresh(sn):
+    if not sn:
+        return jsonify({"status": "error", "message": "sn missing"}), 400
     
     try:
-        logger.debug(f"轉換 {file_id} 的資料。")
-        character_entry = get_character_file_entry(file_id)
+        logger.debug(f"轉換 {sn} 的資料。")
+        character_entry = get_character_file_entry(sn)
 
         if character_entry is None:
-            logger.debug(f"檔案 ID: {file_id} 的 character_entry 不存在。")
-            return jsonify({"error": "file not found"}), 404
+            logger.debug(f"檔案 ID: {sn} 的 character_entry 不存在。")
+            return jsonify({"status": "error", "message": "character not exist"}), 404
 
         if not hasattr(character_entry, 'character_data'):
-            logger.debug(f"檔案 ID: {file_id} 的 character_entry 沒有 'character_data' 屬性。")
+            logger.debug(f"檔案 ID: {sn} 的 character_entry 沒有 'character_data' 屬性。")
             return jsonify({"error": "invalid character data"}), 400
 
         full_character_data = character_entry.get_character_data()
 
         if not isinstance(full_character_data, dict):
-            logger.debug(f"檔案 ID: {file_id} 的 character_data 不是字典類型，而是 {type(full_character_data).__name__}")
+            logger.debug(f"檔案 ID: {sn} 的 character_data 不是字典類型，而是 {type(full_character_data).__name__}")
             return jsonify({"error": "character data is not dict"}), 400
 
-        logger.debug(f"檔案 ID: {file_id} 的所有資料檢查通過，開始進行轉換處理。")
+        logger.debug(f"檔案 ID: {sn} 的所有資料檢查通過，開始進行轉換處理。")
 
-        final_flat_data = {'file_id': file_id}
-        final_flat_data.update({'remark': character_entry.get_remark()})
+        final_flat_data = {
+            'sn': sn,
+            'file_id': character_entry.file_id,
+            'remark': character_entry.get_remark()
+        }
                 
         # 依次合併
         final_flat_data.update(flatten_basic_data(full_character_data))
@@ -175,7 +176,7 @@ def compare_reload():
         final_flat_data.update(flatten_accessory_data(full_character_data))
 
     except Exception as e:
-        logger.error(f"處理 file_id: {file_id} 時發生錯誤: {e}\n{traceback.format_exc()}")
+        logger.error(f"處理 file_id: {sn} 時發生錯誤: {e}\n{traceback.format_exc()}")
         return jsonify({"error": f"資料載入失敗: {e}"}), 500
 
     # 回傳 JSON
