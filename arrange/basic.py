@@ -10,7 +10,7 @@ BASIC_KEY_NAME_MAP = {
     "age": "年齡",
     "persona": "外顯",
     "shadow": "內隱",
-    "title": "場景",
+    "scene": "場景",
 }
 
 BASIC_KEY_BLOCK_MAP = {key: 'basic' for key in BASIC_KEY_NAME_MAP}
@@ -29,6 +29,6 @@ def flatten_basic_data(d: Dict[str, Any]) -> Dict[str, Any]:
     
     result["persona"] = get_nested_value(d, "story.backstage.persona", "")
     result["shadow"] = get_nested_value(d, "story.backstage.shadow", "")
-    result["title"] = get_nested_value(d, "story.scenario.title", "")
+    result["scene"] = get_nested_value(d, "story.scenario.scene", "")
 
     return result

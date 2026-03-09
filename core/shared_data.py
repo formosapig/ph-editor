@@ -267,14 +267,14 @@ def get_suggest_file_id(sn: str) -> str:
             pass
 
     profile_name = profile_data.get("name", "")
-    scenario_title = scenario_data.get("title", "")
-    if not profile_name and not scenario_title:
+    scenario_scene = scenario_data.get("scene", "")
+    if not profile_name and not scenario_scene:
             return default_file_id
 
-    subtitle = entry.get_scenario_subtitle()
-    subtitle_part = f"-{subtitle.strip()}" if subtitle and subtitle.strip() else ""
-    suggested_file_id = f"{profile_name}{age_str}【{scenario_title}{subtitle_part}】"
-    #suggested_name = f"{profile_name}{age_str}【{scenario_title}-{file_entry.get_scenario_subtitle()}】.png"
+    title = entry.get_character_title()
+    title_part = f"-{title.strip()}" if title and title.strip() else ""
+    #suggested_file_id = f"{profile_name}{age_str}【{scenario_scene}{title_part}】"
+    suggested_file_id = f"{profile_name}{age_str}【{title_part}】"
            
     return suggested_file_id.strip()
 

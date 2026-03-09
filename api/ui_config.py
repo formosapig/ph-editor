@@ -184,30 +184,23 @@ def get_scenario_list():
     if zero_scenario:
         options.append(
             {
-                "label": zero_scenario.get("title", f"id:{zero_scenario.get('!id', '')}"),
+                "label": zero_scenario.get("scene", f"id:{zero_scenario.get('!id', '')}"),
                 "value": zero_scenario.get("!id", ""),
             }
         )
 
     # 加入剩下排序後的 options
     for scenario in sorted_scenarios:
-        #options.append(
-        #    {
-        #        "label": scenario.get("title", f"id:{scenario.get('!id', '')}"),
-        #        "value": scenario.get("!id", ""),
-        #    }
-        #)
-        
-        # 嘗試從 scenario 取得 "title" 和 "year"
-        title = scenario.get("title", f"id:{scenario.get('!id', '')}")
+        # 嘗試從 scenario 取得 "scene" 和 "year"
+        scene = scenario.get("scene", f"id:{scenario.get('!id', '')}")
         year = scenario.get("year")
         scenario_id = scenario.get("!id", "")
 
         # 根據是否有 "year" 來建構 label 格式
         if year:
-            label = f"{title}({year})"
+            label = f"{scene}({year})"
         else:
-            label = title  # 如果沒有 year，則保持原來的 title
+            label = scene  # 如果沒有 year，則保持原來的 scene(標題)
 
         options.append(
             {
@@ -230,7 +223,7 @@ def get_scenario_list():
         {
             "displayLabel": "場景選擇",
             "dataKey": "!id",
-            "labelKey": "title",
+            "labelKey": "scene",
             "options": options,
             "defaultValue": ""
         },
@@ -247,21 +240,21 @@ def get_scenario_list():
 
 
 def sort_key_with_int_year(scenario):
-    """ 供　get_scenario_list　使用　"""
+    """ 供 get_scenario_list 使用 """
     year_value = scenario.get("year")
-    title = scenario.get("title", "")
+    scene = scenario.get("scene", "")
     
     # 檢查 year_value 是否為 None (缺失值)
     if year_value is None:
         # 1. Flag: 1 (排在後面)
         # 2. Year_Value: 使用一個極大的值，確保排在所有有效年份之後
-        # 3. Title: 用於缺失年份之間的排序
-        return (1, float('inf'), locale.strxfrm(title))
+        # 3. Scene: 用於缺失年份之間的排序
+        return (1, float('inf'), locale.strxfrm(scene))
     else:
         # 1. Flag: 0 (排在前面)
         # 2. Year_Value: 實際的年份數字 (假設是 int 或 float)
-        # 3. Title: 用於年份相同時的次要排序
-        return (0, year_value, locale.strxfrm(title))
+        # 3. Scene: 用於年份相同時的次要排序
+        return (0, year_value, locale.strxfrm(scene))
                 
 
 @api_ui_config_bp.route("/backstage_options", methods=["GET"])

@@ -81,8 +81,8 @@ class CharacterFileEntry:
                 
         return name.strip()
     
-    def get_scenario_title(self) -> str:
-        """ Scenario 資料中取得 title """
+    def get_scenario_scene(self) -> str:
+        """ Scenario 資料中取得 scene(標題) """
         if self.scenario_id is None:
             return ""
 
@@ -92,21 +92,21 @@ class CharacterFileEntry:
                 f"❌ 無法從 Scenario ID '{self.scenario_id}' 取得有效的 Scenario 資料。"
             )
 
-        title = scenario_data.get("title")
-        if not isinstance(title, str) or not title.strip():
+        scene = scenario_data.get("scene")
+        if not isinstance(scene, str) or not scene.strip():
             raise ValueError(
-                f"❌ Scenario ID '{self.scenario_id}' 的 'title' 欄位無效或為空。"
+                f"❌ Scenario ID '{self.scenario_id}' 的 'scene' 欄位無效或為空。"
             )
                 
-        return title.strip()
+        return scene.strip()
 
-    def get_scenario_subtitle(self) -> str:
-        """ scenario 的 subtitle 存放在 metadta.backstage """
-        metadata:Dict[str, any] = self.data_source.get_metadata(self.file_id)
+    def get_character_title(self) -> str:
+        """ character 的 title 存放在 metadta.backstage """
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
         if metadata is None:
             return ""
         else:
-            return metadata.get('backstage', {}).get('subtitle', "").strip()
+            return metadata.get('backstage', {}).get('title', "").strip()
         
     def get_filename(self) -> str:
         return self.filename
@@ -190,7 +190,7 @@ class CharacterFileEntry:
             "sn": self.sn,
             "file_id": self.file_id,
             "profile_name": self.get_profile_name(),
-            "scenario_title": self.get_scenario_title(),
+            "scenario_scene": self.get_scenario_scene(),
             "remark": self.get_remark(),
             "status": self.get_status(),
             "tag_style": t_style,

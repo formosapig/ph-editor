@@ -11,7 +11,7 @@ BASIC_KEY_NAME_MAP = {
     "tag": "標籤",
     "persona": "外顯",
     "shadow": "內隱",
-    "title": "場景",
+    "scene": "場景",
     "plot": "劇情",
     "notes": "備註",
 }
@@ -33,14 +33,14 @@ def flatten_basic_data(d: Dict[str, Any]) -> Dict[str, Any]:
     result["persona"] = get_nested_value(d, "story.backstage.persona", "")
     result["shadow"] = get_nested_value(d, "story.backstage.shadow", "")
     
-    title = get_nested_value(d, "story.scenario.title", "")
-    subtitle = get_nested_value(d, "story.backstage.subtitle", "")
-    if title != "":
-        result["title"] = "🎬" + title
-        if subtitle != "":
-            result["title"] += "-" + subtitle
+    scene = get_nested_value(d, "story.scenario.scene", "")
+    title = get_nested_value(d, "story.backstage.title", "")
+    if scene != "":
+        result["scene"] = "🎬" + scene
+        if title != "":
+            result["scene"] += "-" + title
     else:
-        result["title"] = ""
+        result["scene"] = ""
         
     result["plot"] = get_nested_value(d, "story.scenario.plot", "")
     

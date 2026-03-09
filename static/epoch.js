@@ -1,51 +1,59 @@
-function EpochManager() {
-    return {
-        profile_options: window.profile_options || [], // 從 Flask 傳入
-        selectedProfile: null,
+import { request } from './request.js';
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('epochManager', () => ({
+        selectedProfile: '',
+        profile_options: [
+            { id: 1, name: '存檔 A' },
+            { id: 2, name: '存檔 B' }
+        ],
         characters: [],
-        epochChain: [], // 存放藍區中的角色鏈
-        draggedItem: null,
+        epochChain: [],
+        draggedChar: null,
 
         init() {
-            console.log('Epoch Manager Ready');
+            console.log("Epoch Manager 啟動");
+            // 模擬初始抓取資料
+            this.fetchCharacters();
         },
 
-        async fetchCharacters() {
-            // 這裡實作 AJAX 向 Flask 拿資料
-            // const resp = await fetch(`/api/chars/${this.selectedProfile}`);
-            // this.characters = await resp.json();
+        fetchCharacters() {
+            console.log("正在獲取 Profile 的角色:", this.selectedProfile);
+            // 這裡模擬從 Flask API 獲取資料
+            // 範例資料：
+            this.characters = [
+                { sn: 1, file_id: 'C001', parent_sn: null },
+                { sn: 2, file_id: 'C002', parent_sn: 1 },
+                { sn: 3, file_id: 'C003', parent_sn: null }
+            ];
         },
 
-        handleDragStart(e, char) {
-            this.draggedItem = char;
-            e.dataTransfer.setData('text/plain', char.sn);
+        handleDragStart(event, char) {
+            this.draggedChar = char;
+            // 設定傳輸資料（標準做法）
+            event.dataTransfer.setData('text/plain', JSON.stringify(char));
         },
 
-        handleDrop(e, zone) {
-            const char = this.draggedItem;
-            if (!char) return;
+        handleDrop(event, zoneColor) {
+            if (!this.draggedChar) return;
 
-            if (zone === 'blue') {
-                // 規則：有父代不能直接拉進藍區起點/中繼（除非是邏輯上的子代追加）
-                if (char.parent_sn && this.epochChain.length === 0) {
-                    alert("此角色非始祖，不能作為歲月起點！");
-                    return;
+            if (zoneColor === 'blue') {
+                // 避免重複添加
+                if (!this.epochChain.find(c => c.sn === this.draggedChar.sn)) {
+                    this.epochChain.push(this.draggedChar);
                 }
-                this.epochChain.push(char);
-            } 
-            
-            else if (zone === 'red') {
-                // 規則：作為結尾，觸發回溯（此處示範邏輯，實際可能需 call API）
-                this.traceBackParent(char);
+            } else if (zoneColor === 'red') {
+                alert('回溯功能啟動：' + this.draggedChar.file_id);
             }
+            
+            this.draggedChar = null;
         },
 
-        traceBackParent(char) {
-            // 假設這裡做一個遞迴或請求，將所有祖先找出來並更新到 epochChain
-            // 邏輯：[祖父, 父親, 自己]
-            console.log("正在從紅區回溯父代...", char.sn);
-            // 範例更新：
-            // this.epochChain = fetchedAncestors;
+        onScroll(event) {
+            const { scrollTop, scrollHeight, clientHeight } = event.target;
+            if (scrollTop + clientHeight >= scrollHeight - 5) {
+                console.log("觸發無限滾動 - 載入更多角色");
+            }
         }
-    }
-}
+     }));
+});

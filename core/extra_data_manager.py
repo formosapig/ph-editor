@@ -37,11 +37,11 @@ ORDER_PROFILE = ["!id", "name", "!group_id", "group", "born", "job", "role", "he
 
 DEFAULT_SCENARIO_TEMPLATE = {
     "!id": 0,
-    "title": "新場景",
+    "scene": "新場景",
     "year": 1911,
 }
 
-ORDER_SCENARIO = ["!id", "title", "year", "season", "plot", "notes"]
+ORDER_SCENARIO = ["!id", "scene", "year", "season", "plot", "notes"]
 
 DEFAULT_BACKSTAGE_TEMPLATE = {
     "!tag_id": 1,
@@ -52,7 +52,7 @@ DEFAULT_BACKSTAGE_TEMPLATE = {
     "shadow": "熱情",
 }
 
-ORDER_BACKSTAGE = ["subtitle", "tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "notes"]
+ORDER_BACKSTAGE = ["title", "tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "notes"]
 
 ORDER_EPOCH = [] # 暫時先空著...
 

@@ -694,15 +694,15 @@ function getApiUrl(mainTab, subTab) {
 }
 
 function resetDropdownUI() {
-  // 清空並隱藏所有下拉選單插槽
-  dropdownSlotIds.forEach(slotId => {
-      const slot = document.getElementById(slotId);
-      if (slot) {
-          slot.innerHTML = ''; // 清空內容
-          slot.style.display = 'none'; // 隱藏插槽
-      }
-  });
-  document.getElementById('dropdown-container').classList.remove('show');
+    // 清空並隱藏所有下拉選單插槽
+    dropdownSlotIds.forEach(slotId => {
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = ''; // 清空內容
+            //slot.style.display = 'none'; // 隱藏插槽
+        }
+    });
+    document.getElementById('dropdown-container').classList.remove('show');
 }
 
 async function handleBackstageDropdown(result, { mainTab, subTab }) {
@@ -813,6 +813,7 @@ function renderDropdownSlots(dropdowns, { mainTab, subTab }, onSelectCallback = 
     });
 }
 
+/*
 function positionDropdown() {
   const dropdown = document.getElementById('dropdown-container');
   const mainContentShell = document.getElementById('main-content-shell');
@@ -843,6 +844,41 @@ function positionDropdown() {
   } else {
     mainContent.style.maxWidth = '50px'; // 防止太小
   }
+}*/
+
+function positionDropdown() {
+    /*
+    const dropdown = document.getElementById('dropdown-container');
+    const mainContentShell = document.getElementById('main-content-shell');
+    const mainContent = document.getElementById('main-content');
+    const tabContainer = document.querySelector('.tab-container');
+
+    if (!dropdown || !mainContentShell || !mainContent || !tabContainer) return;
+
+    const shellRect = mainContentShell.getBoundingClientRect();
+    const containerRect = tabContainer.getBoundingClientRect();
+    const dropdownRect = dropdown.getBoundingClientRect();
+
+    const margin = 10; // 邊距
+
+    // --- 修改處：計算位置改為相對左側 ---
+    const top = shellRect.top - containerRect.top + margin;
+    const left = shellRect.left - containerRect.left + margin; // 改用 left
+
+    dropdown.style.position = 'absolute';
+    dropdown.style.top = `${top}px`;
+    dropdown.style.left = `${left}px`; // 從 right 改為 left
+    dropdown.style.right = 'auto';     // 清除之前的 right 設定
+    // --------------------------------
+
+    // 計算 main-content 的寬度補償 (讓文字避開左側選單)
+    const dropdownWidth = dropdownRect.width === 0 ? 0 : dropdownRect.width + margin * 2;
+  
+    // --- 修改處：使用 textIndent 或 padding 讓內容避開選單 ---
+    // 因為選單現在在左邊，我們讓內容向右偏移
+    mainContent.style.paddingLeft = `${dropdownWidth + 15}px`; 
+    mainContent.style.maxWidth = '100%'; // 取消原本對寬度的限制
+    */
 }
 
 function showMessage(text, type = 'success') {

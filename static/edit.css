@@ -294,16 +294,16 @@ button:disabled {
 /* 第二層 tab 結束 */
 
 .content-and-thumbnail-wrapper {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  gap: 15px;
-  padding: 8px 10px 10px 10px;
-  box-sizing: border-bodx;  
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-bodx;  
 }
 
 #main-content-shell {
-  flex: 75%;                  /* 佔滿剩餘空間 */
+  flex: 1; /*75%;                  /* 佔滿剩餘空間 */
   position: relative;       /* 給絕對定位用的參考點 */
   background-color: #fdfaf3; /* 保留背景色 */
   border: 1px solid #d8cfc0; /* 保留邊框 */
@@ -312,8 +312,7 @@ button:disabled {
   margin-top: 0; /*8px;*/
   min-height: 0;            /* flex 正常縮小 */
   box-sizing: border-box;
-  
-  
+  min-width: 0;
 }
 
 #main-content:focus {
@@ -345,9 +344,15 @@ button:disabled {
 
 /* START: 修改部分 - 浮動下拉選單及其插槽樣式 */
 .floating-dropdown {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+    /* position: absolute;
+    top: 10px;
+    left: 10px;
+    right: auto;
+  /*right: 10px;*/
+  
+    flex: 0 0 160px;
+    width: 160px;
+    min-height: 100px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -364,15 +369,16 @@ button:disabled {
 }
 
 .floating-dropdown:not(.show) {
-  display: none;
+    /*display: none;*/
+    visibility: hidden;
 }
 
 .dropdown-slot {
-  display: flex;
-  /*align-items: center;*/
-  flex-direction: column;
-  gap: 8px;
-  /*display: none;*/
+    display: flex;
+    /*align-items: center;*/
+    flex-direction: column;
+    gap: 8px;
+    /*display: none;*/
 }
 
 .dropdown-slot label {
@@ -392,6 +398,8 @@ button:disabled {
   user-select: text;
   flex-grow: 1;
   min-width: 80px;
+  /*max-width: 120px;*/
+  /*width: 140px;*/
 }
 /* END: 修改部分 */
 
@@ -403,7 +411,7 @@ button:disabled {
   user-select: none; 
   cursor: default;
   
-  flex: 25%;
+  flex: 0 0 25%;
   height: 100%;
   
   display: flex;

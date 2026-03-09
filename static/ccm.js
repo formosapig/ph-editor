@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', () => {
         profile_group,
 
         hoveredScenarioId: null,
-        hoveredTitle: '',
+        hoveredScene: '',
         hoveredYear: '',
         hoveredPlot: '',
         basePlot: '',
@@ -48,91 +48,10 @@ window.addEventListener('DOMContentLoaded', () => {
       return this.sortedProfiles.filter(p => p.group_id === groupId);
     },
 
-    /*
-    _updateHoverState(scId = null) {
-      const sc = this.scenarios[scId];
-      this.hoveredScenarioId = scId;
-      this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
-      this.hoveredYear  = sc ? sc.year  : '';
-
-      let combinedPlot = sc ? sc.plot : (scId ? '暫無劇情簡介' : '');
-      combinedPlot = combinedPlot.replace(/\n/g, '<br>');
-
-      if (scId && this.metadatas) {
-        const matchedEntries = Object.entries(this.metadatas).filter(
-          ([_, meta]) => String(meta["!scenario_id"]) === String(scId)
-        );
-
-        if (matchedEntries.length > 0) {
-        //combinedPlot += '<hr>';
-
-          const extraInfo = matchedEntries.map(([_, meta]) => {
-            const bg = meta.backstage || {};
-            const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
-
-            // 處理角色標籤 (套用 .sc-tag 類別) ---
-            const tagInfo = this.getTagInfo(bg["!tag_id"]);
-            let tagHtml = "";
-            if (tagInfo && tagInfo.name && tagInfo.name.zh !== "未設定") {
-              const ts = tagInfo.style || {};
-              // 直接使用你的 .sc-tag class，並動態注入顏色與背景
-              tagHtml = `<span class="sc-tag" style="
-                background: ${ts.background || 'transparent'}; 
-                color: ${ts.color || '#ccc'}; 
-                border: 1px ${ts.borderStyle || 'solid'} ${ts.color || '#ccc'};
-                margin-right: 4px;
-                padding: 2px 5px;
-                font-size: 11px;
-                ">${tagInfo.name.zh}</span>`;
-            }
-
-            // 優化年齡顯示 (使用細體或灰字)
-            let ageHtml = "";
-            if (profile?.born && sc?.year) {
-              const age = parseInt(sc.year) - parseInt(profile.born);
-              ageHtml = `<span style="font-weight: normal; opacity: 0.8; font-size: 0.9em;"> · ${age}歲</span>`;
-            }
-
-            // 2. 優化 Persona/Shadow 顯示 (條件渲染)
-            const pColor = bg["!persona_code"] || '#B87333';
-            const sColor = bg["!shadow_code"] || '#43AD2B';
-
-            // 定義標籤的共用樣式，增加 margin-left 讓 Emoji 跟標籤、標籤跟標籤之間有間距
-            const baseTagStyle = (color) => `background: ${color}22; color: ${color}; border: 1px solid ${color}; padding: 0 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle;`;
-            const personaHtml = bg.persona 
-              ? `<span style="margin-left: 8px; vertical-align: middle;">🎭</span><span style="${baseTagStyle(pColor)}">${bg.persona}</span>` 
-              : "";
-
-            const shadowHtml = bg.shadow 
-              ? `<span style="margin-left: 4px; vertical-align: middle;">👤</span><span style="${baseTagStyle(sColor)}">${bg.shadow}</span>` 
-              : "";
-
-            // 將兩者組合，如果都沒有資料，這裡會是空字串
-            const tagsHtml = `${personaHtml}${shadowHtml}`;
-
-            const name = profile ? profile.name : "未知角色";
-            const notes = bg.notes?.replace(/\n/g, '<br>') ?? '';
-
-            return `
-              <hr>
-              <div style="font-size: 1.05em; font-weight: bold;">
-                ${tagHtml}
-                <span style="font-size: 1.2em; font-weight: bold; color: #ffffff; vertical-align: middle; letter-spacing: 0.5px;">${name}</span>
-                ${ageHtml}
-                ${tagsHtml}
-              </div>
-              <div>${notes || ''}</div>`;
-          }).join('');
-          combinedPlot += extraInfo;
-        }
-      }
-      this.hoveredPlot = combinedPlot;
-    },*/
-    
         _updateHoverState(scId = null) {
             const sc = this.scenarios[scId];
             this.hoveredScenarioId = scId;
-            this.hoveredTitle = sc ? sc.title : (scId ? '未命名事件' : '');
+            this.hoveredScene = sc ? sc.scene : (scId ? '未命名事件' : '');
             this.hoveredYear = sc 
             ? sc.year + ({"spring":"🌸","summer":"☀️","autumn":"🍁","winter":"❄️"}[sc.season?.toLowerCase()] || '') 
             : '';
@@ -340,7 +259,7 @@ window.addEventListener('DOMContentLoaded', () => {
           const actors = Object.keys(this.metadatas).filter(k => 
             metadatas[k]["!scenario_id"] === sid
           );
-          results.push({ id: sid, title: sc.title, actors });
+          results.push({ id: sid, scene: sc.scene, actors });
         }
       });
       return results;
@@ -381,7 +300,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	},
 	
 	// 取得當前事件方塊應套用的主題色
-	getScenarioTitleStyle(scId, profileId) {
+	getScenarioSceneStyle(scId, profileId) {
 	  // 1. 找到該事件中，屬於當前角色的第一個後台資料
 	  const backstages = this.getBackstagesByScenario(scId);
 	  const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.tag_id);

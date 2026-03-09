@@ -19,6 +19,8 @@ from api.profile import api_profile_bp
 from api.scenario import api_scenario_bp
 from api.ui_config import api_ui_config_bp
 from config.logging_setup import setup_logging
+from utils.exceptions import APIError
+from werkzeug.exceptions import HTTPException
 
 # 從 shared_data 模組引入相關函式
 from core.shared_data import (
@@ -39,6 +41,7 @@ from web.arrange_bp import arrange_bp
 from web.ccm_bp import ccm_bp
 from web.compare_bp import compare_bp
 from web.edit_bp import edit_bp
+from web.epoch_bp import epoch_bp
 from web.general_bp import general_bp
 
 # 初始化時確保所有目錄存在
@@ -47,6 +50,12 @@ UserConfigManager.ensure_dir()
 # app = Flask(__name__)
 # 建立 Flask 應用程式實例，並只設定變數的分隔符號
 app = Flask(__name__, template_folder='templates')
+
+# json setting.
+#app.config['JSON_AS_ASCII'] = False  # 讓中文正常顯示，不噴 \uXXXX
+#app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True  # 讓瀏覽器直接看就有縮排
+
+# 換 jinja delimeters 
 app.jinja_env.variable_start_string = '[['
 app.jinja_env.variable_end_string = ']]'
 app.jinja_env.block_start_string = '[%'
@@ -56,11 +65,37 @@ app.register_blueprint(arrange_bp)
 app.register_blueprint(ccm_bp)
 app.register_blueprint(compare_bp)
 app.register_blueprint(edit_bp)
+app.register_blueprint(epoch_bp)
 app.register_blueprint(general_bp)
 app.register_blueprint(api_characters_bp)
 app.register_blueprint(api_profile_bp)
 app.register_blueprint(api_scenario_bp)
 app.register_blueprint(api_ui_config_bp)
+
+
+# error handler.
+@app.errorhandler(APIError)
+def handle_custom_api_error(e):
+    """處理主動拋出的 APIError (符合 RESTful 規範)"""
+    return jsonify({
+        "error": e.message,
+        "code": e.__class__.__name__, # 多帶一個錯誤類型方便前端判斷
+    }), e.status_code
+
+
+@app.errorhandler(HTTPException)
+def handle_standard_http_error(e):
+    """處理 Flask 內建錯誤 (例如 404 Not Found 或 405 Method Not Allowed)"""
+    return jsonify({"error": e.description}), e.code
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    """處理程式 Bug (例如除以零、KeyError)，確保前端不崩潰"""
+    # 這裡可以加入 log 紀錄真正的錯誤原因
+    app.logger.error(f"Unhandled Exception: {str(e)}")
+    return jsonify({"error": "Internal Server Error"}), 500
+
 
 # 設定快取路徑
 CACHE_DIR = UserConfigManager.get_cache_dir()
@@ -265,7 +300,7 @@ def reload_file(file_id):
             "thumb": f"thumb_{file_id}.jpg",
             "id": file_id,
             "profile_name": character_file_obj.get_profile_name(),
-            "scenario_title": character_file_obj.get_scenario_title(),
+            "scenario_scene": character_file_obj.get_scenario_scene(),
             "remark": character_file_obj.get_remark(),
             "status": character_file_obj.get_status(),
         }

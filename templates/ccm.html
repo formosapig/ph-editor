@@ -7,7 +7,8 @@
   <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
-  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='ccm.js') ]]" defer></script>
   <script>
     window.rawData = {
       profiles: [[ profiles | tojson ]],
@@ -74,7 +75,7 @@
                    @mouseleave="handleMouseLeave()">
                 
                 <!-- 場景標題 -->   
-                <div class="sc-name" :style="getScenarioTitleStyle(sc.id, p['!id'])">{{ sc.title }}</div>
+                <div class="sc-name" :style="getScenarioSceneStyle(sc.id, p['!id'])">{{ sc.scene }}</div>
                 
                 <!-- 場景參與者的 tag -->
                 <div class="tags-container">
@@ -98,7 +99,7 @@
     </div>
     
     <!-- 浮動 Plot -->	
-    <div v-if="hoveredTitle || basePlot"
+    <div v-if="hoveredScene || basePlot"
          class="plot-tooltip"
          :class="{ 'is-locked': isLocked }"
          @mouseleave="onTooltipMouseLeave">
@@ -106,7 +107,7 @@
       <!-- Plot 頁面標題 -->
       <header class="clickable" @click.stop="toggleLockOnHeader()">
         <div>
-          <span v-if="isLocked" class="pin">📌</span> {{ hoveredTitle }}
+          <span v-if="isLocked" class="pin">📌</span> {{ hoveredScene }}
         </div>
         <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
       </header>
@@ -162,6 +163,5 @@
       </main>
     </div> <!-- end of plot -->
   </div>
-  <script src="[[ url_for('static', filename='ccm.js') ]]"></script>
 </body>
 </html>
