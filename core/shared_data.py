@@ -222,6 +222,61 @@ def process_tag_info(sn: str) -> tuple[str, str]:
     return tag_style, tag_name
 
 
+def get_tag_count(id: int) -> int:
+    metadata_dict = _extra_data_manager.get_metadata_map()
+    
+    # 用 set 儲存符合條件的 profile_id
+    # set 的特性是元素不重複，且最後 len(set) 就是你要的數量
+    matched_profile_ids = set()
+
+    for metadata in metadata_dict.values():
+        profile_id = metadata.get("!profile_id")
+        
+        # 如果 profile_id 不存在 (None 或空值)，直接跳過這筆
+        if not profile_id:
+            continue
+            
+        backstage_data = metadata.get("backstage", {})
+        
+        # 檢查 code 是否匹配
+        is_match = backstage_data.get("!tag_id") == id
+                
+        # 只要其中一個中，且 profile_id 有值，就塞進 set
+        if is_match:
+            matched_profile_ids.add(profile_id)
+
+    # 最後直接回傳 set 的長度（Size）
+    return len(matched_profile_ids)
+
+
+def get_color_trait_count(code: str) -> int:
+    metadata_dict = _extra_data_manager.get_metadata_map()
+    
+    # 用 set 儲存符合條件的 profile_id
+    # set 的特性是元素不重複，且最後 len(set) 就是你要的數量
+    matched_profile_ids = set()
+
+    for metadata in metadata_dict.values():
+        profile_id = metadata.get("!profile_id")
+        
+        # 如果 profile_id 不存在 (None 或空值)，直接跳過這筆
+        if not profile_id:
+            continue
+            
+        backstage_data = metadata.get("backstage", {})
+        
+        # 檢查 code 是否匹配
+        is_persona_match = backstage_data.get("!persona_code") == code
+        is_shadow_match = backstage_data.get("!shadow_code") == code
+
+        # 只要其中一個中，且 profile_id 有值，就塞進 set
+        if is_persona_match or is_shadow_match:
+            matched_profile_ids.add(profile_id)
+
+    # 最後直接回傳 set 的長度（Size）
+    return len(matched_profile_ids)
+
+
 def get_suggest_file_id(sn: str) -> str:
     """
     根據角色、情境或標籤資料，生成一個建議的檔案名稱。不包含副檔名。

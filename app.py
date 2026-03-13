@@ -1,18 +1,16 @@
 # ph-editor/app.py
-import io
 import logging
-import os, shutil
-import re
+import os
+from wsgiref.simple_server import WSGIRequestHandler
 
 from flask import (
     Flask,
     jsonify,
     render_template,
     request,
-    send_file,
     send_from_directory,
 )
-from PIL import Image
+from waitress import serve
 
 from api.character_bp import api_characters_bp
 from api.profile import api_profile_bp
@@ -30,8 +28,6 @@ from core.shared_data import (
     
     initialize_extra_data,
     get_general_data,
-    get_character_file_entry,
-    remove_character_file_entry,
     get_wish_list,
     add_wish,
     delete_wish as delete_wish_service,
@@ -51,9 +47,12 @@ UserConfigManager.ensure_dir()
 # 建立 Flask 應用程式實例，並只設定變數的分隔符號
 app = Flask(__name__, template_folder='templates')
 
+app.json.sort_keys = False
 # json setting.
 #app.config['JSON_AS_ASCII'] = False  # 讓中文正常顯示，不噴 \uXXXX
 #app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True  # 讓瀏覽器直接看就有縮排
+
+WSGIRequestHandler.protocol_version = "HTTP/1.1"
 
 # 換 jinja delimeters 
 app.jinja_env.variable_start_string = '[['
@@ -342,3 +341,4 @@ def delete_wish(wish_id):
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", port=5000, debug = True, threaded = False) #單執行緒
     app.run(host="0.0.0.0", port=5000, debug = True, threaded = False) #單執行緒
+    #serve(app, host="0.0.0.0", port=5000)

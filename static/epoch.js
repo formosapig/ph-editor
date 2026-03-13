@@ -3,18 +3,22 @@ import { request } from './request.js';
 document.addEventListener('alpine:init', () => {
     Alpine.data('epochManager', () => ({
         selectedProfile: '',
-        profile_options: [
-            { id: 1, name: '存檔 A' },
-            { id: 2, name: '存檔 B' }
-        ],
+        profile_options: window.INITIAL_PROFILES || [],
         characters: [],
         epochChain: [],
         draggedChar: null,
 
         init() {
-            console.log("Epoch Manager 啟動");
+            const firstValid = this.profile_options.find(opt => !opt.disabled && opt.id);
+            if (firstValid) {
+                this.$nextTick(() => {
+                    this.selectedProfile = firstValid.id;
+                    console.log("SelectedProfile", this.selectedProfile);
+                });
+            }
+            //console.log("Epoch Manager 啟動");
             // 模擬初始抓取資料
-            this.fetchCharacters();
+            //this.fetchCharacters();
         },
 
         fetchCharacters() {

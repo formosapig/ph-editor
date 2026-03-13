@@ -18,8 +18,11 @@
         <aside class="sidebar">
             <section class="profile-selector">
                 <select x-model="selectedProfile" @change="fetchCharacters()">
-                    <template x-for="opt in profile_options" :key="opt.id">
-                        <option :value="opt.id" x-text="opt.name"></option>
+                    <template x-for="(opt, index) in profile_options" :key="index">
+                        <option :value="opt.id"
+                                x-text="opt.name"
+                                :disabled="opt.disabled">
+                        </option>
                     </template>
                 </select>
             </section>
@@ -92,6 +95,8 @@
         </section>
     </main>
 </div>
-
+<script>
+    window.INITIAL_PROFILES = [[ profile_options | tojson ]];
+</script>
 </body>
 </html>

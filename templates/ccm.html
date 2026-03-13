@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>時空因果矩陣</title>
-  <!--<link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />-->
-  <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
-  <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
-  <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
+    <meta charset="UTF-8">
+    <title>時空因果矩陣</title>
+    <!--<link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />-->
+    <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
+    <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
+    <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
     <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
     <script src="[[ url_for('static', filename='ccm.js') ]]" defer></script>
-  <script>
-    window.rawData = {
-      profiles: [[ profiles | tojson ]],
-      scenarios: [[ scenarios | tojson ]],
-      metadatas: [[ metadatas | tojson ]],
-      tag_styles: [[ tag_styles | tojson ]],
-      tag_list: [[ tag_list | tojson ]],
-      profile_group: [[ profile_group | tojson ]]
-    };
-  </script>
+    <script>
+        window.rawData = {
+            profiles: [[ profiles | tojson ]],
+            scenarios: [[ scenarios | tojson ]],
+            metadatas: [[ metadatas | tojson ]],
+            tag_styles: [[ tag_styles | tojson ]],
+            tag_list: [[ tag_list | tojson ]],
+            profile_group: [[ profile_group | tojson ]]
+        };
+    </script>
 </head>
 <body>
-  <div v-scope v-cloak class="page-wrapper">
+<div v-scope v-cloak class="page-wrapper">
     <div class="table-container">
       <table>
       
@@ -75,7 +75,8 @@
                    @mouseleave="handleMouseLeave()">
                 
                 <!-- 場景標題 -->   
-                <div class="sc-name" :style="getScenarioSceneStyle(sc.id, p['!id'])">{{ sc.scene }}</div>
+                <!--<div class="sc-name" :style="getScenarioSceneStyle(sc.id, p['!id'])">{{ sc.scene }}</div>-->
+                <div class="sc-name">{{ sc.scene }}</div>
                 
                 <!-- 場景參與者的 tag -->
                 <div class="tags-container">
@@ -87,7 +88,7 @@
                            border: '1px solid ' + getTagInfo(bg.tag_id).style.color
                          }"
                          :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }">
-                      {{ getTagInfo(bg.tag_id).name.zh }}
+                      {{ bg.title }}
                     </div>
                   </div>
                 </div>
@@ -99,69 +100,60 @@
     </div>
     
     <!-- 浮動 Plot -->	
-    <div v-if="hoveredScene || basePlot"
-         class="plot-tooltip"
-         :class="{ 'is-locked': isLocked }"
-         @mouseleave="onTooltipMouseLeave">
-      
-      <!-- Plot 頁面標題 -->
-      <header class="clickable" @click.stop="toggleLockOnHeader()">
-        <div>
-          <span v-if="isLocked" class="pin">📌</span> {{ hoveredScene }}
-        </div>
-        <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
-      </header>
-
-      <!-- Plot 內容 -->
-      <main>
-      
-        <!-- 劇情內容 -->
-        <article>{{ basePlot }}</article>
-
-        <!-- 劇情參與者 -->
-        <section v-for="char in hoveredCharacters">
-
-          <hr> <!-- 分隔線 -->
-
-          <!-- 角色內容 -->
-          <div class="char-row-container">
-            
-            <aside><!-- 左邊, 小圖示及標籤 -->
-              
-              <!-- 人物縮圖 -->
-              <div class="char-avatar-box" @click="openFile(char.sn)">
-                <img :src="char.avatar" @error="(e) => e.target.src='/cache/default.jpg'">
-              </div>
-              
-              <!-- 標籤 -->
-              <span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
-            </aside>
-
-            <div class="info-summary"><!-- 右邊, 人物主要屬性, 說明 -->
-        
-              <!-- 人物主要屬性 -->
-              <div class="info-top">
-                <span class="char-name-highlight">{{ char.name }}</span>
-                <span v-if="char.age" class="char-age-dim"> · {{ char.age }}歲</span>
-                <div v-if="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
-                  <template v-if="char.persona">
-                    <span>🎭</span>
-                    <span :style="getBadgeStyle(char.pColor)" class="meta-badge">{{ char.persona }}</span>
-                  </template>
-                  <template v-if="char.shadow">
-                    <span>👤</span>
-                    <span :style="getBadgeStyle(char.sColor)" class="meta-badge">{{ char.shadow }}</span>
-                  </template>
+    <div v-if="hoveredScene || basePlot" class="plot-tooltip" :class="{ 'is-locked': isLocked }" @mouseleave="onTooltipMouseLeave">
+        <!-- Plot 頁面標題 -->
+        <header class="clickable" @click.stop="toggleLockOnHeader()">
+            <div><span v-if="isLocked" class="pin">📌</span> {{ hoveredScene }}</div>
+            <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
+        </header>
+        <!-- Plot 內容 -->
+        <main>
+            <!-- 劇情內容 -->
+            <article>{{ basePlot }}</article>
+            <!-- 劇情參與者 -->
+            <section v-for="char in hoveredCharacters">
+                <hr> <!-- 分隔線 -->
+                <!-- 角色內容 -->
+                <div class="char-row-container">
+                    <aside><!-- 左邊, 小圖示及標籤 -->
+                        <!-- 年齡 -->
+                        <span v-if="char.age" class="age-badge">{{ char.age }}</span> 
+                        <!-- 人物縮圖 -->
+                        <div class="char-avatar-box" @click="openFile(char.sn)">
+                            <img :src="char.avatar" @error="(e) => e.target.src='/cache/default.jpg'">
+                        </div>
+                        <!-- 標籤 -->
+                        <!--<span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>-->
+                        <!-- 姓名 -->
+                        <span class="profile-badge">{{ char.name }}</span>
+                    </aside>
+                    <div class="info-summary"><!-- 右邊, 人物主要屬性, 說明 -->
+                        <!-- 人物主要屬性 -->
+                        <div class="info-top">
+                            <!--
+                            <span class="char-name-highlight">{{ char.name }}</span>
+                            <span v-if="char.age" class="char-age-dim"> · {{ char.age }}歲</span>-->
+                            <span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
+                            <div v-if="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
+                            <template v-if="char.persona">
+                                <span>🎭</span>
+                                <span :style="getBadgeStyle(char.pColor)" class="meta-badge">{{ char.persona }}</span>
+                            </template>
+                            <template v-if="char.shadow">
+                                <span>👤</span>
+                                <span :style="getBadgeStyle(char.sColor)" class="meta-badge">{{ char.shadow }}</span>
+                            </template>
+                            </div>
+                        </div>
+                        <!-- 標題 -->
+                        <div v-if="char.title" class="char-title-row">{{ char.title }}</div>
+                        <!-- 說明 -->
+                        <div v-if="char.notes" class="info-bottom">{{ char.detail }}</div>
+                    </div> <!-- info-summary -->
                 </div>
-              </div>
-              
-              <!-- 說明 -->
-              <div v-if="char.notes" class="info-bottom">{{ char.notes }}</div>
-            </div>
-          </div>
-        </section>
-      </main>
+            </section>
+        </main>
     </div> <!-- end of plot -->
-  </div>
+</div> <!-- v-scope -->
 </body>
 </html>

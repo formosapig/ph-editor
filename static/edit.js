@@ -578,29 +578,20 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
   console.log(`執行 createSelect 函數，ID: ${id}`); // 新增日誌
   const select = document.createElement('select');
   select.id = id;
+  
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = JSON.stringify(opt.value);
+        const pureLabel = opt.pureLabel || opt.label;
+        option.dataset.pureLabel = pureLabel;
+        option.dataset.fullLabel = opt.label;
+        option.textContent = opt.label;
 
-  // START: 修正 - 移除手動添加「請選擇」選項的邏輯
-  // 由於後端已經在 options 陣列中提供了「請選擇」選項，
-  // 這裡不再需要手動添加，避免重複。
-  // const defaultOption = document.createElement('option');
-  // defaultOption.value = ''; // 空值
-  // defaultOption.textContent = '請選擇'; // 提示文字
-  // select.appendChild(defaultOption);
-  // END: 修正
-
-  options.forEach(opt => {
-    const option = document.createElement('option');
-    // 將 value 序列化為 JSON 字串，以便在 option.value 中儲存複雜物件
-    // 如果 opt.value 已經是簡單值 (string, number)，則不需要 JSON.stringify
-    // 這裡假設 opt.value 可能會是物件，所以保留 JSON.stringify
-    option.value = JSON.stringify(opt.value);
-    option.textContent = opt.label;
-
-    // *** 新增的 disabled 邏輯 ***
-    // 檢查 opt 物件中是否有 disabled 屬性且其值為 true
-    if (opt.disabled === true) {
-        option.disabled = true;
-    }
+        // *** 新增的 disabled 邏輯 ***
+        // 檢查 opt 物件中是否有 disabled 屬性且其值為 true
+        if (opt.disabled === true) {
+            option.disabled = true;
+        }
 
     // 比較 defaultValue 和 opt.value，如果相同則選中
     // 處理 defaultValue 可能是物件或簡單值的情況
@@ -618,10 +609,25 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
     select.appendChild(option);
   });
 
-  select.addEventListener('change', e => {
-    const selectEl = e.target;
-    const selectedIndex = selectEl.selectedIndex;
-    const selectedOption = selectEl.options[selectedIndex];
+    if (select.selectedIndex !== -1) {
+        const selected = select.options[select.selectedIndex];
+        selected.textContent = selected.label;//pureLabel;
+    }
+
+
+    select.addEventListener('change', e => {
+        const selectEl = e.target;
+    
+        for (let i = 0; i < selectEl.options.length; i++) {
+            const opt = selectEl.options[i];
+            opt.textContent = opt.dataset.fullLabel;
+        }    
+    
+        const selectedIndex = selectEl.selectedIndex;
+        const selectedOption = selectEl.options[selectedIndex];
+        const pureLabel = selectedOption.dataset.pureLabel;
+        
+        selectedOption.textContent = selectedOption.label;//pureLabel;
 
     const selectedValueStr = selectedOption.value;
     let selectedValue;
@@ -631,12 +637,12 @@ function createSelect(id, options, defaultValue, onChangeCallback) {
       selectedValue = selectedValueStr;
     }
 
-    const selectedLabel = selectedOption.text; // option 顯示的文字就是 label
+    //const selectedLabel = selectedOption.text; // option 顯示的文字就是 label
 
     // 傳物件給 callback，包含 value 和 label
     onChangeCallback({
       value: selectedValue,
-      label: selectedLabel
+      label: pureLabel // selectedLabel
     });
 
     console.log(`Select 元素 ${id} 值改變，value=${selectedValue}, label=${selectedLabel}`);

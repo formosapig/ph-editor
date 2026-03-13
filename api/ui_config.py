@@ -11,6 +11,8 @@ from core.shared_data import (
     get_profile_map,
     get_scenario_map,
     get_default_backstage,
+    get_tag_count,
+    get_color_trait_count,
 )
 from game_data.cup_data import generate_cup_options
 
@@ -291,7 +293,11 @@ def get_backstage_options():
 
         # 2. 添加 tag_name 作為可選選項
         tag_options.append({
-            "label": tag_name,
+            "label": (
+                f"{tag_name} ({c})" if (c := get_tag_count(tag.get("id"))) > 0
+                else tag_name
+            ),
+            "pureLabel": tag_name,
             "value": tag.get("id")
         })
 
@@ -319,7 +325,11 @@ def get_backstage_options():
         {"label": "無", "value": ""},  # 或 value: "none"
     ] + [
         {
-            "label": trait.get("trait", {}).get("zh", ""),
+            "label": (
+                f"{trait.get('trait', {}).get('zh', '')} ({c})" if (c := get_color_trait_count(trait.get("code"))) > 0 
+                else trait.get('trait', {}).get('zh', '')
+            ),
+            "pureLabel": trait.get("trait", {}).get("zh", ""),
             "value": trait.get("code"),
         }
         for trait in color_traits

@@ -52,7 +52,7 @@ DEFAULT_BACKSTAGE_TEMPLATE = {
     "shadow": "熱情",
 }
 
-ORDER_BACKSTAGE = ["title", "tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "notes"]
+ORDER_BACKSTAGE = ["tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "title", "detail","notes"]
 
 ORDER_EPOCH = [] # 暫時先空著...
 

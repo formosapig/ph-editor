@@ -41,5 +41,5 @@ def edit(sn, entry):
         file_id=entry.file_id,
         remark=entry.get_remark(),
         status=entry.get_status(),
-        data=json.dumps(result_content),
+        data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )    

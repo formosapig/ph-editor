@@ -31,10 +31,10 @@ def general():
 
     return render_template(
         "general.html",
-        color_traits = color_traits_data,
-        tag_styles = tag_styles_data,
-        tag_list = tag_list_data,
-        profile_group = profile_group_data,
+        color_traits=color_traits_data,
+        tag_styles=tag_styles_data,
+        tag_list=tag_list_data,
+        profile_group=profile_group_data,
     )
 
 

@@ -55,7 +55,7 @@ th {
 .year-header {
   font-size: 14px;
   letter-spacing: 1px;
-  color: #ffcc00;
+  color: var(--color-age);
   font-weight: 900; /*bold;*/
 }
 
@@ -145,13 +145,13 @@ th:not(.corner-cell), .matrix-cell {
 /* 基礎事件方塊樣式微調 */
 .event-box {
   background: #222; /*rgba(255, 255, 255, 0.03);*/
-  border: 1px solid #444;
-  border-left: 4px solid #555; /* 預設邊框較暗 */
+  border: 2px solid #444;
+  /*border-left: 4px solid #555; /* 預設邊框較暗 */
     
-  border-radius: 0 3px 6px 0;
+  border-radius: 6px;/*0 3px 6px 0;*/
   /*margin-bottom: 10px;*/
   margin: 4px;
-  padding: 12px;
+  padding: 10px;
   transition: all 0.2s ease; /* 讓縮放與發光更平滑 */
   cursor: pointer;
 }
@@ -165,8 +165,8 @@ th:not(.corner-cell), .matrix-cell {
 /* 連動高亮樣式：所有相同劇本 ID 的方塊都會變色 */
 .event-box.active-link {
   background: rgba(255, 204, 0, 0.1); /* 淡淡的金色底 */
-  border-color: #ffcc00;              /* 金色邊框 */
-  border-left: 4px solid #ffcc00;     /* 金色左緣 */
+  /*border-color: #ffcc00;              /* 金色邊框 */
+  /*border-left: 4px solid #ffcc00;     /* 金色左緣 */
   box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); /* 霓虹發光感 */
 }
 
@@ -177,7 +177,7 @@ th:not(.corner-cell), .matrix-cell {
 }*/
 
 .sc-name {
-  color: #ffcc00;
+  color: var(--color-age);
   font-weight: bold;
   margin-bottom: 6px;
   font-size: 14px;
@@ -300,13 +300,13 @@ th:not(.corner-cell), .matrix-cell {
       
       .char-avatar-box {
         flex-shrink: 0; /* 防止圖片被擠壓 */
-        width: 63px;
-        height: 88px;
+        width: 126px;
+        height: 176px;
         border: 1px solid rgba(179, 136, 255, 0.5); /* 紫色邊框 */
         background: #000;
         overflow: hidden;
         /* 如果想要圓形可以改 50%，但依照你的風格，建議直角或小圓角 4px */
-        border-radius: 4px; 
+        border-radius: 2px; 
         
         /* clickable */
         cursor: pointer;
@@ -352,10 +352,28 @@ th:not(.corner-cell), .matrix-cell {
         .char-age-dim { font-size: 0.85em; font-weight: 600; color: #ddd; opacity: 0.8; }
         .meta-badge { padding: 0 6px; border-radius: 4px; font-size: 11px; border: 1px solid; }
       }
+
+      .char-title-row {
+        /*margin-top: 4px;      /* 與姓名的間距 */
+        /*font-size: 0.9em;     /* 比姓名略小 */
+        color: #cbe;          /* 較淡的顏色 */
+        /*font-weight: 500;
+        /* 如果 title 非常長，可以考慮以下省略號寫法 */
+        /*overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;*/
+
+        /*display: inline-block;*/
+        /*padding: 2px 6px;*/
+        font-size: 14px;
+        /*font-weight: 800;*/
+        /*border-bottom: 1px dashed #ccc;*/
+      }
       
       .info-bottom {
+        /*border-top: 1px solid #888; /* 可選：加一條細線分隔 */
         margin-top: 4px;
-        font-size: 13px;      /* 與劇情簡介一致 */
+        font-size: 14px;      /* 與劇情簡介一致 */
         color: #eaddff;      /* 與劇情簡介一致 */
         text-align: left;    /* 靠左對齊 */
         line-height: 1.3;   /* 密集行高，比原本的 1.6 小 */
@@ -369,6 +387,38 @@ th:not(.corner-cell), .matrix-cell {
   } /* main > section > .char-row-container */
   
 } /* plot-tooltip */
+
+.age-badge {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    z-index: 10;
+
+    /*background-color: var(--color-profile-background);*/
+    color: var(--color-age);
+    border: 2px solid #aa8;
+    border-radius: 6px;
+    /*padding: 0px 4px;*/
+    font-size: 14px;
+    /*margin-top: -10px;*/
+
+    background-color: rgba(32, 32, 32, 0.8); 
+    line-height: 1;    /* 減少我們剛才討論過的天然間距 */
+    padding: 2px 4px;  /* 稍微給一點內距會比較美觀 */
+}
+
+
+.profile-badge {
+    background-color: var(--color-profile-background);
+    color: var(--color-profile-text);
+    border: 1px solid var(--color-profile-border);
+    border-radius: 3px;
+    padding: 0px 4px;
+    font-size: 14px;
+    margin-top: -10px;
+    z-index: 10;
+}
+
 
 /* 分組標頭樣式 */
 .group-header-row {

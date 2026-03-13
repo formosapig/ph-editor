@@ -1,8 +1,13 @@
 /* theme.css */
 :root {
+    --main-color: #fff;
 
-
-
+    
+    --color-age: #ffcc00;  /* year, age, born and so on */
+    /* profile badge */
+    --color-profile-background: rgba(255, 222, 150, 0.85);
+    --color-profile-text: #3b2a00;
+    --color-profile-border: rgba(60, 40, 0, 0.80);
 }
 
 /* toast */
