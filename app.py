@@ -1,6 +1,7 @@
 # ph-editor/app.py
 import logging
 import os
+import traceback
 from wsgiref.simple_server import WSGIRequestHandler
 
 from flask import (
@@ -11,6 +12,7 @@ from flask import (
     send_from_directory,
 )
 from waitress import serve
+from werkzeug.routing import IntegerConverter
 
 from api.character_bp import api_characters_bp
 from api.profile import api_profile_bp
@@ -46,6 +48,9 @@ UserConfigManager.ensure_dir()
 # app = Flask(__name__)
 # 建立 Flask 應用程式實例，並只設定變數的分隔符號
 app = Flask(__name__, template_folder='templates')
+
+# 讓 url <int:number> 支援負數
+app.url_map.converters['int'] = type('SignedInt', (IntegerConverter,), {'regex': r'-?\d+'})
 
 app.json.sort_keys = False
 # json setting.
@@ -92,7 +97,8 @@ def handle_standard_http_error(e):
 def handle_unexpected_error(e):
     """處理程式 Bug (例如除以零、KeyError)，確保前端不崩潰"""
     # 這裡可以加入 log 紀錄真正的錯誤原因
-    app.logger.error(f"Unhandled Exception: {str(e)}")
+    error_details = traceback.format_exc()
+    app.logger.error(f"Unhandled Exception: {error_details}")
     return jsonify({"error": "Internal Server Error"}), 500
 
 

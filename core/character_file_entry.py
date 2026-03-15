@@ -6,7 +6,7 @@ import copy
 from typing import Dict, Any
 
 from .character_data import CharacterData
-from .file_constants import PLAYHOME_MARKER
+from .constants import PLAYHOME_MARKER
 from .extra_data_manager import ExtraDataManager
 
 logger = logging.getLogger(__name__)
@@ -137,6 +137,10 @@ class CharacterFileEntry:
     def update_scenario_id(self, scenario_id: int):
         self.scenario_id = scenario_id
         self.data_source.update_scenario_id(self.sn, scenario_id)
+
+    def remove_scenario(self):
+        self.scenario_id = None
+        self.data_source.remove_scenario(self.sn)
 
     def update_character_data(self, main_key: str, sub_key: str, data: any):
         self.character_data.update_data(main_key, sub_key, data)

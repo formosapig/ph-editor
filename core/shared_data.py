@@ -4,6 +4,8 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.constants import SpecialScenario
+
 # 假設這些是從其他模組引入的
 from .character_data import CharacterData
 from .character_file_entry import CharacterFileEntry
@@ -145,9 +147,11 @@ def process_scenario_data(
     scenario_id = updated_scenario.get("!id")
     success = False
     new_scenario_id = None
-    if scenario_id == 0:
+    if scenario_id == SpecialScenario.NEW:
         success = _extra_data_manager.add_scenario(updated_scenario)
         new_scenario_id = updated_scenario.get("!id", None) if success else None
+        if not success and (entry := get_character_file_entry(sn)):
+            entry.remove_scenario()
     else:
         success = _extra_data_manager.update_scenario(updated_scenario)
 

@@ -6,6 +6,7 @@ import nanoid
 from typing import Any, Dict, List, Optional, Tuple
 
 # 假設 UserConfigManager 已經存在，且負責提供檔案路徑
+from core.constants import SpecialScenario
 from core.user_config_manager import UserConfigManager
 #from .shared_data import get_character_file_entry
 
@@ -36,9 +37,10 @@ DEFAULT_PROFILE_TEMPLATE = {
 ORDER_PROFILE = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
 
 DEFAULT_SCENARIO_TEMPLATE = {
-    "!id": 0,
-    "scene": "新場景",
+    "!id": SpecialScenario.NEW.value,
+    "scene": "✨" + SpecialScenario.NEW.label,
     "year": 1911,
+    "notes": "如果沒有任何變更，並且觸發儲存，會變成移除場景設定。"
 }
 
 ORDER_SCENARIO = ["!id", "scene", "year", "season", "plot", "notes"]
@@ -371,9 +373,9 @@ class ExtraDataManager():
             return False
             
         # 2. 準備更新, 再檢查一次 scenario_id 是 0 才做
-        if updated_scenario.get("!id") == 0:
+        if updated_scenario.get("!id") == SpecialScenario.NEW:
             new_id = max(self._scenario_map.keys(), default = 0) + 1
-            updated_scenario["!id"] = new_id # 重要!!這邊更新 profile_id 成新的.
+            updated_scenario["!id"] = new_id # 重要!!這邊更新 scenario_id 成新的.
             self._commit_scenario(new_id, updated_scenario)
             return True
         else:
@@ -421,7 +423,14 @@ class ExtraDataManager():
         metadata = self._metadata_map.get(sn, {})
         metadata['!scenario_id'] = scenario_id;
         self._commit_metadata(sn, metadata)
-        
+
+    def remove_scenario(self, sn: str):
+        logger.debug(f"remove scenario at ${sn}")
+        # 要修改內容,直接內部讀取
+        metadata = self._metadata_map.get(sn, {})
+        metadata.pop("!scenario_id", None)
+        self._commit_metadata(sn, metadata)                
+
     def update_backstage(self, sn: str, backstage_data: dict):
         metadata = self._metadata_map.get(sn, {})
         metadata['backstage'] = backstage_data

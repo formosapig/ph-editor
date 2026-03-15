@@ -6,6 +6,7 @@ import logging
 from flask import Blueprint, jsonify
 
 from config.dropdown_config import dropdown_config_map
+from core.constants import SpecialScenario
 from core.shared_data import (
     get_general_data,
     get_profile_map,
@@ -160,17 +161,18 @@ def get_profile_list():
     return jsonify({"dropdowns": dropdown_configs})
     
     
-@api_ui_config_bp.route("/scenarios", methods=["GET"])
+@api_ui_config_bp.get("/scenarios")
 def get_scenario_list():
     scenario_map = get_scenario_map()
     
-    options = []
-    
-    # 提前取出 id=0 的 scenario（若存在）
-    zero_scenario = scenario_map.get(0)
+    special_features = [
+        SpecialScenario.NEW,
+        SpecialScenario.SILHOUETTE,
+        SpecialScenario.ECHO
+    ]
 
-    # 除去 0 的 scenario
-    other_scenarios = {k: v for k, v in scenario_map.items() if k != 0}
+    special_ids = {int(s) for s in SpecialScenario}
+    other_scenarios = {k: v for k, v in scenario_map.items() if k not in special_ids}
 
     locale.setlocale(locale.LC_COLLATE, "zh_TW.UTF-8")
     # 將其轉為 options 並根據 name 中文排序
@@ -179,17 +181,19 @@ def get_scenario_list():
         key=sort_key_with_int_year
     )
 
+    options = []
+    
     # 初始選項
-    options.append({"label": "請選擇", "value": ""})
+    options.append({"label": "請選擇", "value": "", "disabled": True})
 
-    # 第二順位是 id = 0 的 scenario（若有）
-    if zero_scenario:
-        options.append(
-            {
-                "label": zero_scenario.get("scene", f"id:{zero_scenario.get('!id', '')}"),
-                "value": zero_scenario.get("!id", ""),
-            }
-        )
+    # 特殊場景
+    for spec in special_features:
+        spec_data = scenario_map.get(int(spec), {})
+        label = spec_data.get("scene", spec.label)
+        options.append({
+            "label": label,
+            "value": int(spec)
+        })
 
     # 加入剩下排序後的 options
     for scenario in sorted_scenarios:
@@ -204,12 +208,10 @@ def get_scenario_list():
         else:
             label = scene  # 如果沒有 year，則保持原來的 scene(標題)
 
-        options.append(
-            {
-                "label": label,
-                "value": scenario_id,
-            }
-        )
+        options.append({
+            "label": label,
+            "value": scenario_id,
+        })
 
     season_options = [
         {"label": "無", "value": ""},
@@ -218,8 +220,6 @@ def get_scenario_list():
         {"label": "🍁秋", "value": "autumn"},
         {"label": "❄️冬", "value": "winter"}
     ]
-
-
 
     dropdown_config = [
         {
