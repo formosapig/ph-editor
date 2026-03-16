@@ -27,21 +27,24 @@ window.addEventListener('DOMContentLoaded', () => {
         
         // Computed
         get scanPathDisplay() {
-        return this.currentScanPath ? this.shortenPath(this.currentScanPath) : '尚未選擇';
+            return this.currentScanPath ? this.shortenPath(this.currentScanPath) : '尚未選擇';
         },
+
         get selectedCount() {
-        return this.selectedSet.length;
+            return this.selectedSet.length;
         },
+
         get totalFilesCount() {
-        return this.displayedImages.length;
+            return this.displayedImages.length;
         },
+
         get isAnyMenuOpen() {
-        return this.showSortMenu || this.showFilterMenu;
+            return this.showSortMenu || this.showFilterMenu;
         },
         
         // Methods
         onMounted() {
-        this.init(); // 安全執行初始化
+            this.init(); // 安全執行初始化
         },
     
         async scan(path) {

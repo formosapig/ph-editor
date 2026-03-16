@@ -147,7 +147,13 @@ def process_scenario_data(
     scenario_id = updated_scenario.get("!id")
     success = False
     new_scenario_id = None
-    if scenario_id == SpecialScenario.NEW:
+    if scenario_id in [SpecialScenario.SILHOUETTE, SpecialScenario.ECHO]:
+        original_data = _extra_data_manager.get_scenario(scenario_id)
+        if (original_data):
+            updated_scenario.clear()
+            updated_scenario.update(original_data)
+        success = True    
+    elif scenario_id == SpecialScenario.NEW:
         success = _extra_data_manager.add_scenario(updated_scenario)
         new_scenario_id = updated_scenario.get("!id", None) if success else None
         if not success and (entry := get_character_file_entry(sn)):

@@ -6,7 +6,7 @@ import copy
 from typing import Dict, Any
 
 from .character_data import CharacterData
-from .constants import PLAYHOME_MARKER
+from .constants import PLAYHOME_MARKER, SpecialScenario
 from .extra_data_manager import ExtraDataManager
 
 logger = logging.getLogger(__name__)
@@ -84,6 +84,10 @@ class CharacterFileEntry:
     def get_scenario_scene(self) -> str:
         """ Scenario 資料中取得 scene(標題) """
         if self.scenario_id is None:
+            return ""
+
+        # 特殊 scenario id 都濾掉
+        if self.scenario_id in [SpecialScenario.NEW, SpecialScenario.SILHOUETTE, SpecialScenario.ECHO]:
             return ""
 
         scenario_data: Dict[str, Any] = self.data_source.get_scenario(self.scenario_id)

@@ -1,3 +1,5 @@
+import { request } from './request.js'
+
 window.addEventListener('DOMContentLoaded', () => {
     const { profiles, scenarios, metadatas, tag_styles, tag_list, profile_group } = window.rawData;
 
@@ -94,7 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         pColor: bg["!persona_code"] || '#B87333',
                         shadow: bg.shadow || null,
                         sColor: bg["!shadow_code"] || '#43AD2B',
-                        notes: bg.notes || ''
+                        //notes: bg.notes || ''
                     };
                 });
             }
@@ -170,7 +172,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     sn: sn,
                     title: title,
                     tag_id: backstage["!tag_id"],
-                    profile_id: meta["!profile_id"]
+                    profile_id: meta["!profile_id"],
+                    border_color: backstage["border_color"]
                 };
             });
             return matchedMetas;
@@ -271,39 +274,14 @@ window.addEventListener('DOMContentLoaded', () => {
             return results;
         },
 	
-	// 取得當前事件方塊應套用的主題色
-	getScenarioStyle(scId, profileId) {
-	  // 1. 找到該事件中，屬於當前角色的第一個後台資料
-	  const backstages = this.getBackstagesByScenario(scId);
-	  const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.tag_id);
-	  
-	  // 1. 預設顏色（找不到資料時顯示的顏色，例如原本的深灰色）
-      const defaultBorderColor = '#555'; 
-      //const defaultBackground = 'rgba(255, 255, 255, 0.03)';
-  
-      //if (scId == 20) { // profileId == 13) {
-		//  console.log(backstages);
-		 // console.log(primaryBG);
-	  //}
-  
-	  if (primaryBG) {
-		const tagInfo = this.getTagInfo(primaryBG.tag_id);
-		if (tagInfo && tagInfo.style) {
-		  return {
-			// 設定左邊框為標籤主色
-			borderColor: tagInfo.style.color,
-			// 設定一個極淡的背景色（維持你原本的透明質感，但帶一點標籤色調）
-			//background: tagInfo.style.background//
-			//background: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), ${tagInfo.style.background}`
-			//background: `linear-gradient(50deg, ${tagInfo.style.background} 0%, rgba(255, 255, 255, 0.03) 100%)`
-		  };
-		}
-	  }
-	  
-	  return {
-		borderLeftColor: defaultBorderColor
-	  }; // 若沒找到則回傳空物件，套用 CSS 預設值
-	},
+        // 取得當前事件方塊應套用的主題色
+        getScenarioStyle(scId, profileId) {
+            const backstages = this.getBackstagesByScenario(scId);
+            const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.border_color !== '#555');
+            return {
+                borderColor: (primaryBG && primaryBG.border_color) || '#555'
+            };
+        },
 	
 	// 取得當前事件方塊應套用的主題色
 	getScenarioSceneStyle(scId, profileId) {
@@ -328,51 +306,42 @@ window.addEventListener('DOMContentLoaded', () => {
 	  return {}; // 若沒找到則回傳空物件，套用 CSS 預設值
 	},
 	
-	async reloadData() {
-      console.log("正在從伺服器同步資料...");
-      try {
-        const response = await fetch("/ccm/reload");
-        const result = await response.json();
+        async reloadData() {
+            console.log("正在從伺服器同步資料...");
+            try {
+                const url = "/ccm/reload";
+                const newData = await request(url);
 
-        if (result.status === "success") {
-          // 解構後端回傳的資料
-          const newData = result.data;
-          
-          // 更新響應式資料
-          // 注意：這裡要確保後端 data 裡面的 key 與前端一致
-          this.profiles = newData.profiles;
-          this.scenarios = newData.scenarios;
-          this.metadatas = newData.metadatas;
-          this.tag_styles = newData.tag_styles;
-          this.tag_list = newData.tag_list;
-          this.profile_group = newData.profile_group;
-          
-          // plot
-          if (this.hoveredScenarioId) {
-            this._updateHoverState(this.hoveredScenarioId);
-          }
-          
-          this.version++;
-          console.log("資料同步完成！");
-        } else {
-          console.error("同步失敗:", result.message);
-        }
-      } catch (err) {
-        console.error("網路請求出錯:", err);
-      }
-    },
+                this.profiles = newData.profiles;
+                this.scenarios = newData.scenarios;
+                this.metadatas = newData.metadatas;
+                this.tag_styles = newData.tag_styles;
+                this.tag_list = newData.tag_list;
+                this.profile_group = newData.profile_group;
+                
+                // plot
+                if (this.hoveredScenarioId) {
+                    this._updateHoverState(this.hoveredScenarioId);
+                }
+                
+                this.version++;
+                console.log("資料同步完成！");
+            } catch (err) {
+                console.error("網路請求出錯:", err.displayMessage || '系統錯誤');
+            }
+        },
 	
-  });
+    }); // const app = PetiteVue.reactive({
 
-  // 接收 editor 資料
-  const bc = new BroadcastChannel('edit_file_sync_bus');
-  bc.onmessage = (e) => {
-    const {file_id, action} = e.data;
-    if (action === "updated") {
-      // 不管改了什麼, 預設 reload
-      app.reloadData();
-    }
-  };
+    // 接收 editor 資料
+    const bc = new BroadcastChannel('edit_file_sync_bus');
+    bc.onmessage = (e) => {
+        const {file_id, action} = e.data;
+        if (action === "updated") {
+            // 不管改了什麼, 預設 reload
+            app.reloadData();
+        }
+    };
 
-  PetiteVue.createApp(app).mount('[v-scope]');
+    PetiteVue.createApp(app).mount('[v-scope]');
 });

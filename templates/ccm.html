@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
     <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
-    <script src="[[ url_for('static', filename='ccm.js') ]]" defer></script>
+    <script type="module" src="[[ url_for('static', filename='ccm.js') ]]"></script>
     <script>
         window.rawData = {
             profiles: [[ profiles | tojson ]],
@@ -148,7 +148,7 @@
                         <!-- 標題 -->
                         <div v-if="char.title" class="char-title-row">{{ char.title }}</div>
                         <!-- 說明 -->
-                        <div v-if="char.notes" class="info-bottom">{{ char.detail }}</div>
+                        <div v-if="char.detail" class="info-bottom">{{ char.detail }}</div>
                     </div> <!-- info-summary -->
                 </div>
             </section>
