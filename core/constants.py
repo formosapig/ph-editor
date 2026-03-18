@@ -9,7 +9,7 @@ class SpecialScenario(IntEnum):
     # 定義方式：(數值, 顯示名稱)
     NEW = (-1, "新場景")
     SILHOUETTE = (-2, "時光剪影")
-    ECHO = (-3, "歲月迴響")
+    REVERBERATION = (-3, "歲月迴響")
 
     def __new__(cls, value, label):
         # 因為繼承 IntEnum，我們需要這樣初始化

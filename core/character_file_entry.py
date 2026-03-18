@@ -87,7 +87,7 @@ class CharacterFileEntry:
             return ""
 
         # 特殊 scenario id 都濾掉
-        if self.scenario_id in [SpecialScenario.NEW, SpecialScenario.SILHOUETTE, SpecialScenario.ECHO]:
+        if self.scenario_id in [SpecialScenario.NEW, SpecialScenario.SILHOUETTE, SpecialScenario.REVERBERATION]:
             return ""
 
         scenario_data: Dict[str, Any] = self.data_source.get_scenario(self.scenario_id)

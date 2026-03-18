@@ -168,7 +168,7 @@ def get_scenario_list():
     special_features = [
         SpecialScenario.NEW,
         SpecialScenario.SILHOUETTE,
-        SpecialScenario.ECHO
+        SpecialScenario.REVERBERATION
     ]
 
     special_ids = {int(s) for s in SpecialScenario}

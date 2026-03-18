@@ -82,7 +82,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         title: bg.title ?? "",
                         detail: bg.detail ?? "",
                         avatar: `/api/characters/${encodeURIComponent(sn)}/thumbnail`,
-                        age: (profile?.born && sc?.year) ? (parseInt(sc.year) - parseInt(profile.born || 0)) : null,
+                        age: bg.age ?? null, // (profile?.born && sc?.year) ? (parseInt(sc.year) - parseInt(profile.born || 0)) : null,
                         // 標籤樣式物件
                         tag: (tagInfo && tagInfo.name?.zh !== "未設定") ? {
                             name: tagInfo.name.zh,
