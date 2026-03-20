@@ -71,7 +71,7 @@ const subTabs = {
 };
 
 // START: 新增 - 定義下拉選單插槽的 ID 陣列
-const dropdownSlotIds = ['dropdown-1', 'dropdown-2', 'dropdown-3'];
+const dropdownSlotIds = ['dropdown-1', 'dropdown-2', 'dropdown-3', 'dropdown-4'];
 // END: 新增
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -712,10 +712,11 @@ function resetDropdownUI() {
 }
 
 async function handleBackstageDropdown(result, { mainTab, subTab }) {
-    if (result.defaultScenario && isDataEmpty(mainTab, subTab)) {
-        globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultScenario));
-        updateMainContent(globalParsedData[mainTab][subTab], true);
-    }
+    // 直接產生 dropdown 不要載入預設模版
+    //if (result.defaultBackstage && isDataEmpty(mainTab, subTab)) {
+    //    globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultBackstage));
+    //    updateMainContent(globalParsedData[mainTab][subTab], true);
+    //}
     renderDropdownSlots(result.dropdowns, { mainTab, subTab });
 }
 

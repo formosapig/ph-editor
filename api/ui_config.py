@@ -16,6 +16,7 @@ from core.shared_data import (
     get_color_trait_count,
 )
 from game_data.cup_data import generate_cup_options
+from game_data.life_stage_data import generate_lifestage_options
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ def get_dropdown_options(tab, subTab):
     return jsonify({"dropdowns": dropdowns})
 
 
-@api_ui_config_bp.route("/profiles", methods=["GET"])
+@api_ui_config_bp.get("/profiles")
 def get_profile_list():
     profile_map = get_profile_map()
     general_data = get_general_data()
@@ -259,7 +260,7 @@ def sort_key_with_int_year(scenario):
         return (0, year_value, locale.strxfrm(scene))
                 
 
-@api_ui_config_bp.route("/backstage_options", methods=["GET"])
+@api_ui_config_bp.get("/backstage_options")
 def get_backstage_options():
     """提供 backstage 編輯所需的多組下拉選單"""
     dropdowns = []
@@ -356,9 +357,22 @@ def get_backstage_options():
     )
 
     # 取得預設情境模板
-    default_backstage_data = get_default_backstage()
+    # default_backstage_data = get_default_backstage()
+
+    # 第四組，當 scenario 是歲月迴響 (BREVARATION) 時，這代表人生共鳴
+    life_stage_options = generate_lifestage_options()
+
+    dropdowns.append(
+        {
+            "displayLabel": "人生共鳴",
+            "dataKey": "!resonance_id",
+            "labelKey": "resonance",
+            "options": life_stage_options,
+            "defaultValue": "",
+        }
+    )
 
     return jsonify({
         "dropdowns": dropdowns ,
-        "defaultBackstage" : default_backstage_data
+        #"defaultBackstage" : default_backstage_data
     })

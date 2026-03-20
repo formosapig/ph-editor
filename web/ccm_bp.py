@@ -16,6 +16,7 @@ from core.shared_data import (
     get_scenario_map,
     get_metadata_map,
 )
+from game_data.life_stage_data import get_lifestage_by_id, get_min_age
 
 logger = logging.getLogger(__name__)
 ccm_bp = Blueprint("ccm_bp", __name__, url_prefix="/ccm")
@@ -100,35 +101,60 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
         # 處理「歲月迴響」特殊邏輯
         if scenario_id == SpecialScenario.REVERBERATION and profile_id:
             profileData = profiles.get(profile_id)
+    
+            # 從資料中取得 resonance ID (這就是你的 !res_id)
+            # 如果沒設，預設可以用 3 (半步青春) 作為保底
+            res_id = backstage.get("!resonance_id") 
 
-            if profileData:
-                born_value = profileData.get("born")
-                try:
-                    final_year = int(born_value) + 20 if born_value is not None else 2000
-                except (ValueError, TypeError):
-                    final_year = 2000
+            if profileData and res_id:
+                # 1. 取得人生階段資料與最小年齡
+                stage = get_lifestage_by_id(int(res_id))
+                min_age = get_min_age(int(res_id))
+                
+                if stage and min_age is not None:
+                    # A. 計算年份：出生年份 + 人生階段最小年齡
+                    born_value = profileData.get("born")
+                    try:
+                        # 如果 born 沒填，預設從 2000 年開始
+                        base_year = int(born_value) if born_value is not None else 2000
+                        final_year = base_year + min_age
+                    except (ValueError, TypeError):
+                        final_year = 2000 + min_age
 
-                # 2. 建立虛擬 Scenario
-                new_scenario_id = OFFSET_REVERBERATION + int(profile_id)
-                scenarios[new_scenario_id] = {
-                    "!id": new_scenario_id,
-                    "scene": SpecialScenario.REVERBERATION.label,
-                    "year": final_year,
-                    "plot": "半步青春"
-                }
+                    # B. 建立虛擬 Scenario
+                    new_scenario_id = OFFSET_REVERBERATION + int(profile_id)
+                    
+                    # C. 組合文字邏輯
+                    # scene = stage['short'] (例如：懷春) + profile['name'] (例如：小美)
+                    scene_name = f"{stage['short']}{profileData.get('name', '無名氏')}"
+                    # plot = stage['desc'] (例如：少女幻想戀愛的可能)
+                    plot_text = stage['desc']
 
-                item_copy["!scenario_id"] = new_scenario_id
-                backstage['border_color'] = "#39FF14"
-                backstage['age'] = 20
+                    scenarios[new_scenario_id] = {
+                        "!id": new_scenario_id,
+                        "scene": scene_name,
+                        "year": final_year,
+                        "plot": plot_text
+                    }
+
+                    # D. 更新回傳狀態
+                    item_copy["!scenario_id"] = new_scenario_id
+                    backstage['border_color'] = "#39FF14"  # 螢光綠代表共鳴成功
+                    backstage['age'] = min_age
+                    
+                    logger.info(f"歲月迴響成功：{scene_name} ({final_year}年)")
+                else:
+                    logger.warning(f"跳過時空迴響：無效的 Resonance ID {res_id}")
             else:
-                logger.error(f"跳過時空迴響：找不到 Profile ID {profile_id}")
+                # 如果 res_id 是空的，表示「世界靜默」
+                logger.info(f"時空迴響靜默：Profile ID {profile_id} 未設定人生共鳴")
         elif scenario_id == SpecialScenario.SILHOUETTE:
             # 處理「時光剪影」特殊邏輯
             tag_id = backstage.get("!tag_id")
             tag = backstage.get("tag")
             target_tag = next((item for item in tag_list if item.get("id") == tag_id), {})
             desc = target_tag.get("desc", {}).get("zh", "")
-            logger.debug(f"tag_id: {tag_id}, tag: {tag}, desc: {desc}")
+            #logger.debug(f"tag_id: {tag_id}, tag: {tag}, desc: {desc}")
             if tag_id and tag:
                 new_scenario_id = OFFSET_SILHOUETTE + tag_id
 

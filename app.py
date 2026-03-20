@@ -1,6 +1,6 @@
 # ph-editor/app.py
 import logging
-import os
+import os,time
 import traceback
 from wsgiref.simple_server import WSGIRequestHandler
 
@@ -121,6 +121,7 @@ initialize_extra_data()
 #logger.info("全域 general 資料載入完成。")
 
 
+'''
 def clean_old_thumbnails(cache_dir, max_remove=3):
     if not os.path.exists(cache_dir):
         return
@@ -133,12 +134,40 @@ def clean_old_thumbnails(cache_dir, max_remove=3):
     for f, _ in files[:max_remove]:
         try:
             os.remove(os.path.join(cache_dir, f))
-            # print(f"刪除快取縮圖: {f}")
+            print(f"刪除快取縮圖: {f}")
         except Exception as e:
             print(f"刪除失敗: {f}, {e}")
+'''
+def smart_clean_thumbnails(cache_dir, threshold=500, days=3):
+    if not os.path.exists(cache_dir):
+        return
+
+    all_files = [f for f in os.listdir(cache_dir) if f.lower().endswith((".png", ".jpg"))]
+    if len(all_files) < threshold:
+        logger.debug(f"目前檔案數 {len(all_files)}，未達標，繼續裝死...")
+        return
+
+    logger.debug(f"檔案數 {len(all_files)} 已超過門檻 {threshold}，開始清理 3 天前的舊檔...")
+    expiry_threshold = time.time() - (days * 24 * 60 * 60)
+    count = 0
+    for f in all_files:
+        file_path = os.path.join(cache_dir, f)
+        try:
+            mtime = os.path.getmtime(file_path)
+            # 只要超過三天就幹掉
+            if mtime < expiry_threshold:
+                os.remove(file_path)
+                count += 1
+        except Exception as e:
+            logger.error(f"處理 {f} 出錯: {e}")
+
+    if count > 0:
+        logger.info(f"大掃除完畢，共清掉了 {count} 個過期檔案。")
+    else:
+        logger.debug("雖然達到了 500 張，但目前沒有超過 3 天的舊檔，先放它們一馬。")
 
 
-clean_old_thumbnails(CACHE_DIR)  # 應用啟動時執行清理
+smart_clean_thumbnails(CACHE_DIR)  # 應用啟動時執行清理
 
 
 @app.route("/")
@@ -347,4 +376,4 @@ def delete_wish(wish_id):
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", port=5000, debug = True, threaded = False) #單執行緒
     app.run(host="0.0.0.0", port=5000, debug = True, threaded = False) #單執行緒
-    #serve(app, host="0.0.0.0", port=5000)
+    # serve(app, host="0.0.0.0", port=5000)

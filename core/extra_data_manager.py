@@ -55,7 +55,7 @@ DEFAULT_BACKSTAGE_TEMPLATE = {
 }
 
 # gen = generation
-ORDER_BACKSTAGE = ["tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "generation", "title", "detail", "notes"]
+ORDER_BACKSTAGE = ["tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "!resonance_id", "resonance", "title", "detail", "notes"]
 
 ORDER_EPOCH = [] # 暫時先空著...
 
