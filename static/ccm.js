@@ -1,14 +1,12 @@
 import { request } from './request.js'
 
 window.addEventListener('DOMContentLoaded', () => {
-    const { profiles, scenarios, metadatas, tag_styles, tag_list, profile_group } = window.rawData;
+    const { profiles, scenarios, metadatas, profile_group } = window.rawData;
 
     const app = PetiteVue.reactive({
         profiles,
         scenarios,
         metadatas,
-        tag_styles,
-        tag_list,
         profile_group,
 
         hoveredScenarioId: null,
@@ -24,30 +22,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
         get sortedGroups() {
-        return this.profile_group
-            .filter(group => {
-            return true;
-            })
-            .sort((a, b) => a.order - b.order);		
+            return this.profile_group
+                .filter(group => {
+                    return true;
+                })
+                .sort((a, b) => a.order - b.order);		
         },
 
 
         toggleGroup(groupId) {
-        const index = this.collapsedGroups.indexOf(groupId);
-        if (index > -1) {
-            this.collapsedGroups.splice(index, 1); // 移除 = 展開
-        } else {
-            this.collapsedGroups.push(groupId); // 加入 = 縮起
-        }
+            const index = this.collapsedGroups.indexOf(groupId);
+            if (index > -1) {
+                this.collapsedGroups.splice(index, 1); // 移除 = 展開
+            } else {
+                this.collapsedGroups.push(groupId); // 加入 = 縮起
+            }
         },
 
         isCollapsed(groupId) {
-        return this.collapsedGroups.includes(groupId);
+            return this.collapsedGroups.includes(groupId);
         },
 
         // 輔助方法：根據 group 過濾 profile
         getProfilesByGroup(groupId) {
-        return this.sortedProfiles.filter(p => p.group_id === groupId);
+            return this.sortedProfiles.filter(p => p.group_id === groupId);
         },
 
         _updateHoverState(scId = null) {
@@ -72,7 +70,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 .map(([sn, meta]) => {
                     const bg = meta.backstage || {};
                     const profile = this.profiles ? this.profiles[meta["!profile_id"]] : null;
-                    const tagInfo = this.getTagInfo(bg["!tag_id"]);
+                    //const tagInfo = this.getTagInfo(bg["!tag_id"]);
 
                     // 預先計算好所有顯示邏輯
                     return {
@@ -84,12 +82,12 @@ window.addEventListener('DOMContentLoaded', () => {
                         avatar: `/api/characters/${encodeURIComponent(sn)}/thumbnail`,
                         age: bg.age ?? null, // (profile?.born && sc?.year) ? (parseInt(sc.year) - parseInt(profile.born || 0)) : null,
                         // 標籤樣式物件
-                        tag: (tagInfo && tagInfo.name?.zh !== "未設定") ? {
-                            name: tagInfo.name.zh,
+                        tag: (bg.tag) ? {
+                            name: bg.tag,
                             style: {
-                                background: tagInfo.style?.background || 'transparent',
-                                color: tagInfo.style?.color || '#ccc',
-                                borderColor: tagInfo.style?.color || '#ccc'
+                                background: bg.background || '#aaa',
+                                color: bg.color || '#555',
+                                borderColor: bg.color || '#555'
                             }
                         } : null,
                         persona: bg.persona || null,
@@ -165,44 +163,21 @@ window.addEventListener('DOMContentLoaded', () => {
                 ([sn, meta]) => meta["!scenario_id"] === scId
             ).flatMap(([sn, meta]) => {
                 const backstage = meta.backstage || {};
-                let title = backstage["title"];
-                if (!title)
-                    title = this.getTagInfo(backstage["!tag_id"]).name.zh || "";
                 return {
                     sn: sn,
-                    title: title,
+                    title: backstage["title"],
                     tag_id: backstage["!tag_id"],
                     profile_id: meta["!profile_id"],
-                    border_color: backstage["border_color"]
+                    color: backstage["color"] || '#555',
+                    background: backstage["background"] || '#aaa'
                 };
             });
             return matchedMetas;
         },
 
-        // 輔助函式：透過 tag_id 取得完整的 tag 物件與樣式
-        getTagInfo(tagId) {
-        if (!tagId) {
-            // 回傳一個虛擬的「未定義」樣式
-            return {
-            name: { zh: "未設定" },
-            style: { 
-                color: "#888", 
-                background: "transparent", 
-                borderStyle: "dashed" // 加上虛線感
-            }
-            };
-        }	
-        
-        //console.error(tagId)
-        const tag = this.tag_list.find(t => t.id === tagId);
-        if (!tag) return null;
-        const style = this.tag_styles[tag.type] || {};
-        return { ...tag, style };
-        },
-
         // 判斷該 event-box 內的 backstage 資訊是否屬於目前這一橫行的 profile
         isCurrentProfile(backstageItem, currentProfileId) {
-        return backstageItem.profile_id === currentProfileId;
+            return backstageItem.profile_id === currentProfileId;
         },
 
         // 處理點擊標籤開啟檔案
@@ -277,34 +252,11 @@ window.addEventListener('DOMContentLoaded', () => {
         // 取得當前事件方塊應套用的主題色
         getScenarioStyle(scId, profileId) {
             const backstages = this.getBackstagesByScenario(scId);
-            const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.border_color !== '#555');
+            const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.color);
             return {
-                borderColor: (primaryBG && primaryBG.border_color) || '#555'
+                borderColor: (primaryBG && primaryBG.color) || '#555'
             };
         },
-	
-	// 取得當前事件方塊應套用的主題色
-	getScenarioSceneStyle(scId, profileId) {
-	  // 1. 找到該事件中，屬於當前角色的第一個後台資料
-	  const backstages = this.getBackstagesByScenario(scId);
-	  const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.tag_id);
-	  
-	  if (primaryBG) {
-		const tagInfo = this.getTagInfo(primaryBG.tag_id);
-		if (tagInfo && tagInfo.style) {
-		  return {
-			color: tagInfo.style.color  
-			// 設定左邊框為標籤主色
-			//borderColor: tagInfo.style.color,
-			// 設定一個極淡的背景色（維持你原本的透明質感，但帶一點標籤色調）
-			//background: tagInfo.style.background//
-			//background: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), ${tagInfo.style.background}`
-			//background: `linear-gradient(50deg, ${tagInfo.style.background} 0%, rgba(255, 255, 255, 0.03) 100%)`
-		  };
-		}
-	  }
-	  return {}; // 若沒找到則回傳空物件，套用 CSS 預設值
-	},
 	
         async reloadData() {
             console.log("正在從伺服器同步資料...");
@@ -315,8 +267,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 this.profiles = newData.profiles;
                 this.scenarios = newData.scenarios;
                 this.metadatas = newData.metadatas;
-                this.tag_styles = newData.tag_styles;
-                this.tag_list = newData.tag_list;
                 this.profile_group = newData.profile_group;
                 
                 // plot

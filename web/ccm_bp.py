@@ -35,18 +35,21 @@ def _get_ccm_data():
     """封裝資料獲取與過濾的邏輯，供多個 Route 共用"""
     general_data = get_general_data()
     
+    
+    allowed_fields = {"!id", "name", "!group_id", "born", "height", "cup"}
     profiles = get_profile_map()
-    clean_profiles = {
-        k: v for k, v in profiles.items()
-        if k != 0 and v.get("!id") != 0
-    }
+    prepared_profiles = {}
+    for k, v in profiles.items():
+        if k != 0 and v.get("!id") != 0:
+            # 只提取白名單中的欄位，建立一個新的小字典
+            prepared_profiles[k] = {key: v[key] for key in v if key in allowed_fields}
 
     prepared_scenarios = _prepare_scenarios(get_scenario_map())
 
-    prepared_metadatas = _prepare_metadatas(general_data, clean_profiles, prepared_scenarios, get_metadata_map())
+    prepared_metadatas = _prepare_metadatas(general_data, prepared_profiles, prepared_scenarios, get_metadata_map())
 
     return {
-        "profiles": clean_profiles,
+        "profiles": prepared_profiles,
         "scenarios": prepared_scenarios,
         "metadatas": prepared_metadatas,
         "tag_styles": general_data.get('tag_styles', ""),
@@ -77,7 +80,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
     tag_list = general_data.get('tag_list', [])
 
     type_to_color = {
-        t_type: info.get('color', '#555') 
+        t_type: info.get('color', '#555')
         for t_type, info in tag_styles.items()
     }
     
@@ -86,18 +89,38 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
         for tag in tag_list if 'id' in tag
     }
         
+
+    # 1. 先建立 type 到完整樣式的索引
+    type_to_styles = {
+        t_type: {
+            'color': info.get('color', '#555'),
+            'background': info.get('background', '#eee') # 假設預設背景是淡灰色
+        }
+        for t_type, info in tag_styles.items()
+    }
+
+    # 2. 再建立 tag_id 到樣式物件的索引
+    tag_id_to_styles = {
+        tag['id']: type_to_styles.get(tag.get('type'), {'color': '#555', 'background': '#eee'})
+        for tag in tag_list if 'id' in tag
+    }
+
     clean_metadatas = {}
 
     for k, v in metadatas.items():
         item_copy = copy.deepcopy(v)
+        item_copy.pop("!remark", None)
+        item_copy.pop("!status", None)
         backstage = item_copy.setdefault('backstage', {})
+        backstage.pop("notes", None)
         tag_id = backstage.get('!tag_id')
         
-        backstage['border_color'] = tag_id_to_color.get(tag_id, '#555')
+        backstage['color'] = tag_id_to_styles.get(tag_id, {}).get('color', None)
+        backstage['background'] = tag_id_to_styles.get(tag_id, {}).get('background', None)
         
         scenario_id = item_copy.get("!scenario_id")
         profile_id = item_copy.get("!profile_id")
-
+       
         # 處理「歲月迴響」特殊邏輯
         if scenario_id == SpecialScenario.REVERBERATION and profile_id:
             profileData = profiles.get(profile_id)
@@ -139,7 +162,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
 
                     # D. 更新回傳狀態
                     item_copy["!scenario_id"] = new_scenario_id
-                    backstage['border_color'] = "#39FF14"  # 螢光綠代表共鳴成功
+                    backstage['color'] = "#39FF14"  # 螢光綠代表共鳴成功
                     backstage['age'] = min_age
                     
                     logger.info(f"歲月迴響成功：{scene_name} ({final_year}年)")

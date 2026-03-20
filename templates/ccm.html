@@ -14,8 +14,6 @@
             profiles: [[ profiles | tojson ]],
             scenarios: [[ scenarios | tojson ]],
             metadatas: [[ metadatas | tojson ]],
-            tag_styles: [[ tag_styles | tojson ]],
-            tag_list: [[ tag_list | tojson ]],
             profile_group: [[ profile_group | tojson ]]
         };
     </script>
@@ -75,17 +73,16 @@
                    @mouseleave="handleMouseLeave()">
                 
                 <!-- 場景標題 -->   
-                <!--<div class="sc-name" :style="getScenarioSceneStyle(sc.id, p['!id'])">{{ sc.scene }}</div>-->
                 <div class="sc-name">{{ sc.scene }}</div>
                 
                 <!-- 場景參與者的 tag -->
                 <div class="tags-container">
                   <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.sn" style="display: contents">
-                    <div v-if="getTagInfo(bg.tag_id)" class="sc-tag"
+                    <div v-if="bg.title" class="sc-tag"
                          :style="{ 
-                           color: getTagInfo(bg.tag_id).style.color, 
-                           background: getTagInfo(bg.tag_id).style.background,
-                           border: '1px solid ' + getTagInfo(bg.tag_id).style.color
+                           color: bg.color, 
+                           background: bg.background,
+                           border: '1px solid ' + bg.color
                          }"
                          :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }">
                       {{ bg.title }}

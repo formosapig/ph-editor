@@ -394,6 +394,10 @@ th:not(.corner-cell), .matrix-cell {
     left: -2px;
     z-index: 10;
 
+    display: flex;
+    align-items: center;     /* 垂直置中 */
+    justify-content: center;  /* 水平置中 */
+
     /*background-color: var(--color-profile-background);*/
     color: var(--color-age);
     border: 2px solid #aa8;
@@ -406,7 +410,6 @@ th:not(.corner-cell), .matrix-cell {
     line-height: 1;    /* 減少我們剛才討論過的天然間距 */
     padding: 2px 4px;  /* 稍微給一點內距會比較美觀 */
 }
-
 
 .profile-badge {
     background-color: var(--color-profile-background);
