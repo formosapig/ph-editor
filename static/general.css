@@ -39,7 +39,7 @@ thead th {
   border-bottom: 2px solid #dde3e9; /* 表頭底部邊框更淺 */
   padding-top: 15px;
   padding-bottom: 15px;
-ext-align: center;
+  text-align: center;
 }
 tbody tr {
   transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
@@ -159,4 +159,101 @@ select:focus {
 td select {
   text-align: center; /* 讓下拉選單文字置中 */
   text-align-last: center; /* 確保選中項也置中 */
+}
+
+
+/* gemini add */
+
+/* 隱藏 Radio 本身 */
+input[name="tabs"] {
+  display: none;
+}
+
+/* Tab 導覽列樣式 */
+.tab-menu {
+  display: flex;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 20px;
+}
+
+.tab-menu label {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: #f9f9f9;
+  transition: 0.2s;
+}
+
+.tab-menu label:hover {
+  background: #eee;
+}
+
+/* 內容區塊預設全部隱藏 */
+.tab-content section {
+  display: none;
+  padding: 15px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+/* 核心邏輯：當 Radio 被選取時，顯示對應的內容並高亮 Label */
+#tab1:checked ~ .tab-menu label[for="tab1"],
+#tab2:checked ~ .tab-menu label[for="tab2"],
+#tab3:checked ~ .tab-menu label[for="tab3"],
+#tab4:checked ~ .tab-menu label[for="tab4"] {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-bottom: 2px solid #fff; /* 蓋住底線 */
+  margin-bottom: -2px;
+  font-weight: bold;
+  color: #2196F3;
+}
+
+#tab1:checked ~ .tab-scroll-box .tab-content #content1,
+#tab2:checked ~ .tab-scroll-box .tab-content #content2,
+#tab3:checked ~ .tab-scroll-box .tab-content #content3,
+#tab4:checked ~ .tab-scroll-box .tab-content #content4 {
+  display: block;
+}
+
+/* 送出按鈕樣式優化 */
+.submit-btn {
+  margin-top: 20px;
+  padding: 10px 30px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.submit-btn:disabled {
+  background-color: #ccc;
+}
+
+/* 頂部按鈕列佈局 */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* 固定 Tab 選單在頂部 */
+.tab-menu {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white; /* 避免捲動內容透出來 */
+  border-bottom: 2px solid #ccc;
+}
+
+/* 內容捲動容器 */
+.tab-scroll-box {
+  height: calc(100vh - 220px); /* 扣掉 header 與 tab 的高度，請依需求微調 */
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-top: none;
+  background: #fff;
+    scroll-behavior: smooth;
 }

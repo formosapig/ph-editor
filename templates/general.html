@@ -1,19 +1,39 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>全域設定</title>
-  <!--<script src="/static/petite-vue.iife.js" defer init></script>-->
-  <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer init></script>
-  <link rel="stylesheet" href="[[ url_for('static', filename='general.css') ]]" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>全域設定</title>
+    <link rel="stylesheet" href="[[ url_for('static', filename='general.css') ]]" />
+    <script src="[[ url_for('static', filename='general.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
 </head>
 <body>
 
-<div v-scope="app">
-  <h2>全域設定</h2>
+<div x-data="setupApp()" x-init="init()">
+  <div class="header-actions">
+    <h2>全域設定</h2>
+    <button @click="submit" :disabled="isSubmitDisabled()" class="submit-btn">送出資料</button>
+  </div>
+<div class="tab-container">
+  <input type="radio" id="tab1" name="tabs" checked @change="$refs.scrollBox.scrollTop = 0">
+  <input type="radio" id="tab2" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
+  <input type="radio" id="tab3" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
+  <input type="radio" id="tab4" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
 
-    <section>
+  <nav class="tab-menu">
+    <label for="tab1">特質顏色</label>
+    <label for="tab2">標籤類型</label>
+    <label for="tab3">標籤詳細</label>
+    <label for="tab4">簡介分組</label>
+  </nav>
+
+<div class="tab-scroll-box" x-ref="scrollBox">
+  <div class="tab-content">
+
+
+
+  <section id="content1">
     <h3>特質-顏色 設定</h3>
     <table>
       <thead>
@@ -25,22 +45,22 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in color_traits" :key="index">
-          <td><input type="text" v-model="item.trait.zh" placeholder="特質 (中文)" /></td>
-          <td><input type="text" v-model="item.name.zh" placeholder="顏色名稱 (中文)" /></td>
-          <td><input type="color" v-model="item.code" /></td>
-          <td>
-            <button @click="removeColorTrait(index)" :disabled="color_traits.length === 1">刪除</button>
-          </td>
-        </tr>
+        <template x-for="(item, index) in color_traits" :key="index">
+          <tr>
+            <td><input type="text" x-model="item.trait.zh" placeholder="特質 (中文)" /></td>
+            <td><input type="text" x-model="item.name.zh" placeholder="顏色名稱 (中文)" /></td>
+            <td><input type="color" x-model="item.code" /></td>
+            <td>
+              <button @click="removeColorTrait(index)" :disabled="color_traits.length === 1">刪除</button>
+            </td>
+          </tr>
+        </template>
       </tbody>
     </table>
     <button @click="addColorTrait">新增一行</button>
-
-    <!--<pre>目前 color_traits 資料： [[ color_traits ]]</pre>-->
   </section>
 
-    <section>
+  <section id="content2">
     <h3>標籤類型</h3>
     <table>
       <thead>
@@ -54,32 +74,32 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in tag_type_settings_array" :key="item.key">
-          <td><input type="text" v-model="item.key" placeholder="例如: origin" /></td>
-          <td>
-            <input
-              type="text"
-              v-model="item.name.zh"
-              placeholder="例如: 本源 (中文)"
-              class="tag-type-name-input"
-              :style="{ color: item.color, backgroundColor: item.background }"
-            />
-          </td>
-          <td><input type="color" v-model="item.color" /></td>
-          <td><input type="color" v-model="item.background" /></td>
-          <td><input type="number" v-model.number="item.order" placeholder="排序數字" min="1" /></td>
-          <td>
-            <button @click="removeTagTypeSetting(index)" :disabled="tag_type_settings_array.length === 1">刪除</button>
-          </td>
-        </tr>
+        <template x-for="(item, index) in tag_type_settings_array" :key="index">
+          <tr>
+            <td><input type="text" x-model="item.key" placeholder="例如: origin" /></td>
+            <td>
+              <input
+                type="text"
+                x-model="item.name.zh"
+                placeholder="例如: 本源 (中文)"
+                class="tag-type-name-input"
+                :style="{ color: item.color, backgroundColor: item.background }"
+              />
+            </td>
+            <td><input type="color" x-model="item.color" /></td>
+            <td><input type="color" x-model="item.background" /></td>
+            <td><input type="number" x-model.number="item.order" placeholder="排序數字" min="1" /></td>
+            <td>
+              <button @click="removeTagTypeSetting(index)" :disabled="tag_type_settings_array.length === 1">刪除</button>
+            </td>
+          </tr>
+        </template>
       </tbody>
     </table>
     <button @click="addTagTypeSetting">新增一行</button>
-
-    <!--<pre>目前 tag_styles 資料： [[ tag_styles ]]</pre>-->
   </section>
 
-    <section>
+  <section id="content3">
     <h3>標籤設定</h3>
     <table>
       <thead>
@@ -94,40 +114,39 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in tag_array" :key="item.id || index">
-          <td>
-            <select v-model="item.type">
-              <option disabled value="">請選擇類型</option>
-                              <option v-for="typeItem in tag_type_settings_array" :value="typeItem.key">{{ typeItem.name.zh }}</option>
-            </select>
-          </td>
-          <td>
-		    <input
+        <template x-for="(item, index) in tag_array" :key="item.id">
+          <tr>
+            <td>
+              <select x-model="item.type">
+                <option disabled value="">請選擇類型</option>
+                <template x-for="typeItem in tag_type_settings_array" :key="typeItem.key">
+                    <option :value="typeItem.key" x-text="typeItem.name.zh"></option>
+                </template>
+              </select>
+            </td>
+            <td>
+              <input
                 type="text"
-                v-model="item.name.zh"
+                x-model="item.name.zh"
                 placeholder="名稱" 
-				:style="{
-                  color: tagTypeSettingsMap[item.type] ? tagTypeSettingsMap[item.type].color : '',
-                  backgroundColor: tagTypeSettingsMap[item.type] ? tagTypeSettingsMap[item.type].background : ''
-                }"
-            />
-          </td>
-          <td><textarea v-model="item.desc.zh" placeholder="描述"></textarea></td>
-          <td><textarea v-model="item.snapshot.zh" placeholder="拍照"></textarea></td>
-          <td><textarea v-model="item.appearance.zh" placeholder="特徵"></textarea></td>
-          <td><textarea v-model="item.clothing.zh" placeholder="穿著"></textarea></td>
-          <td>
-            <button @click="removeTag(index)" :disabled="tag_array.length === 1">刪除</button>
-          </td>
-        </tr>
+                :style="getTagStyle(item.type)"
+              />
+            </td>
+            <td><textarea x-model="item.desc.zh" placeholder="描述"></textarea></td>
+            <td><textarea x-model="item.snapshot.zh" placeholder="拍照"></textarea></td>
+            <td><textarea x-model="item.appearance.zh" placeholder="特徵"></textarea></td>
+            <td><textarea x-model="item.clothing.zh" placeholder="穿著"></textarea></td>
+            <td>
+              <button @click="removeTag(index)" :disabled="tag_array.length === 1">刪除</button>
+            </td>
+          </tr>
+        </template>
       </tbody>
     </table>
     <button @click="addTag">新增一行</button>
-
-    <!--<pre>目前 tag_list 資料： [[ tag_list ]]</pre>-->
   </section>
 
-<section>
+  <section id="content4">
     <h3>簡介分組</h3>
     <table>
       <thead>
@@ -136,380 +155,50 @@
           <th>名稱</th>
           <th>描述</th>
           <th>文字</th>
-		  <th>背景</th>
+          <th>背景</th>
           <th>排序</th>
           <th>操作</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in profile_group_array" :key="item.id">
-          <td>{{ item.id }}</td>
-          <td>
-            <input 
-              type="text" 
-              v-model="item.name.zh" 
-              placeholder="分組名稱"
-              :style="{ color: item.color, backgroundColor: item.background }"
-            />
-          </td>
-          <td><textarea v-model="item.desc.zh" placeholder="描述"></textarea></td>
-          <td><input type="color" v-model="item.color" /></td>
-          <td><input type="color" v-model="item.background" /></td>
-          <td><input type="number" v-model.number="item.order" min="1" /></td>
-          <td>
-            <button @click="removeProfileGroup(index)" :disabled="profile_group_array.length === 1">刪除</button>
-          </td>
-        </tr>
+        <template x-for="(item, index) in profile_group_array" :key="item.id">
+          <tr>
+            <td x-text="item.id"></td>
+            <td>
+              <input 
+                type="text" 
+                x-model="item.name.zh" 
+                placeholder="分組名稱"
+                :style="{ color: item.color, backgroundColor: item.background }"
+              />
+            </td>
+            <td><textarea x-model="item.desc.zh" placeholder="描述"></textarea></td>
+            <td><input type="color" x-model="item.color" /></td>
+            <td><input type="color" x-model="item.background" /></td>
+            <td><input type="number" x-model.number="item.order" min="1" /></td>
+            <td>
+              <button @click="removeProfileGroup(index)" :disabled="profile_group_array.length === 1">刪除</button>
+            </td>
+          </tr>
+        </template>
       </tbody>
     </table>
     <button @click="addProfileGroup">新增分組</button>
-  </section>    
+  </section>
 
-    <button @click="submit" :disabled="submitDisabled">送出資料</button>
   </div>
+</div>
+</div>
+</div>
 
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    PetiteVue.createApp(window.app).mount('[v-scope]');
-  });
-
-  // 使用 Jinja2 語法將後端傳遞的變數注入到 JavaScript 中
-  const initialColorTraits = [[ color_traits | tojson ]];
-  const initialTagTypeSettings = [[ tag_styles | tojson ]]; // 假設後端傳遞 tag_type_setting
-  const initialTags = [[ tag_list | tojson ]]; // 假設後端傳遞 tag 資料
-  const initialProfileGroups = [[ profile_group | tojson ]];
-
-  window.app = {
-    // color_traits 初始化
-    color_traits: initialColorTraits.length > 0 ? initialColorTraits : [{ 
-      code: '#000000', 
-      name: { en: '', zh: '' }, // 保持結構，但 UI 只顯示 zh
-      trait: { zh: '' } 
-    }],
-
-    // tag_type_settings 初始化
-    // 將後端傳來的物件轉換為陣列，並依照 order 排序
-    tag_type_settings_array: Object.keys(initialTagTypeSettings).length > 0
-      ? Object.entries(initialTagTypeSettings)
-          .map(([key, value]) => ({ key, ...value }))
-          .sort((a, b) => a.order - b.order) // 在這裡進行排序
-      : [{ 
-          key: '', 
-          name: { zh: '' }, 
-          order: 1, 
-          color: '#000000', 
-          background: '#FFFFFF' 
-        }],
-    
-    // tag_array 初始化
-    tag_array: initialTags.length > 0 ? initialTags : [{
-        id: Date.now(), // 給予一個臨時 ID，確保 key 的唯一性
-        type: '',
-        name: { zh: '' },
-        desc: { zh: '' },
-        snapshot: { zh: '' },
-        appearance: { zh: '' },
-        clothing: { zh: '' }
-    }],
-
-    // 2. 初始化 profile_group_array
-    profile_group_array: initialProfileGroups.length > 0 
-      ? initialProfileGroups.sort((a, b) => a.order - b.order)
-      : [{ 
-          id: 1, 
-          name: { zh: '' }, 
-          desc: { zh: '' }, 
-          order: 1, 
-          color: '#000000', 
-          background: '#FFFFFF' 
-        }],
-
-    get tagTypeSettingsMap() {
-      return this.tag_type_settings_array.reduce((map, item) => {
-        if (item.key) {
-          map[item.key] = item;
-        }
-        return map;
-      }, {});
-    },
-
-    // --- color_traits 相關方法 ---
-    addColorTrait() {
-      this.color_traits.push({ 
-        code: '#000000', 
-        name: { en: '', zh: '' }, 
-        trait: { zh: '' } 
-      });
-    },
-    removeColorTrait(index) {
-      if (this.color_traits.length > 1) {
-        this.color_traits.splice(index, 1);
-      }
-    },
-
-    // --- tag_type_setting 相關方法 ---
-    addTagTypeSetting() {
-      // 找到目前最大的 order 值，新項目 order 為其加一
-      const maxOrder = this.tag_type_settings_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
-      this.tag_type_settings_array.push({
-        key: '',
-        name: { zh: '' }, // 只初始化中文名稱
-        order: maxOrder + 1,
-        color: '#000000',
-        background: '#FFFFFF'
-      });
-    },
-    removeTagTypeSetting(index) {
-      if (this.tag_type_settings_array.length > 1) {
-        this.tag_type_settings_array.splice(index, 1);
-      }
-    },
-
-    // --- tag 相關方法 ---
-    addTag() {
-        // 為新項目生成一個獨特的 ID，避免與現有 ID 重複，並保持遞增
-        const maxId = this.tag_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
-        this.tag_array.push({
-            id: maxId + 1,
-            type: '',
-            name: { zh: '' },
-            desc: { zh: '' },
-            snapshot: { zh: '' },
-            appearance: { zh: '' },
-            clothing: { zh: '' }
-        });
-    },
-    removeTag(index) {
-        if (this.tag_array.length > 1) {
-            this.tag_array.splice(index, 1);
-        }
-    },
-
-    // 3. 新增相關方法
-    addProfileGroup() {
-      const maxId = this.profile_group_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
-      const maxOrder = this.profile_group_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
-      this.profile_group_array.push({
-        id: maxId + 1,
-        name: { zh: '' },
-        desc: { zh: '' },
-        order: maxOrder + 1,
-        color: '#000000',
-        background: '#FFFFFF'
-      });
-    },
-    removeProfileGroup(index) {
-      if (this.profile_group_array.length > 1) {
-        this.profile_group_array.splice(index, 1);
-      }
-    },
-
-    // --- 提交相關邏輯 ---
-    get submitDisabled() {
-      // 檢查 color_traits
-      const colorTraitsInvalid = this.color_traits.some(item => 
-        !item.trait.zh.trim() || !item.name.zh.trim()
-      );
-
-      // 檢查 tag_type_settings
-      const tagTypeSettingsInvalid = this.tag_type_settings_array.some(item =>
-        !item.key.trim() || !item.name.zh.trim() || !item.order || item.order < 1
-      );
-
-      // 檢查 tag
-      const tagsInvalid = this.tag_array.some(item =>
-        !item.type.trim() || !item.name.zh.trim()
-      );
-
-      // ... 原有的檢查 ...
-      const profileGroupInvalid = this.profile_group_array.some(item => 
-        !item.name.zh.trim() || !item.order
-      );
-      
-      // 在 return 中加入檢查
-      return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid;
-    },
-    submit() {
-      // 過濾並轉換 color_traits
-      const filteredColorTraits = this.color_traits.filter(item => 
-        item.trait.zh.trim() && item.name.zh.trim()
-      );
-
-      // 過濾並轉換 tag_type_settings 回原始物件格式
-      const filteredTagTypeSettings = {};
-      // 提交前，先根據 order 重新排序，確保提交的數據順序一致
-      const sortedTagTypeForSubmission = [...this.tag_type_settings_array].sort((a, b) => a.order - b.order);
-
-      sortedTagTypeForSubmission.forEach(item => {
-        if (item.key.trim() && item.name.zh.trim() && item.order && item.order >= 1) {
-          filteredTagTypeSettings[item.key.trim()] = {
-            name: { zh: item.name.zh }, // 確保只提交中文名稱
-            order: item.order,
-            color: item.color,
-            background: item.background
-          };
-        }
-      });
-
-      // 過濾並排序 tag 數據，只保留有效的部分
-      const finalFilteredTags = this.tag_array
-        .filter(item => item.type.trim() && item.name.zh.trim())
-        .sort((a, b) => {
-          // 1. 取得 Type 的 Order (第一排序依據)
-          const orderA = filteredTagTypeSettings[a.type]?.order || Infinity;
-          const orderB = filteredTagTypeSettings[b.type]?.order || Infinity;
-        
-          // 檢查 Order 是否相等
-          if (orderA !== orderB) {
-            // Order 不相等，直接依 Order 由小到大排序
-            return orderA - orderB;
-          }
-
-          // 2. Order 相等，則依 Tag 的 ID 排序 (第二排序依據)
-          // 假設 item.id 已經是數字 (在 addTag 中是以數字生成)
-          const idA = a.id || Infinity;
-          const idB = b.id || Infinity;
-        
-          // 依 ID 由小到大排序
-          return idA - idB;
-        })
-        .map((item, index) => ({
-          id: item.id, //index + 1, // 從 1 開始重新給予 id
-          type: item.type,
-          name: { zh: item.name.zh },
-          desc: { zh: item.desc.zh },
-          snapshot: { zh: item.snapshot.zh },
-          appearance: { zh: item.appearance.zh },
-          clothing: { zh: item.clothing.zh }
-        }));
-
-      // 過濾並排序 Profile Group
-      const filteredProfileGroups = this.profile_group_array
-        .filter(item => item.name.zh.trim())
-        .sort((a, b) => a.order - b.order)
-        .map(item => ({
-          id: item.id,
-          name: { zh: item.name.zh },
-          desc: { zh: item.desc.zh },
-          order: item.order,
-          color: item.color,
-          background: item.background
-        }));
-
-      const dataToSend = {
-        color_traits: filteredColorTraits,
-        tag_styles: filteredTagTypeSettings,
-        tag_list: finalFilteredTags,
-        profile_group: filteredProfileGroups // <-- 新增這行
-      };
-      
-      fetch('/general/update', { // 這裡的 API 端點是用來 POST 資料的
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend),
-      })
-      .then(res => {
-        if (!res.ok) {
-          // 嘗試讀取錯誤訊息
-          return res.json().then(errData => {
-            throw new Error(errData.message || '伺服器錯誤');
-          });
-        }
-        return res.json();
-      })
-      .then(data => {
-        this.showMessage('送出成功，正在儲存資料...', 'info');
-        // 加入 pingPongSync 流程
-        //return this.pingPongSync();  // 確保是 this 上的函式
-      })
-      .catch(err => {
-        // 使用自定義的訊息框代替 alert
-        this.showMessage(`送出失敗：${err.message || '請稍後再試'}`, 'error');
-        console.error('提交失敗:', err);
-      });
-    },
-
-    // 自定義訊息框方法 (取代 alert)
-    showMessage(message, type = 'info') {
-      const messageBox = document.createElement('div');
-      messageBox.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 15px 25px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-      `;
-
-      if (type === 'success') {
-        messageBox.style.backgroundColor = '#4CAF50';
-        messageBox.style.color = 'white';
-      } else if (type === 'error') {
-        messageBox.style.backgroundColor = '#F44336';
-        messageBox.style.color = 'white';
-      } else {
-        messageBox.style.backgroundColor = '#2196F3';
-        messageBox.style.color = 'white';
-      }
-
-      messageBox.textContent = message;
-      document.body.appendChild(messageBox);
-
-      // 顯示動畫
-      setTimeout(() => {
-        messageBox.style.opacity = '1';
-        messageBox.style.transform = 'translateX(-50%) translateY(0)';
-      }, 10); // 小延遲確保過渡生效
-
-      // 隱藏動畫並移除
-      setTimeout(() => {
-        messageBox.style.opacity = '0';
-        messageBox.style.transform = 'translateX(-50%) translateY(-20px)';
-        messageBox.addEventListener('transitionend', () => messageBox.remove());
-      }, 3000); // 3 秒後自動消失
-    },
-	
-	pingPongSync() {
-      let savedCount = 0;
-      const self = this;
-
-      async function saveNext() {
-        try {
-          const response = await fetch('/api/characters/ping_pong_sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`伺服器回應錯誤: ${response.status} ${response.statusText} - ${errorText}`);
-          } 
-
-          const data = await response.json();
-
-          if (data.file_id) {  
-            savedCount++;
-            //self.showMessage(`成功儲存檔案: ${data.file_id}。繼續儲存...`, 'info');
-            await saveNext();
-          } else {
-            self.showMessage(`✅ 所有資料 (${savedCount} 筆) 已成功儲存！`, 'success');
-          }
-        } catch (err) {
-          console.error("儲存失敗", err);
-          self.showMessage(`❌ 儲存失敗: ${err.message}`, 'error');
-        }
-      }
-      self.showMessage("⏳ 正在儲存資料，請稍候...", 'info');
-      return saveNext();
-    }
-  }
+  // 透過全域變數傳遞 Jinja2 資料給 app.js
+  window.INIT_DATA = {
+    colorTraits: [[ color_traits | tojson ]],
+    tagStyles: [[ tag_styles | tojson ]],
+    tagList: [[ tag_list | tojson ]],
+    profileGroup: [[ profile_group | tojson ]]
+  };
 </script>
 </body>
 </html>
