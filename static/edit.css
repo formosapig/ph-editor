@@ -11,14 +11,6 @@ body {
   background-color: #f5f6f5;
 }
 
-/* 頂部按鈕 */
-.top-right-button-container {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-}
-
 /* 標題 */
 h1 {
   font-size: 24px;
@@ -52,11 +44,11 @@ h1 {
   background-color: #f5f5f5;
   /*border-bottom: 1px dashed #ccc;*/
   text-align: left;
-}
-
-.file-id-remark:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    
+    &:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
 }
 
 .status-radio-group {
@@ -125,62 +117,62 @@ h1 {
 
 /* Tab 容器 */
 .tab-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex: 1; /* 佔據所有剩餘空間 */
-  min-height: 0; /* 關鍵：允許內容收縮，確保 flex: 1 能正確運作 */
-  background-color: #f7f3ec;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow: hidden; /* 防止內部元素溢出產生捲動條，但這裡主要是為了讓 main-content 內的捲動條有效 */
-}
-
-/* Tab 內容區域 */
-#parsed-data-display {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  position: relative; /* 為絕對定位的子元素提供參考 */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* 佔據所有剩餘空間 */
+    min-height: 0; /* 關鍵：允許內容收縮，確保 flex: 1 能正確運作 */
+    background-color: #fff; /* 改為純白，提升現代感 */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px; /* 圓角加大更親和 */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    overflow: hidden; /* 防止內部元素溢出產生捲動條，但這裡主要是為了讓 main-content 內的捲動條有效 */
 }
 
 /* Tab 按鈕 */
 .tab-buttons {
-  display: flex;
-  border-bottom: 1px solid #ddd;
-  background-color: #1e8f5e;
-  border-radius: 4px 4px 0 0;
-  padding: 0;
-  margin: 0;
-  flex-shrink: 0; /* 確保按鈕區不被壓縮 */
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0; /* 確保按鈕區不被壓縮 */
+    /* gemini add */
+    background-color: #2c3e50; /* 改為深色，質感較重 */
+    padding: 0 10px;
+    gap: 5px;
 }
 
 .tab-button {
-  padding: 12px 20px;
-  background: #fff;
-  border: none;
-  cursor: pointer;
-  margin-right: 0;
-  border-radius: 0;
-  font-size: 14px;
-  transition: all 0.2s;
-  color: #555;
-  border-bottom: 3px solid transparent;
-  position: relative;
-  top: 1px; /* 防止切換時移動 */
-}
+    position: relative;
+    top: 1px;
 
-.tab-button:hover {
-  background: #f8f8f8;
-  color: #333;
-}
+    margin-right: 0;
+    padding: 14px 24px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
 
-.tab-button.active {
-  background: #fff;
-  font-weight: bold;
-  color: #222;
-  border-bottom: 3px solid #4CAF50;
+    color: #bdc3c7;
+    font-size: 14px;
+    font-weight: 500;
+
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    &.active {
+        color: #fff;
+        font-weight: bold;
+        background: transparent;
+        border-bottom-color: #3498db;
+        box-shadow: inset 0 -4px 10px rgba(52, 152, 219, 0.1); 
+    }
 }
 
 /* Tab 內容 */
@@ -211,33 +203,8 @@ h1 {
   overflow: hidden; /* pre 元素本身不產生捲動條 */
 }
 
-/* 按鈕樣式 */
-button {
-  padding: 10px 15px;
-  font-size: 16px;
-  cursor: pointer;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-/* 禁用狀態 */
-button:disabled {
-  background-color: #cccccc;
-  color: #666666;
-  cursor: not-allowed;
-  /* 取消 hover 效果 */
-  pointer-events: none;
-}
-
 /* 第二層 tab 開始 */
-#sub-tab-buttons {
+.sub-tab-buttons {
   display: flex;
   border-bottom: 1px solid #aaccee;
   background-color: #e6f0fa; /* 淡藍色，和第一層淺色調區分 */
@@ -249,6 +216,13 @@ button:disabled {
   box-shadow: inset 0 -1px 0 #9cc0e0;
   margin-top: 4px;
   flex-shrink: 0; /* 確保子 tab 按鈕不被壓縮 */
+    /* gemini add */
+    background-color: #f8f9fa; /* 淺灰色背景，與主頁面區分 */
+    padding: 8px 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 8px;
+    margin-top: 0px;
 }
 
 .sub-tab-button {
@@ -261,12 +235,24 @@ button:disabled {
   color: #2a4d7b; /* 深藍色 */
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s;
+    /* gemini add */
+    padding: 6px 16px;
+    background: #fff;
+    border: 1px solid #dcdfe6;
+    border-radius: 20px; /* 膠囊形狀更精緻 */
+    font-size: 13px;
+    color: #606266;
+    transition: all 0.2s;
 }
 
 .sub-tab-button:hover {
   background-color: #c7dafd;
   border-color: #3a70db;
   color: #1f3f6e;
+    /* gemini add */
+    border-color: #3498db;
+    color: #3498db;
+    background: #f0f7ff;
 }
 
 .sub-tab-button.active {
@@ -275,6 +261,11 @@ button:disabled {
   border-color: #2a56b5;
   font-weight: bold;
   box-shadow: 0 0 8px rgba(58, 112, 219, 0.6);
+    /* gemini add */
+    background-color: #3498db;
+    color: #fff;
+    border-color: #3498db;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);       
 }
 
 /* 第二層 tab 內容區 */
@@ -299,10 +290,13 @@ button:disabled {
     min-height: 0;
     gap: 10px;
     padding: 10px;
-    box-sizing: border-bodx;  
+    box-sizing: border-bodx;
+    /* gemini add */
+    background-color: #fff;
+    border-top: none;       
 }
 
-#main-content-shell {
+.main-content-shell {
   flex: 1; /*75%;                  /* 佔滿剩餘空間 */
   position: relative;       /* 給絕對定位用的參考點 */
   background-color: #fdfaf3; /* 保留背景色 */
@@ -313,15 +307,17 @@ button:disabled {
   min-height: 0;            /* flex 正常縮小 */
   box-sizing: border-box;
   min-width: 0;
+    /* gemini add */
+    &:focus-within {
+        border-color: #bb8855; /* 溫潤的深木色 */
+        background-color: #fffdf9; /* 稍微提亮，像打光一樣 */
+        box-shadow: 0 0 0 4px rgba(187, 136, 85, 0.15), 
+            0 4px 12px rgba(0, 0, 0, 0.08); /* 雙重陰影：外發光 + 下落陰影 */
+        transform: translateY(-1px); /* 微幅向上飄浮 1px，這就是高級感 */
+    }
 }
 
-#main-content:focus {
-  background-color: #fbf6e9; /* 專注狀態：稍微加亮的紙色 */
-  border-color: #c6b69f;
-  box-shadow: 0 0 0 2px rgba(204, 187, 150, 0.3); /* 柔光陰影 */
-}
-
-#main-content {
+.main-content {
   flex: 1 1 auto;           
   /* max-width: 75%;           /* 保留右側留白 */
   white-space: pre-wrap;
@@ -366,12 +362,16 @@ button:disabled {
   font-family: Arial, sans-serif;
   color: #333;
   box-sizing: border-box;
+    /* gemini add */
+    border: 1px solid #ebeef5;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-radius: 8px;
 }
 
-.floating-dropdown:not(.show) {
+/*.floating-dropdown:not(.show) {
     /*display: none;*/
-    visibility: hidden;
-}
+    /*visibility: hidden;
+}*/
 
 .dropdown-slot {
     display: flex;
@@ -401,66 +401,28 @@ button:disabled {
   /*max-width: 120px;*/
   /*width: 140px;*/
 }
-/* END: 修改部分 */
 
-#thumbnail-container {
-  /* position: absolute;*/
-  /*bottom: 10px; */
-  /*right: 10px;*/
-  /*z-index: 5; */
-  user-select: none; 
-  cursor: default;
-  
-  flex: 0 0 25%;
-  height: 100%;
-  
-  display: flex;
-  flex-direction: column; /* 讓圖片上下堆疊 */
-  /*border: 1px solid #ccc; /* 方便觀察容器邊界 */
-  /*justify-content: center;*/
-  /*align-items: flex-start;*/
-  
-  
-  
-}
+.thumbnail-container {
+    flex: 0 0 25%;
+    height: 100%;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; /* 1. 確保置頂 */
+    align-items: center; 
+    padding: 0;           /* 2. 移除內距，讓圖片能貼邊 */
+    box-sizing: border-box;
+    overflow: hidden;
+    pointer-events: none; /* 3. 禁止所有點擊事件 (含子元素) */
 
-#main-thumb-wrapper {
-  flex: 3;
-  display: flex;
-  
-  overflow: hidden;
-  justify-content: center;   /* 改成靠右 */
-  padding: 4px;                /* 留一點呼吸空間 */
-}
-
-#main-thumb-wrapper img {
-  /*max-width: 100%;*/
-  /*max-height: 100%;*/
-  width: 100%;
-  height: auto;
-
-  object-fit: contain;
-
-  border-radius: 4px;
-  image-rendering: crisp-edges;
-}
-
-#sub-thumb-wrapper {
-  flex: 1;
-  display: flex;
-  
-  overflow: hidden;
-  justify-content: flex-end;   /* 改成靠右 */
-    align-items: flex-end;       /* 改成靠下 */
-    padding: 4px;                /* 留一點呼吸空間 */
-}
-
-#sub-thumb-wrapper img {
-  width: auto;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 4px;
-  image-rendering: crisp-edges;
+    img {
+        width: 100%;      /* 4. 寬度強行撐滿 25% 的區域 */
+        height: auto;     /* 高度依比例縮放 */
+        display: block;
+        
+        object-fit: contain; /* 如果要完全填滿不留白就用 cover，要看全圖用 contain */
+        border-radius: 4px;
+        image-rendering: crisp-edges;
+    }
 }
 
 [x-cloak] { display: none; }

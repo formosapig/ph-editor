@@ -71,28 +71,20 @@
                 </template>
             </div>
 
-            <div id="main-content-shell">
-                <div id="main-content" 
+            <div class="main-content-shell">
+                <div class="main-content" 
                      contenteditable="true" 
                      x-ref="mainContent"
                      @input="handleContentInput()"
                      @blur="saveContent()"></div>
             </div>
             
-            <div id="thumbnail-container">
-                <div id="main-thumb-wrapper">
+            <div class="thumbnail-container">
+                <!--<div class="main-thumb-wrapper">-->
                     <img :src="'/api/characters/' + sn + '/thumbnail'"
                          alt="主角縮圖"
                          draggable="false">
-                </div>
-                
-                <template x-if="sub_sn">
-                    <div id="sub-thumb-wrapper">
-                        <img :src="'/api/characters/' + sub_sn + '/thumbnail'"
-                             alt="配角縮圖"
-                             draggable="false">
-                    </div> 
-                </template>
+                <!--</div>-->
             </div>
 
 
