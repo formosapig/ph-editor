@@ -6,58 +6,55 @@
     <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='app.css') ]]" />
-    <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='app.js') ]]" type="module"></script>
+    <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
 </head>
-<body>
-    <div v-scope v-cloak>
-        <div v-effect="onMounted()"></div>
-        <div id="actionButtons" class="action-bar">
-            <div class="buttons-row">
-                <!-- 主功能按鈕 -->                
-                <div class="left-buttons">
-                    <button @click="changeFolder" title="修改掃描資料夾" :disabled="isAnyMenuOpen">📁</button>
-		            <button @click="toggleSort" ref="sortButton" :class="{ active: showSortMenu }" title="排序">🔃</button>
-		            <button @click="toggleFilter" :class="{ active: showFilterMenu }" title="篩選">🔍</button>
-                    <button @click="compareSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="比較">📊️</button>
-                    <button @click="arrangeSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="排列">📋️</button>		  
-                    <button @click="editSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="編輯">✏️</button>
-                    <button @click="renameSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="改名">🅰️</button>
-                    <button @click="cloneSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="複製">💾</button>
-                    <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
-                </div>
-		        <!-- 狀態篩選 -->
-                <div class="center-status-toggle">
-                    <label class="status-btn" :class="{ active: activeStatuses.includes('archived') }">
-                        <input type="checkbox" v-model="activeStatuses" value="archived" @change="toggleStatus" hidden> 📦封存
-                    </label>
-                    <label class="status-btn" :class="{ active: activeStatuses.includes('draft') }">
-                        <input type="checkbox" v-model="activeStatuses" value="draft" @change="toggleStatus" hidden> 🧩草稿
-                    </label>
-                    <label class="status-btn" :class="{ active: activeStatuses.includes('refinement') }">
-                        <input type="checkbox" v-model="activeStatuses" value="refinement" @change="toggleStatus" hidden> 🎨潤飾
-                    </label>
-                    <label class="status-btn" :class="{ active: activeStatuses.includes('finalized') }">
-                        <input type="checkbox" v-model="activeStatuses" value="finalized" @change="toggleStatus" hidden> 📌定稿
-                    </label>
-                </div>
-                <!-- 全域功能 -->
-                <div class="right-button">
-		            <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📚</button>
-                    <button @click="openCCM" :disabled="!currentScanPath" title="時空因果">🌌️</button>
-                    <button @click="openEpoch" :disabled="!currentScanPath" title="歲月">⏳</button>
-                    <button @click="openWishing" :disabled="!currentScanPath" title="許願噴泉">⛲</button>
-                </div>
+<body x-data="phApp" x-cloak x-init="onMounted()">
+    <div id="actionButtons" class="action-bar">
+        <div class="buttons-row">
+            <div class="left-buttons">
+                <button @click="changeFolder" title="修改掃描資料夾" :disabled="isAnyMenuOpen">📁</button>
+                <button @click="toggleSort" ref="sortButton" :class="{ active: showSortMenu }" title="排序">🔃</button>
+                <button @click="toggleFilter" :class="{ active: showFilterMenu }" title="篩選">🔍</button>
+                <button @click="compareSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="比較">📊️</button>
+                <button @click="arrangeSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="排列">📋️</button>         
+                <button @click="editSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="編輯">✏️</button>
+                <button @click="renameSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="改名">🅰️</button>
+                <button @click="cloneSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="複製">💾</button>
+                <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
             </div>
-            <div class="status-bar">
-                <span>📂 掃描路徑：{{ scanPathDisplay }}</span>
-                <span>選擇: {{ selectedCount }} / 總數: {{ totalFilesCount }}</span>
+            
+            <div class="center-status-toggle">
+                <label class="status-btn" :class="{ active: activeStatuses.includes('archived') }">
+                    <input type="checkbox" x-model="activeStatuses" value="archived" @change="toggleStatus" hidden> 📦封存
+                </label>
+                <label class="status-btn" :class="{ active: activeStatuses.includes('draft') }">
+                    <input type="checkbox" x-model="activeStatuses" value="draft" @change="toggleStatus" hidden> 🧩草稿
+                </label>
+                <label class="status-btn" :class="{ active: activeStatuses.includes('refinement') }">
+                    <input type="checkbox" x-model="activeStatuses" value="refinement" @change="toggleStatus" hidden> 🎨潤飾
+                </label>
+                <label class="status-btn" :class="{ active: activeStatuses.includes('finalized') }">
+                    <input type="checkbox" x-model="activeStatuses" value="finalized" @change="toggleStatus" hidden> 📌定稿
+                </label>
+            </div>
+
+            <div class="right-button">
+                <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📚</button>
+                <button @click="openCCM" :disabled="!currentScanPath" title="時空因果">🌌️</button>
+                <button @click="openEpoch" :disabled="!currentScanPath" title="歲月">⏳</button>
+                <button @click="openWishing" :disabled="!currentScanPath" title="許願噴泉">⛲</button>
             </div>
         </div>
+        <div class="status-bar">
+            <span>📂 掃描路徑：<span x-text="scanPathDisplay"></span></span>
+            <span>選擇: <span x-text="selectedCount"></span> / 總數: <span x-text="totalFilesCount"></span></span>
+        </div>
+    </div>
 
-        <div id="gallery" class="clickable-area" @click="handleGalleryClick">
-            <div v-for="item in displayedImages" 
-                 :key="`${item.sn}-${sortAscending}`"
-                 class="thumb-container"
+    <div id="gallery" class="clickable-area" @click="handleGalleryClick">
+        <template x-for="item in displayedImages" :key="`${item.sn}-${sortAscending}`">
+            <div class="thumb-container"
                  :class="{ selected: isSelected(item.sn) }"
                  @click="toggleSelect(item.sn, $event)">
                 <div class="checkmark">✅</div>
@@ -69,84 +66,79 @@
                          height="352"
                          loading="lazy"
                          draggable="false">
-                    <div v-if="item.profile_name" class="profile-badge">{{ item.profile_name }}</div>
-                    <div v-if="item.tag_name" 
+                    <div x-show="item.profile_name" class="profile-badge" x-text="item.profile_name"></div>
+                    <div x-show="item.tag_name" 
                          class="tag-label"
-                         :style="getTagStyle(item.tag_style)">
-                        {{ item.tag_name }}
+                         :style="getTagStyle(item.tag_style)"
+                         x-text="item.tag_name">
                     </div>
-		            <div v-if="item.scenario_scene" class="scenario-badge">{{ item.scenario_scene }}</div>
+                    <div x-show="item.scenario_scene" class="scenario-badge" x-text="item.scenario_scene"></div>
                 </div>
-		        <div>
+                <div>
                     <div class="filename-label">
-		                <span v-if="item.status === 'archived'" title="封存">📦</span>
-		                <span v-if="item.status === 'draft'" title="草稿">🧩</span>
-                        <span v-if="item.status === 'refinement'" title="潤飾">🎨</span>
-                        <span v-if="item.status === 'finalized'" title="定稿">📌</span>
-			            {{ item.file_id }}
+                        <span x-show="item.status === 'archived'" title="封存">📦</span>
+                        <span x-show="item.status === 'draft'" title="草稿">🧩</span>
+                        <span x-show="item.status === 'refinement'" title="潤飾">🎨</span>
+                        <span x-show="item.status === 'finalized'" title="定稿">📌</span>
+                        <span x-text="item.file_id"></span>
                     </div>
-		            <div v-if="item.remark" class="file-id-remark">{{ item.remark }}</div>
-		        </div>
-            </div> <!-- v-for="item in displayedImages" -->
-        </div> <!-- gallery-->
+                    <div x-show="item.remark" class="file-id-remark" x-text="item.remark"></div>
+                </div>
+            </div>
+        </template>
+    </div>
 
-	    <!-- 排序選單 -->
-        <div v-if="showSortMenu" id="sortMenu" class="float-menu horizontal" @click.stop>
+    <template x-if="showSortMenu">
+        <div id="sortMenu" class="float-menu horizontal" @click.stop>
             <div class="option" :class="{ active: sortKey === 'file_id' }" @click="applySort('file_id')">📄 檔名</div>
             <div class="option" :class="{ active: sortKey === 'profile_name' }" @click="applySort('profile_name')">👤 人名</div>
-            <div class="option" :class="{ active: sortKey === 'scenario_scene' }" @click="applySort('scenario_scene')">🎬 場景</div>	  
+            <div class="option" :class="{ active: sortKey === 'scenario_scene' }" @click="applySort('scenario_scene')">🎬 場景</div>      
             <div class="option" :class="{ active: sortKey === 'tag_name' }" @click="applySort('tag_name')">🏷️ 標籤</div>
             <div class="divider"></div>
-            <div class="option" @click="toggleSortOrder">{{ sortAscending ? '⬆️ 昇序' : '⬇️ 降序' }}</div>
+            <div class="option" @click="toggleSortOrder" x-text="sortAscending ? '⬆️ 昇序' : '⬇️ 降序'"></div>
         </div>
+    </template>
 
-        <!-- 篩選選單 -->
-        <div v-if="showFilterMenu" class="float-menu horizontal" @click.stop>
+    <template x-if="showFilterMenu">
+        <div class="float-menu horizontal" @click.stop>
             <div class="option" :class="{ active: filterKey === 'file_id' }" @click="applyFilter('file_id')">📄 檔名</div>
             <div class="option" :class="{ active: filterKey === 'profile_name' }" @click="applyFilter('profile_name')">👤 人名</div>
             <div class="option" :class="{ active: filterKey === 'scenario_scene' }" @click="applyFilter('scenario_scene')">🎬 場景</div>
             <div class="option" :class="{ active: filterKey === 'tag_name' }" @click="applyFilter('tag_name')">🏷️ 標籤</div>
             <div class="option" :class="{ active: filterKey === '' }" @click="applyFilter('')">🧹 清除</div>
-	        <div class="divider"></div>
-            <input type="text" v-model="filterKeyword" placeholder="輸入關鍵字..." />
+            <div class="divider"></div>
+            <input type="text" x-model="filterKeyword" placeholder="輸入關鍵字..." />
         </div>
-	
-        <!-- 施工噴泉 -->
-        <div v-if="showWishing" class="wish-fountain">
-            <div class="wish-list">
-                <div v-for="w in wishes" :key="w.id" class="wish-item">
+    </template>
+
+    <div x-show="showWishing" class="wish-fountain">
+        <div class="wish-list">
+            <template x-for="w in wishes" :key="w.id">
+                <div class="wish-item">
                     <div class="wish-header">
-                        <span>{{ w.type }} {{ w.date }}</span>
+                        <span x-text="`${w.type} ${w.date}`"></span>
                         <span class="delete-btn" @click="deleteWish(w.id)">✕</span>
                     </div>
-                    <div class="wish-content">{{ w.content }}</div>
+                    <div class="wish-content" x-text="w.content"></div>
                 </div>
-            </div>
-
-            <div class="wish-input-area">
-                <select v-model="newWishType" style="width: 100%; margin-bottom: 5px;">
-                    <option value="📕">📕 錯誤</option>
-                    <option value="📗">📗 優化</option>
-                    <option value="📘">📘 重構</option>
-                    <option value="📙">📙 功能</option>
-                </select>
-                <textarea v-model="newWishContent" placeholder="隨手記下想法..." 
-                          style="width: 100%; height: 60px; resize: none;"></textarea>
-                <button @click="submitWish" style="width: 100%; margin-top: 5px; cursor: pointer;">
-                    投進噴泉 ⛲
-                </button>
-            </div>
+            </template>
         </div>
-  
-        <!-- show message -->
-        <div class="toast-container">
-            <div v-for="msg in messages" :key="msg.id" class="toast-message">
-                {{ msg.text }}
-            </div>
+        <div class="wish-input-area">
+            <select x-model="newWishType" style="width: 100%; margin-bottom: 5px;">
+                <option value="📕">📕 錯誤</option>
+                <option value="📗">📗 優化</option>
+                <option value="📘">📘 重構</option>
+                <option value="📙">📙 功能</option>
+            </select>
+            <textarea x-model="newWishContent" placeholder="隨手記下想法..." style="width: 100%; height: 60px; resize: none;"></textarea>
+            <button @click="submitWish" style="width: 100%; margin-top: 5px; cursor: pointer;">投進噴泉 ⛲</button>
         </div>
+    </div>
 
-    </div> <!-- v-scope -->
-
-    <script type="module" src="[[ url_for('static', filename='app.js') ]]"></script>
+    <div class="toast-container">
+        <template x-for="msg in messages" :key="msg.id">
+            <div class="toast-message" x-text="msg.text"></div>
+        </template>
+    </div>
 </body>
 </html>

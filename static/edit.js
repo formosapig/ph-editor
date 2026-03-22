@@ -1,909 +1,239 @@
-// 全域存放從後端拿到的解析資料
-let globalParsedData = null;
-let autoSaveTimer = null;
-let autoSaveRemarkTimer = null;
+import { request } from './request.js'
 
-// 第二層 tab 設定物件，key 是第一層 tab id，value 是陣列，裡面是 { key, label } 物件
-const subTabs = {
-  hair: [
-    { key: 'back_hair', label: '後髮' },
-    { key: 'front_hair', label: '前髮' },
-    { key: 'side_hair', label: '側髮' },
-  ],
-  face: [
-    { key: 'overall', label: '全体' },
-    { key: 'ears', label: '耳朵' },
-    { key: 'eyebrows', label: '眉毛' },
-    { key: 'eyelashes', label: '睫毛' },
-    { key: 'eyes', label: '眼睛' },
-    { key: 'eyeballs', label: '眼球' },
-    { key: 'nose', label: '鼻子' },
-    { key: 'cheeks', label: '臉頰' },
-    { key: 'mouth', label: '嘴唇' },
-    { key: 'chin', 'label': '下巴' },
-    { key: 'mole', label: '痣' },
-    { key: 'makeup', label: '化妝' },
-    { key: 'tattoo', label: '刺青' }
-  ],
-  body: [
-    { key: 'overall', label: '全体' },
-    { key: 'breast', label: '胸部' },
-    { key: 'upper_body', label: '上半身' },
-    { key: 'lower_body', label: '下半身' },
-    { key: 'arms', label: '腕' },
-    { key: 'legs', label: '腳' },
-    { key: 'nails', label: '指甲' },
-    { key: 'pubic_hair', label: '陰毛' },
-    { key: 'tan_lines', label: '曬痕' },
-    { key: 'tattoo', label: '刺青' }
-  ],
-  clothing: [
-    { key: 'top', label: '上衣' },
-    { key: 'bottom', label: '下著' },
-    { key: 'bra', label: '胸罩' },
-    { key: 'panty', label: '內褲' },
-    { key: 'swimsuit', label: '泳衣' },
-    { key: 'swimsuit_top', label: '泳衣-上衣' },
-    { key: 'swimsuit_bottom', label: '泳衣-下著' },
-    { key: 'gloves', label: '手套' },
-    { key: 'pantyhose', label: '褲襪' },
-    { key: 'socks', label: '襪子' },
-    { key: 'shoes', label: '鞋子' }
-  ],
-  accessory: [
-    { key: 'accessory_01', label: '01' },
-    { key: 'accessory_02', label: '02' },
-    { key: 'accessory_03', label: '03' },
-    { key: 'accessory_04', label: '04' },
-    { key: 'accessory_05', label: '05' },
-    { key: 'accessory_06', label: '06' },
-    { key: 'accessory_07', label: '07' },
-    { key: 'accessory_08', label: '08' },
-    { key: 'accessory_09', label: '09' },
-    { key: 'accessory_10', label: '10' }
-  ],
-  story: [
-    //{ key: 'general', label: '全域' },
-    { key: 'profile', label: '簡介' },
-    { key: 'scenario', label: '場景' },
-    { key: 'backstage', label: '幕後' }
-  ]
-};
+document.addEventListener('alpine:init', () => {
+    Alpine.data('characterEditor', (params) => ({
+        sn: params.sn,
+        sub_sn: params.sub_sn,
+        globalParsedData: params.initialData || {},
+        status: params.status,
 
-// START: 新增 - 定義下拉選單插槽的 ID 陣列
-const dropdownSlotIds = ['dropdown-1', 'dropdown-2', 'dropdown-3', 'dropdown-4'];
-// END: 新增
+        activeMainTab: 'story',
+        activeSubTab: 'profile',
+        dropdowns: [],
+        
+        // 訊息系統
+        messageText: '',
+        messageType: 'success',
+        
+        // Timer
+        autoSaveTimer: null,
+        remarkTimer: null,
+        remarkHasChanged: false,
+        hasChanged: false,
 
-window.addEventListener('DOMContentLoaded', () => {
-  //console.log('DOMContentLoaded 事件觸發。'); // 新增日誌
+        mainTabs: {
+            story: '故事', hair: '頭髮', face: '臉部',
+            body: '身體', clothing: '服裝', accessory: '配件'
+        },
 
-  // 第一層 Tab 切換功能
-  document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-      console.log(`點擊主 Tab: ${button.getAttribute('data-tab')}`); // 新增日誌
-      // 移除所有第一層 tab 的 active 類
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      // 加上目前點擊按鈕 active
-      button.classList.add('active');
+        subTabsConfig: {
+            hair: [ { key: 'back_hair', label: '後髮' }, { key: 'front_hair', label: '前髮' }, { key: 'side_hair', label: '側髮' } ],
+            face: [ { key: 'overall', label: '全体' }, { key: 'ears', label: '耳朵' }, { key: 'eyebrows', label: '眉毛' }, { key: 'eyelashes', label: '睫毛' }, { key: 'eyes', label: '眼睛' }, { key: 'eyeballs', label: '眼球' }, { key: 'nose', label: '鼻子' }, { key: 'cheeks', label: '臉頰' }, { key: 'mouth', label: '嘴唇' }, { key: 'chin', label: '下巴' }, { key: 'mole', label: '痣' }, { key: 'makeup', label: '化妝' }, { key: 'tattoo', label: '刺青' } ],
+            body: [ { key: 'overall', label: '全体' }, { key: 'breast', label: '胸部' }, { key: 'upper_body', label: '上半身' }, { key: 'lower_body', label: '下半身' }, { key: 'arms', label: '腕' }, { key: 'legs', label: '腳' }, { key: 'nails', label: '指甲' }, { key: 'pubic_hair', label: '陰毛' }, { key: 'tan_lines', label: '曬痕' }, { key: 'tattoo', label: '刺青' } ],
+            clothing: [ { key: 'top', label: '上衣' }, { key: 'bottom', label: '下著' }, { key: 'bra', label: '胸罩' }, { key: 'panty', label: '內褲' }, { key: 'swimsuit', label: '泳衣' }, { key: 'swimsuit_top', label: '泳衣-上衣' }, { key: 'swimsuit_bottom', label: '泳衣-下著' }, { key: 'gloves', label: '手套' }, { key: 'pantyhose', label: '褲襪' }, { key: 'socks', label: '襪子' }, { key: 'shoes', label: '鞋子' } ],
+            accessory: Array.from({length: 10}, (_, i) => ({ key: `accessory_${(i+1).toString().padStart(2, '0')}`, label: (i+1).toString().padStart(2, '0') })),
+            story: [ { key: 'profile', label: '簡介' }, { key: 'scenario', label: '場景' }, { key: 'backstage', label: '幕後' } ]
+        },
 
-      const tabId = button.getAttribute('data-tab');
+        init() {
+            window.app = this; // 除錯使用
+            this.switchMainTab('story');
+            this.showMessage('角色資料預載完成。');
+        },
 
-      // 產生並切換第二層 tab
-      renderSubTabs(tabId);
-    });
-  });
+        // --- Tab 切換 ---
+        switchMainTab(key) {
+            this.activeMainTab = key;
+            const firstSub = this.subTabsConfig[key]?.[0]?.key;
+            if (firstSub) this.switchSubTab(firstSub);
+        },
 
-  // 一開頁面直接用後端資料初始化頁面
-  //console.log('檢查 characterData 是否已定義...'); // 新增日誌
-  if (typeof characterData !== 'undefined') {
-    //console.log('characterData 已定義，開始初始化頁面。'); // 新增日誌
-    updateTabs(characterData);
-    //console.log('初始角色資料:', globalParsedData); // 調整 console 訊息
-    // 自動選擇第一個可用的 tab 作為預設載入
-    const firstTab = document.querySelector('.tab-button');
-    if (firstTab) {
-      const tabId = firstTab.getAttribute('data-tab');
-      firstTab.classList.add('active');
-      //console.log(`自動載入第一個主 Tab: ${tabId}`); // 新增日誌
-      renderSubTabs(tabId); // 這會觸發第二層 tab 的渲染，並在內部呼叫 renderSubTabContent
+        switchSubTab(key) {
+            this.activeSubTab = key;
+            this.renderContent();
+            this.fetchDropdowns();
+        },
 
-      // START: 修正 - 確保頁面載入時能正確觸發第一個 subTab 的內容和下拉選單載入
-      const subTabList = subTabs[tabId];
-      if (subTabList && subTabList.length > 0) {
-        //console.log(`自動載入第一個子 Tab: ${subTabList[0].key}`); // 新增日誌
-        // 直接調用 renderSubTabContent，它會再呼叫 renderDropdowns
-        renderSubTabContent(tabId, subTabList[0].key);
-      } else {
-        //console.log(`第一個主 Tab (${tabId}) 沒有子 Tab。`); // 新增日誌
-      }
-      // END: 修正
-    } else {
-      //console.log('未找到任何主 Tab 按鈕。'); // 新增日誌
-    }
-    
-	showMessage('角色資料預載完成。');
-    //document.getElementById('result-message').textContent = '角色資料預載完成。';
-  } else {
-    //console.log('characterData 未定義，無法初始化頁面。'); // 新增日誌
-	showMessage('無角色數據', 'warning');
-    //document.getElementById('result-message').textContent = '無角色數據';
-  }
-
-  // 綁定 main-content 的 input 事件，觸發自動儲存
-  const mainContent = document.getElementById('main-content');
-  
-  let hasChanged = false;  // ← 宣告在事件處理器外，整個模組都能共用
-  
-  // 輸入事件，30 sec debounce 自動儲存
-  mainContent.addEventListener('input', () => {
-	hasChanged = true;
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      autoSaveData();
-    }, 30000);
-  });
-
-  // 離焦事件，立即儲存（取消 debounce）
-  mainContent.addEventListener('blur', () => {
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer);
-      autoSaveTimer = null;
-    }
-	if (hasChanged) {
-      autoSaveData();
-      hasChanged = false;
-    } 
-  });
-  
-  // 綁定 file-id-remark 也要防抖動...
-  const remarkContent = document.getElementById('file-id-remark');
-  let remarkHasChanged = false;	
-  // 綁定 input 事件
-  remarkContent.addEventListener('input', () => {
-    remarkHasChanged = true;
-    if (autoSaveRemarkTimer) clearTimeout(autoSaveRemarkTimer);
-    autoSaveRemarkTimer = setTimeout(() => {
-      const newRemark = remarkContent.innerText.trim();
-	  console.log("input trigger.");
-      updateRemark(newRemark);
-	}, 10000);
-  });
-
-  // 離焦立刻儲存
-  remarkContent.addEventListener('blur', () => {
-    if (autoSaveRemarkTimer) {
-      clearTimeout(autoSaveRemarkTimer);
-	  autoSaveRemarkTimer = null;
-	}
-	if (remarkHasChanged) {
-      const newRemark = remarkContent.innerText.trim();
-	  console.log("blur trigger.");
-      updateRemark(newRemark);
-	  remarkHasChanged = false;
-	}
-  });
-  
-  // 綁定 Status Radio Group
-  const statusRadios = document.querySelectorAll('input[name="file-status"]');
-  statusRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        const newStatus = radio.value;
-        console.log("status trigger: " + newStatus);
-        updateStatus(newStatus);
-      }
-    });
-  });  
-  
-});
-
-function updateMainContent(strJson, autoSave = false) {
-  const mainContent = document.getElementById('main-content');
-
-  if (!mainContent) {
-    console.error(`找不到 ID 為 "main-content" 的元素。`);
-    return;
-  }
-  
-  try {
-    mainContent.textContent = JSON.stringify(
-      strJson,
-      (key, value) => key.startsWith('!') ? undefined : value,
-      2
-    );
-  } catch (e) {
-	  console.error(`處理資料並轉換為字串時發生錯誤：`, e);
-	  mainContent.textContent = '';
-	  return;
-  }
-  
-  if (autoSave) {
-    // 觸發自動儲存（如果需要）
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      autoSaveData();
-    }, 500);
-  }
-}
-
-/**
- * 從後端獲取資料並更新
- */
-function updateTabs(parsedData) {
-  //console.log('執行 updateTabs 函數。'); // 新增日誌
-  globalParsedData = parsedData;
-  // 這裡不再更新任何 <pre> 或 tab-content，因為統一用 main-content 顯示
-}
-
-/**
- * 產生第二層 tab 按鈕並加入事件監聽
- * @param {string} mainTabKey - 第一層 tab id
- */
-function renderSubTabs(mainTabKey) {
-  //console.log(`執行 renderSubTabs 函數，主 Tab: ${mainTabKey}`); // 新增日誌
-  const container = document.getElementById('sub-tab-buttons');
-  container.innerHTML = ''; // 清空舊按鈕
-
-  // START: 修改 - 點擊第一層 Tab 時，清空並隱藏所有下拉選單
-  const dropdownContainer = document.getElementById('dropdown-container');
-  dropdownContainer.classList.remove('show'); // 隱藏整個下拉選單容器
-  dropdownSlotIds.forEach(slotId => {
-      const slot = document.getElementById(slotId);
-      if (slot) {
-          slot.innerHTML = ''; // 清空插槽內容
-          slot.style.display = 'none'; // 隱藏插槽
-      }
-  });
-  //console.log('已清空並隱藏所有下拉選單插槽。'); // 新增日誌
-  // END: 修改
-
-  const tabs = subTabs[mainTabKey] || [];
-  //console.log(`主 Tab (${mainTabKey}) 的子 Tab 數量: ${tabs.length}`); // 新增日誌
-
-  tabs.forEach((tab, index) => {
-    const btn = document.createElement('button');
-    btn.className = 'sub-tab-button';
-    if (index === 0) btn.classList.add('active');
-    btn.textContent = tab.label;   // 顯示中文標籤
-    btn.dataset.tabKey = tab.key;  // 儲存英文 key
-
-    btn.addEventListener('click', () => {
-      //console.log(`點擊子 Tab: ${tab.key}`); // 新增日誌
-      // 移除所有第二層 tab 按鈕 active
-      document.querySelectorAll('.sub-tab-button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      // 顯示內容並載入下拉選單
-      renderSubTabContent(mainTabKey, tab.key);
-    });
-
-    container.appendChild(btn);
-  });
-
-  if (tabs.length > 0) {
-    //console.log(`renderSubTabs: 預設載入第一個子 Tab 的內容和下拉選單 (${mainTabKey}/${tabs[0].key})`); // 新增日誌
-    // 預設載入第一個子 tab 的內容和下拉選單
-    renderSubTabContent(mainTabKey, tabs[0].key);
-  } else {
-    //console.log(`renderSubTabs: 主 Tab (${mainTabKey}) 沒有子 Tab，清空 main-content。`); // 新增日誌
-    document.getElementById('main-content').textContent = '無第二層資料';
-    // START: 新增 - 如果沒有子 Tab，也確保下拉選單被清空和隱藏
-    const dropdownContainer = document.getElementById('dropdown-container');
-    dropdownContainer.classList.remove('show');
-    // END: 新增
-  }
-}
-
-/**
- * 在固定的 main-content 容器裡，顯示 JSON 資料
- * @param {string} mainTabKey 
- * @param {string} subTabKey 
- */
-function renderSubTabContent(mainTabKey, subTabKey) {
-  //console.log(`執行 renderSubTabContent 函數，主 Tab: ${mainTabKey}, 子 Tab: ${subTabKey}`); // 新增日誌
-  const mainContent = document.getElementById('main-content');
-  if (
-    globalParsedData &&
-    globalParsedData[mainTabKey] &&
-    globalParsedData[mainTabKey][subTabKey] !== undefined
-  ) {
-    updateMainContent(globalParsedData[mainTabKey][subTabKey], false);	  
-    // 紀錄目前編輯的 tab key
-    mainContent.dataset.mainTabKey = mainTabKey;
-    mainContent.dataset.subTabKey = subTabKey;
-    //console.log(`main-content 已更新為 ${mainTabKey}/${subTabKey} 的資料。`); // 新增日誌
-  } else {
-    mainContent.textContent = `找不到資料：第一層 "${mainTabKey}"，第二層 "${subTabKey}"`;
-    mainContent.dataset.mainTabKey = '';
-    mainContent.dataset.subTabKey = '';
-    console.log(`main-content 顯示「找不到資料」訊息 (${mainTabKey}/${subTabKey})。`); // 新增日誌
-  }
-
-  // START: 修改 - 在 renderSubTabContent 內部呼叫 fetch 並渲染下拉選單
-  // 這裡假設後端 API 路徑是 /api/ui_config/options/<tab>/<subTab>
-  //console.log(`準備呼叫 fetchAndRenderDropdowns 函數 (${mainTabKey}/${subTabKey}).`); // 新增日誌
-  fetchAndRenderDropdowns(mainTabKey, subTabKey);
-  // END: 修改
-}
-
-/**
- * 自動儲存目前 main-content 的資料，傳回後端更新
- */
-function autoSaveData() {
-    console.log('執行 autoSaveData 函數。');
-    const mainContent = document.getElementById('main-content');
-    const mainTabKey = mainContent.dataset.mainTabKey;
-    const subTabKey = mainContent.dataset.subTabKey;
-
-    if (!mainTabKey || !subTabKey) {
-        showMessage('無法儲存：無效的 tab 鍵值', 'error');
-        console.error('autoSaveData: 無效的 tab 鍵值。');
-        return;
-    }
-
-    let newData;
-    try {
-        newData = JSON.parse(mainContent.textContent);
-    } catch (err) {
-        showMessage('JSON 格式錯誤，無法儲存', 'error');
-        console.error('autoSaveData: JSON 格式錯誤。', err);
-        return;
-    }
-
-    // ← 【修改點】從 globalParsedData 補回 ! 開頭的 key
-    if (globalParsedData && globalParsedData[mainTabKey] && globalParsedData[mainTabKey][subTabKey]) {
-        const originalData = globalParsedData[mainTabKey][subTabKey];
-        for (const key in originalData) {
-            if (key.startsWith('!')) {
-                newData[key] = originalData[key];
+        // --- 內容渲染與儲存 ---
+        renderContent() {
+            const data = this.globalParsedData[this.activeMainTab]?.[this.activeSubTab];
+            const displayData = {};
+            if (data) {
+                // 過濾掉 ! 開頭的 key
+                Object.keys(data).forEach(k => {
+                    if (!k.startsWith('!')) displayData[k] = data[k];
+                });
             }
-        }
-    }
+            this.$refs.mainContent.textContent = JSON.stringify(displayData, null, 2);
+        },
 
-    _updateCharacterData(mainTabKey, subTabKey, sn, newData);
-}
+        handleContentInput() {
+            this.hasChanged = true;
+            clearTimeout(this.autoSaveTimer);
+            this.autoSaveTimer = setTimeout(() => this.saveContent(), 30000);
+        },
 
-async function _updateCharacterData(mainTabKey, subTabKey, sn, newData) {
-    console.log(`正在自動儲存: ${mainTabKey}/${subTabKey}`);
-
-    try {
-        const url = `/api/characters/` +
-            `${encodeURIComponent(sn)}/data/` +
-            `${encodeURIComponent(mainTabKey)}/` +
-            `${encodeURIComponent(subTabKey)}`;
-
-        const response = await fetch(url, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                data: newData
-            })
-        });
-
-        if (!response.ok) {
-            let errorMsg = `HTTP 錯誤: ${response.status}`;
+        async saveContent() {
+            if (!this.hasChanged) return;
+            
+            let newData;
             try {
-                const errData = await response.json();
-                errorMsg = errData.error || errorMsg;
+                newData = JSON.parse(this.$refs.mainContent.textContent);
             } catch (e) {
-                /* 忽略解析 JSON 失敗的錯誤 */
+                return this.showMessage('JSON 格式錯誤', 'error');
             }
-            throw new Error(errorMsg);
-        }
 
-        const result = await response.json();
+            // 補回 ! 開頭的隱藏資料
+            const originalData = this.globalParsedData[this.activeMainTab][this.activeSubTab];
+            for (let k in originalData) {
+                if (k.startsWith('!')) newData[k] = originalData[k];
+            }
 
-        if (result.new_profile_id) {
-            newData["!id"] = result.new_profile_id;
-        } else if (result.new_scenario_id) {
-            newData["!id"] = result.new_scenario_id;
-        }
+            await this.uploadData(newData);
+            this.hasChanged = false;
+        },
 
-        if (globalParsedData?.[mainTabKey]) {
-            globalParsedData[mainTabKey][subTabKey] = newData;
-        }
+        async uploadData(newData) {
+            const url = `/api/characters/${encodeURIComponent(this.sn)}/data/${this.activeMainTab}/${this.activeSubTab}`;
+            try {
+                const result = await request(url, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ data: newData })
+                });
+                this.globalParsedData[this.activeMainTab][this.activeSubTab] = newData;
+                this.showMessage(result.message || '更新成功');
+                this.notifyParent();
+                // 根據後端需求重新載入選單
+                if (result.need_update_profile_dropdown || result.need_update_scenario_dropdown) {
+                    this.fetchDropdowns();
+                }
+            } catch (e) {
+                this.showMessage(e.displayMessage || '儲存失敗', 'error');
+            }
+        },
 
-        showMessage(result.message || '更新成功！');
-        console.log('autoSaveData: 更新成功。', result);
+        // --- 下拉選單邏輯 ---
+        async fetchDropdowns() {
+            this.dropdowns = [];
+            let apiUrl = `/api/ui_config/options/${this.activeMainTab}/${this.activeSubTab}`;
+            if (this.activeMainTab === 'story') {
+                if (this.activeSubTab === 'profile') apiUrl = `/api/ui_config/profiles`;
+                if (this.activeSubTab === 'scenario') apiUrl = `/api/ui_config/scenarios`;
+                if (this.activeSubTab === 'backstage') apiUrl = `/api/ui_config/backstage_options`;
+            }
 
-        notifyParent();
+            try {
+                const result = await request(apiUrl);
+                this.dropdowns = result.dropdowns || [];
+            } catch (e) {
+                this.dropdowns = [];
+                this.showMessage(e.displayMessage, 'warning');
+            }
+        },
 
-        if (result.need_update_profile_dropdown) {
-            await fetchAndRenderDropdowns("story", "profile");
-        } else if (result.need_update_scenario_dropdown) {
-            await fetchAndRenderDropdowns("story", "scenario");
-        }
+        async handleDropdownChange(config, event) {
+            const val = JSON.parse(event.target.value);
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const optObj = config.options.find(o => JSON.stringify(o.value) === event.target.value);
+            const label = optObj ? (optObj.pureLabel || optObj.label) 
+                                 : selectedOption.text;
 
-    } catch (error) {
-        showMessage('儲存失敗：' + error.message, 'error');
-        console.error('autoSaveData: 儲存失敗。', error);
-    }
-}
+            const dataRef = this.globalParsedData[this.activeMainTab][this.activeSubTab];
 
-
-// 更新角色備註(remark)
-async function updateRemark(remark) {
-    try {
-        const url = `/api/characters/${encodeURIComponent(sn)}/remark`;
-        const response = await fetch(url, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ remark: remark })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || `更新失敗 (${response.status})`);
-        }
-
-        console.log('更新成功:', data);
-        showMessage(`更新成功。`);
-        notifyParent();
-    } catch (error) {
-        console.error('更新失敗:', error);
-        showMessage(`更新失敗。`, 'error');
-    }
-} // updateRemark
-
-// 更新狀態(status)
-async function updateStatus(status) {
-    try {
-        const url = `/api/characters/${encodeURIComponent(sn)}/status`;
-        const response = await fetch(url, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ status: status }) 
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || `更新失敗 (${response.status})`);
-        }
-
-        console.log('更新成功:', data);
-        showMessage(`更新成功。`);
-        notifyParent();
-    } catch (error) {
-        console.error('更新失敗:', error);
-        showMessage(`更新失敗。`, 'error');
-    }  
-} // updateStatus
-
-
-/**
- * 以下是你原本的 ajax 請求範例，可配合使用
- * 例如呼叫 reloadFile() 或 saveFile() 來更新 globalParsedData
- */
-
-function reloadFile() {
-  console.log('執行 reloadFile 函數。'); // 新增日誌
-  //const hexDisplay = document.getElementById('result-message');
-  showMessage('正在重新載入檔案數據...');
-  //hexDisplay.textContent = '正在重新載入檔案數據...';
-
-  fetch(`/api/characters/reload?file_id=${encodeURIComponent(fileId)}`)
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(errData => {
-          throw new Error(errData.error || `HTTP 錯誤: ${response.status}`);
-        }).catch(() => {
-          throw new Error(`HTTP 錯誤: ${response.status}`);
-        });
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.error) {
-        showMessage('錯誤：' + data.error, 'error'); 
-  	    //hexDisplay.textContent = '錯誤：' + data.error;
-        console.error('reloadFile: 伺服器回傳錯誤。', data.error); // 新增日誌
-        return;
-      }
-
-      updateTabs(data);
-      showMessage('重新載入檔案數據成功。');
-	  //hexDisplay.textContent = '重新載入檔案數據成功。';
-      console.log('reloadFile: 重新載入成功。'); // 新增日誌
-
-      // 重新渲染第二層 tab，保持目前第一層 tab 按鈕 active
-      const activeMainTab = document.querySelector('.tab-button.active');
-      if (activeMainTab) {
-        console.log(`reloadFile: 重新渲染主 Tab: ${activeMainTab.getAttribute('data-tab')}`); // 新增日誌
-        renderSubTabs(activeMainTab.getAttribute('data-tab'));
-      } else {
-        // 如果沒有 active tab，預設載入第一個
-        const firstTab = document.querySelector('.tab-button');
-        if (firstTab) {
-            console.log(`reloadFile: 無 active 主 Tab，載入第一個主 Tab: ${firstTab.getAttribute('data-tab')}`); // 新增日誌
-            renderSubTabs(firstTab.getAttribute('data-tab'));
-        } else {
-            console.warn('reloadFile: 未找到任何主 Tab 按鈕可供重新渲染。'); // 新增日誌
-        }
-      }
-    })
-    .catch(err => {
-	  showMessage('載入失敗：' + err.message, 'error');	
-      //hexDisplay.textContent = '載入失敗：' + err.message;
-      console.error('reloadFile: 載入失敗。', err); // 新增日誌
-    });
-}
-
-function saveFile() {
-  console.log('執行 saveFile 函數。'); // 新增日誌
-  //const hexDisplay = document.getElementById('result-message');
-  showMessage('正在儲存資料...');
-  //hexDisplay.textContent = '正在儲存資料...';
-
-  fetch('s/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      file_id: fileId
-    })
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(err => {
-        throw new Error(err.error || '儲存失敗');
-      }).catch(() => {
-        throw new Error('無法解析伺服器回應');
-      });
-    }
-    return response.json();
-  })
-  .then(result => {
-    showMessage(result.message || '儲存成功！');
-	//hexDisplay.textContent = result.message || '儲存成功！';
-    console.log('saveFile: 儲存成功。', result); // 新增日誌
-    document.getElementById('saveButton').disabled = true;
-  })
-  .catch(error => {
-    showMessage('儲存失敗：' + error.message, 'error');
-    //hexDisplay.textContent = '儲存失敗：' + error.message;
-    console.error('saveFile: 儲存失敗。', error); // 新增日誌
-  });
-}
-
-/**
- * 建立一個 <select> 元素及其選項。
- * @param {string} id - <select> 元素的 ID。
- * @param {Array<Object>} options - 選項陣列，每個物件包含 label 和 value。
- * @param {*} defaultValue - 預設選中的值。
- * @param {Function} onChangeCallback - 當選項改變時的回呼函數。
- * @returns {HTMLSelectElement} 建立的 select 元素。
- */
-function createSelect(id, options, defaultValue, onChangeCallback) {
-  console.log(`執行 createSelect 函數，ID: ${id}`); // 新增日誌
-  const select = document.createElement('select');
-  select.id = id;
-  
-    options.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = JSON.stringify(opt.value);
-        const pureLabel = opt.pureLabel || opt.label;
-        option.dataset.pureLabel = pureLabel;
-        option.dataset.fullLabel = opt.label;
-        option.textContent = opt.label;
-
-        // *** 新增的 disabled 邏輯 ***
-        // 檢查 opt 物件中是否有 disabled 屬性且其值為 true
-        if (opt.disabled === true) {
-            option.disabled = true;
-        }
-
-    // 比較 defaultValue 和 opt.value，如果相同則選中
-    // 處理 defaultValue 可能是物件或簡單值的情況
-    if (typeof defaultValue === 'object' && defaultValue !== null) {
-        if (JSON.stringify(opt.value) === JSON.stringify(defaultValue)) {
-            option.selected = true;
-        }
-    } else {
-        // 當 opt.value 是物件時，即使 defaultValue 是簡單值，也需要比較其序列化後的結果
-        // 假設 defaultValue 也是簡單值，或者 opt.value 會被正確轉換
-        if (JSON.stringify(opt.value) === JSON.stringify(defaultValue)) {
-             option.selected = true;
-        }
-    }
-    select.appendChild(option);
-  });
-
-    if (select.selectedIndex !== -1) {
-        const selected = select.options[select.selectedIndex];
-        selected.textContent = selected.label;//pureLabel;
-    }
-
-
-    select.addEventListener('change', e => {
-        const selectEl = e.target;
-    
-        for (let i = 0; i < selectEl.options.length; i++) {
-            const opt = selectEl.options[i];
-            opt.textContent = opt.dataset.fullLabel;
-        }    
-    
-        const selectedIndex = selectEl.selectedIndex;
-        const selectedOption = selectEl.options[selectedIndex];
-        const pureLabel = selectedOption.dataset.pureLabel;
-        
-        selectedOption.textContent = selectedOption.label;//pureLabel;
-
-    const selectedValueStr = selectedOption.value;
-    let selectedValue;
-    try {
-      selectedValue = selectedValueStr === '' ? null : JSON.parse(selectedValueStr);
-    } catch {
-      selectedValue = selectedValueStr;
-    }
-
-    //const selectedLabel = selectedOption.text; // option 顯示的文字就是 label
-
-    // 傳物件給 callback，包含 value 和 label
-    onChangeCallback({
-      value: selectedValue,
-      label: pureLabel // selectedLabel
-    });
-
-    console.log(`Select 元素 ${id} 值改變，value=${selectedValue}, label=${selectedLabel}`);
-  });
-  return select;
-}
-
-async function fetchAndRenderDropdowns(mainTab, subTab) {
-    const context = { mainTab, subTab };
-    let apiUrl = getApiUrl(mainTab, subTab);
-    
-    // 初始化 UI
-    resetDropdownUI();
-    showMessage(`正在載入 ${mainTab}/${subTab} 的選單...`);
-
-    try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error(`HTTP 錯誤: ${response.status}`);
-        const result = await response.json();
-
-        // 根據類型分流處理
-        if (mainTab === 'story' && subTab === 'backstage') {
-            await handleBackstageDropdown(result, context);
-        } else if (mainTab === 'story' && subTab === 'profile') {
-            await handleProfileDropdown(result, context);
-        } else if (mainTab === 'story' && subTab === 'scenario') {
-            await handleScenarioDropdown(result, context);
-        } else {
-            await handleDefaultDropdown(result, context);
-        }
-
-    } catch (error) {
-        showMessage(`載入失敗：${error.message}`, 'error');
-        console.error('Dropdown Error:', error);
-    } finally {
-        positionDropdown();
-    }
-}
-
-function getApiUrl(mainTab, subTab) {
-  // 判斷是否為 profile 或 scenario 路由
-  let apiUrl = `/api/ui_config/options/${mainTab}/${subTab}`;
-  const isProfileDropdown = (mainTab === 'story' && subTab === 'profile');
-  const isScenarioDropdown = (mainTab === 'story' && subTab === 'scenario');
-  const isBackstageDropdown = (mainTab === 'story' && subTab === 'backstage');
-
-  if (isProfileDropdown) {
-    apiUrl = `/api/ui_config/profiles`;
-  } else if (isScenarioDropdown) {	  
-    apiUrl = `/api/ui_config/scenarios`;
-  } else if (isBackstageDropdown) {
-    apiUrl = `/api/ui_config/backstage_options`;
-  }
-  return apiUrl;
-}
-
-function resetDropdownUI() {
-    // 清空並隱藏所有下拉選單插槽
-    dropdownSlotIds.forEach(slotId => {
-        const slot = document.getElementById(slotId);
-        if (slot) {
-            slot.innerHTML = ''; // 清空內容
-            //slot.style.display = 'none'; // 隱藏插槽
-        }
-    });
-    document.getElementById('dropdown-container').classList.remove('show');
-}
-
-async function handleBackstageDropdown(result, { mainTab, subTab }) {
-    // 直接產生 dropdown 不要載入預設模版
-    //if (result.defaultBackstage && isDataEmpty(mainTab, subTab)) {
-    //    globalParsedData[mainTab][subTab] = JSON.parse(JSON.stringify(result.defaultBackstage));
-    //    updateMainContent(globalParsedData[mainTab][subTab], true);
-    //}
-    renderDropdownSlots(result.dropdowns, { mainTab, subTab });
-}
-
-/*function isDataEmpty(mainTab, subTab) {
-    return (
-        !globalParsedData[mainTab] || 
-        !globalParsedData[mainTab][subTab] || 
-        Object.keys(globalParsedData[mainTab][subTab]).length === 0
-    );
-}*/
-
-async function handleProfileDropdown(result, { mainTab, subTab }) {
-    renderDropdownSlots(result.dropdowns, { mainTab, subTab }, async (dropdownConfig, selected) => {
-        if (dropdownConfig.dataKey === "!id" && selected.value !== "") {
-            const res = await fetch(`/api/profile/detail/${selected.value}`);
-            const detailData = await res.json();
-            globalParsedData[mainTab][subTab] = detailData;
-            updateMainContent(detailData, true);
-        } else {
-            genericUpdate(dropdownConfig, selected, mainTab, subTab);
-        }
-    });
-}
-
-async function handleScenarioDropdown(result, { mainTab, subTab }) {
-    renderDropdownSlots(result.dropdowns, { mainTab, subTab }, async (dropdownConfig, selected) => {
-        if (dropdownConfig.dataKey === "!id" && selected.value !== "") {
-            const res = await fetch(`/api/scenario/detail/${selected.value}`);
-            const detailData = await res.json();
-            globalParsedData[mainTab][subTab] = detailData;
-            updateMainContent(detailData, true);
-        } else {
-            // 處理季節或其他通用選單 (解決你上次提到的值覆蓋問題)
-            genericUpdate(dropdownConfig, selected, mainTab, subTab);
-        }
-    });
-}
-
-async function handleDefaultDropdown(result, { mainTab, subTab }) {
-    renderDropdownSlots(result.dropdowns, { mainTab, subTab });
-}
-
-// 通用的資料更新邏輯：解決 Key/Label 覆蓋問題
-function genericUpdate(config, selected, mainTab, subTab) {
-    const dataRef = globalParsedData[mainTab][subTab];
-    
-    if (selected.value === "") {
-        // 如果選的是「無」("")，則刪除該欄位
-        delete dataRef[config.dataKey];
-        if (config.labelKey) delete dataRef[config.labelKey];
-        console.log(`已刪除欄位: ${config.dataKey}`);
-    } else {
-        // 正常寫入 Value
-        dataRef[config.dataKey] = selected.value;
-        
-        // 只有當 labelKey 存在且不等於 dataKey 時才寫入 Label (避免覆蓋)
-        if (config.labelKey && config.labelKey !== config.dataKey) {
-            dataRef[config.labelKey] = selected.label;
-        }
-        console.log(`已更新欄位: ${config.dataKey} = ${selected.value}`);
-    }
-    
-    // 同步更新畫面上的 JSON 顯示
-    updateMainContent(dataRef, true);
-}
-
-// 統一渲染 Select 槽位
-function renderDropdownSlots(dropdowns, { mainTab, subTab }, onSelectCallback = null) {
-    if (!dropdowns || !Array.isArray(dropdowns) || dropdowns.length === 0) {
-      console.log("沒有可渲染的下拉選單選項。");
-      return;
-    }
-    document.getElementById('dropdown-container').classList.add('show');
-
-    dropdowns.forEach((config, index) => {
-        if (index >= dropdownSlotIds.length) return;
-
-        const slot = document.getElementById(dropdownSlotIds[index]);
-        const currentValue = globalParsedData?.[mainTab]?.[subTab]?.[config.dataKey];
-
-        const label = document.createElement('label');
-        label.textContent = config.displayLabel;
-
-        const select = createSelect(
-            `${dropdownSlotIds[index]}-${config.dataKey}`,
-            config.options,
-            currentValue || config.defaultValue,
-            (selected) => {
-                if (onSelectCallback) {
-                    onSelectCallback(config, selected);
+            // 如果是切換 Profile/Scenario ID，需要抓取詳細資料
+            if (config.dataKey === "!id" && val !== "") {
+                const type = this.activeSubTab === 'profile' ? 'profile' : 'scenario';
+                const res = await fetch(`/api/${type}/detail/${val}`);
+                const detailData = await res.json();
+                this.globalParsedData[this.activeMainTab][this.activeSubTab] = detailData;
+            } else {
+                // 通用更新
+                if (val === "") {
+                    delete dataRef[config.dataKey];
+                    if (config.labelKey) delete dataRef[config.labelKey];
                 } else {
-                    genericUpdate(config, selected, mainTab, subTab);
+                    dataRef[config.dataKey] = val;
+                    if (config.labelKey && config.labelKey !== config.dataKey) {
+                        dataRef[config.labelKey] = label;
+                    }
                 }
             }
-        );
+            this.renderContent();
+            this.hasChanged = true;
+            this.saveContent();
+        },
 
-        slot.innerHTML = '';
-        slot.appendChild(label);
-        slot.appendChild(select);
-        slot.style.display = 'flex';
-    });
-}
+        isOptionSelected(config, opt) {
+            const current = this.globalParsedData[this.activeMainTab]?.[this.activeSubTab]?.[config.dataKey];
+            return JSON.stringify(current) === JSON.stringify(opt.value);
+        },
 
-/*
-function positionDropdown() {
-  const dropdown = document.getElementById('dropdown-container');
-  const mainContentShell = document.getElementById('main-content-shell');
-  const mainContent = document.getElementById('main-content');
-  const tabContainer = document.querySelector('.tab-container');
+        // --- 備註 (Remark) 處理 ---
+        handleRemarkInput() {
+            this.remarkHasChanged = true;
+            clearTimeout(this.remarkTimer);
+            // 10秒防抖動自動儲存
+            this.remarkTimer = setTimeout(() => {
+                this.saveRemark();
+            }, 10000);
+        },
 
-  if (!dropdown || !mainContentShell || !mainContent || !tabContainer) return;
+        async saveRemark() {
+            if (!this.remarkHasChanged) return;
+            const newRemark = this.$refs.remark.innerText.trim();
+            const url = `/api/characters/${encodeURIComponent(this.sn)}/remark`;
 
-  const shellRect = mainContentShell.getBoundingClientRect();
-  const containerRect = tabContainer.getBoundingClientRect();
-  const dropdownRect = dropdown.getBoundingClientRect();
+            try {
+                const result = await request(url, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ remark: newRemark })
+                });
 
-  const margin = 10; // 邊距
+                this.showMessage('備註更新成功');
+                this.remarkHasChanged = false;
+                this.notifyParent();
+            } catch (error) {
+                this.showMessage(error.displayMessage, 'error');
+            }
+        },
 
-  // 計算浮動選單位置（相對 tab-container）
-  const top = shellRect.top - containerRect.top + margin;
-  const right = containerRect.right - shellRect.right + margin;
+        // --- 狀態 (Status) 處理 ---
+        async updateStatus(newStatus) {
+            console.log("Status trigger:", newStatus);
 
-  dropdown.style.position = 'absolute';
-  dropdown.style.top = `${top}px`;
-  dropdown.style.right = `${right}px`;
+            const url = `/api/characters/${encodeURIComponent(this.sn)}/status`;
+            try {
+                const result = await request(url, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: newStatus }) 
+                });
 
-  // 計算 main-content max-width
-  const maxWidth = shellRect.width - (dropdownRect.width === 0 ? 0 : dropdownRect.width + margin * 2);
+                this.showMessage(result.message || '更新成功');
+                this.notifyParent();
+            } catch (error) {
+                this.showMessage(errorData.displayMessage || '狀態更新失敗', 'error');
+            }
+        },
 
-  if (maxWidth > 0) {
-    mainContent.style.maxWidth = `${maxWidth}px`;
-  } else {
-    mainContent.style.maxWidth = '50px'; // 防止太小
-  }
-}*/
+        // 輔助標籤切換 (原本漏掉的話也補上)
+        getStatusLabel(s) {
+            const map = { 
+                archived: '📦 封存', 
+                draft: '🧩 草稿', 
+                refinement: '🎨 潤飾', 
+                finalized: '📌 定稿' 
+            };
+            return map[s] || s;
+        },
 
-function positionDropdown() {
-    /*
-    const dropdown = document.getElementById('dropdown-container');
-    const mainContentShell = document.getElementById('main-content-shell');
-    const mainContent = document.getElementById('main-content');
-    const tabContainer = document.querySelector('.tab-container');
+        showMessage(text, type = 'success') {
+            this.messageText = text;
+            this.messageType = type;
+        },
 
-    if (!dropdown || !mainContentShell || !mainContent || !tabContainer) return;
-
-    const shellRect = mainContentShell.getBoundingClientRect();
-    const containerRect = tabContainer.getBoundingClientRect();
-    const dropdownRect = dropdown.getBoundingClientRect();
-
-    const margin = 10; // 邊距
-
-    // --- 修改處：計算位置改為相對左側 ---
-    const top = shellRect.top - containerRect.top + margin;
-    const left = shellRect.left - containerRect.left + margin; // 改用 left
-
-    dropdown.style.position = 'absolute';
-    dropdown.style.top = `${top}px`;
-    dropdown.style.left = `${left}px`; // 從 right 改為 left
-    dropdown.style.right = 'auto';     // 清除之前的 right 設定
-    // --------------------------------
-
-    // 計算 main-content 的寬度補償 (讓文字避開左側選單)
-    const dropdownWidth = dropdownRect.width === 0 ? 0 : dropdownRect.width + margin * 2;
-  
-    // --- 修改處：使用 textIndent 或 padding 讓內容避開選單 ---
-    // 因為選單現在在左邊，我們讓內容向右偏移
-    mainContent.style.paddingLeft = `${dropdownWidth + 15}px`; 
-    mainContent.style.maxWidth = '100%'; // 取消原本對寬度的限制
-    */
-}
-
-function showMessage(text, type = 'success') {
-  const el = document.getElementById('result-message');
-  el.textContent = text;
-  el.className = '';
-  el.classList.add(type);
-}
-
-const bc = new BroadcastChannel('edit_file_sync_bus');
-function notifyParent() {
-    if (sn) {
-        bc.postMessage({sn: sn, action: "updated"});
-    }
-}
-
-//window.reloadFile = reloadFile;
-//window.saveFile = saveFile;
-
-window.addEventListener('load', positionDropdown);
-window.addEventListener('resize', positionDropdown);
+        notifyParent() {
+            const bc = new BroadcastChannel('edit_file_sync_bus');
+            bc.postMessage({ sn: this.sn, action: "updated" });
+        }
+    }));
+});

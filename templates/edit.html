@@ -4,83 +4,101 @@
   <meta charset="UTF-8" />
   <title>編輯檔案</title>
   <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
+  <script src="[[ url_for('static', filename='edit.js') ]]" type="module"></script>
+  <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
 </head>
-<body>
+<body x-data='characterEditor({
+    sn: [[ sn | tojson ]],
+    remark: [[ remark | tojson ]],
+    status: [[ status | tojson ]],
+    initialData: [[ data | safe ]],
+    sub_sn: [[ sub_sn | tojson if sub_sn else "null" ]]
+})' x-init="init()" x-cloak>
+
     <div style="display: flex; align-items: center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
-        <!-- ID -->
         <span class="file-id-label">[[ file_id ]]</span>
 
-        <!-- Remark 可編輯 -->
-        <span id="file-id-remark" contenteditable="true">[[ remark ]]</span>
+        <span id="file-id-remark" 
+              contenteditable="true" 
+              x-ref="remark"
+              @input="handleRemarkInput()"
+              @blur="saveRemark()">[[ remark ]]</span>
+
         <div class="status-radio-group">
-	        <label class="status-radio-btn">
-		        <input type="radio" name="file-status" value="archived" [% if status == 'archived' %]checked[% endif %]>
-		        <span>📦 封存</span>
-	        </label>
-            <label class="status-radio-btn">
-		        <input type="radio" name="file-status" value="draft" [% if status == 'draft' %]checked[% endif %]>
-		        <span>🧩 草稿</span>
-	        </label>
-	        <label class="status-radio-btn">
-		        <input type="radio" name="file-status" value="refinement" [% if status == 'refinement' %]checked[% endif %]>
-		        <span>🎨 潤飾</span>
-	        </label>
-	        <label class="status-radio-btn">
-		        <input type="radio" name="file-status" value="finalized" [% if status == 'finalized' %]checked[% endif %]>
-		        <span>📌 定稿</span>
-	        </label>
-	    </div> <!-- status-radio-group -->  
-    </div> <!-- style="display..."-->
+            <template x-for="s in ['archived', 'draft', 'refinement', 'finalized']">
+                <label class="status-radio-btn">
+                    <input type="radio" name="file-status" :value="s" 
+                           x-model="status" @change="updateStatus(s)">
+                    <span x-text="getStatusLabel(s)"></span>
+                </label>
+            </template>
+        </div>
+    </div>
 
     <div class="tab-container">
         <div class="tab-buttons">
-            <button class="tab-button active" data-tab="story">故事</button>
-            <button class="tab-button" data-tab="hair">頭髮</button>
-            <button class="tab-button" data-tab="face">臉部</button>
-            <button class="tab-button" data-tab="body">身體</button>
-            <button class="tab-button" data-tab="clothing">服裝</button>
-            <button class="tab-button" data-tab="accessory">配件</button>
+            <template x-for="(label, key) in mainTabs">
+                <button class="tab-button" 
+                        :class="{ 'active': activeMainTab === key }"
+                        @click="switchMainTab(key)" 
+                        x-text="label"></button>
+            </template>
         </div>
-        <div id="sub-tab-buttons" class="sub-tab-buttons"></div>
+
+        <div class="sub-tab-buttons">
+            <template x-for="sub in subTabsConfig[activeMainTab]">
+                <button class="sub-tab-button" 
+                        :class="{ 'active': activeSubTab === sub.key }"
+                        @click="switchSubTab(sub.key)" 
+                        x-text="sub.label"></button>
+            </template>
+        </div>
         
         <div class="content-and-thumbnail-wrapper">
-            <!-- dropdown -->
-            <div id="dropdown-container" class="floating-dropdown">
-                <div id="dropdown-1" class="dropdown-slot"></div>
-                <div id="dropdown-2" class="dropdown-slot"></div>
-                <div id="dropdown-3" class="dropdown-slot"></div>
-                <div id="dropdown-4" class="dropdown-slot"></div>
+            <div id="dropdown-container" class="floating-dropdown" :class="{ 'show': dropdowns.length > 0 }">
+                <template x-for="(config, index) in dropdowns">
+                    <div class="dropdown-slot" style="display: flex;">
+                        <label x-text="config.displayLabel"></label>
+                        <select @change="handleDropdownChange(config, $event)">
+                            <template x-for="opt in config.options">
+                                <option :value="JSON.stringify(opt.value)" 
+                                        :selected="isOptionSelected(config, opt)"
+                                        :disabled="!!opt.disabled"
+                                        x-text="opt.label"></option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
             </div>
-            <!-- main content -->    
+
             <div id="main-content-shell">
-                <div id="main-content" contenteditable="true"></div>
+                <div id="main-content" 
+                     contenteditable="true" 
+                     x-ref="mainContent"
+                     @input="handleContentInput()"
+                     @blur="saveContent()"></div>
             </div>
-            <!-- thumbnail -->    
+            
             <div id="thumbnail-container">
                 <div id="main-thumb-wrapper">
-                    <img src="/api/characters/[[ sn ]]/thumbnail"
-                            alt="主角縮圖"
-                            draggable="false">
+                    <img :src="'/api/characters/' + sn + '/thumbnail'"
+                         alt="主角縮圖"
+                         draggable="false">
                 </div>
-                <!--
-                [% if sub_sn %]
-                <div id="sub-thumb-wrapper">
-                    <img src="/api/characters/[[ sub_sn ]]/thumbnail"
-                            alt="配角縮圖"
-                            draggable="false">
-                </div>	   
-                [% endif %]
-                -->
+                
+                <template x-if="sub_sn">
+                    <div id="sub-thumb-wrapper">
+                        <img :src="'/api/characters/' + sub_sn + '/thumbnail'"
+                             alt="配角縮圖"
+                             draggable="false">
+                    </div> 
+                </template>
             </div>
-        </div> <!-- content-and-thumbnail-wrapper -->
-    </div> <!-- tab-container -->
-  
-    <div id="result-message"></div>
-  
-    <script>
-        const sn = [[ sn | tojson ]];
-	    const characterData = [[ data | safe ]];
-    </script>
-    <script src="[[ url_for('static', filename='edit.js') ]]"></script>
+
+
+        </div>
+    </div>
+
+    <div id="result-message" :class="messageType" x-text="messageText"></div>
 </body>
 </html>

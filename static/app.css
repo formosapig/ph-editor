@@ -423,6 +423,6 @@ button.active {
 
 
 /* 是不是放最後比較好 */
-[v-cloak] {
+[x-cloak] {
   display: none;
 }
