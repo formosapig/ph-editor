@@ -35,10 +35,23 @@ document.addEventListener('alpine:init', () => {
             return this.showSortMenu || this.showFilterMenu;
         },
 
-        // Methods
-        async onMounted() {
-            await this.init();
-            
+        async init() {
+            try {
+                const res = await fetch('/get_scan_path');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.scanPath) await this.scan(data.scanPath);
+                }
+            } catch (e) { console.error('取得掃描路徑失敗', e); }
+
+            const adjustGalleryTop = () => {
+                const actionButtons = document.getElementById('actionButtons');
+                const gallery = document.getElementById('gallery');
+                if (actionButtons && gallery) gallery.style.top = actionButtons.offsetHeight + 'px';
+            };
+            window.addEventListener('resize', adjustGalleryTop);
+            adjustGalleryTop();
+
             // 接收 editor 資料 (BroadcastChannel)
             const bc = new BroadcastChannel('edit_file_sync_bus');
             bc.onmessage = (e) => {
@@ -335,24 +348,6 @@ document.addEventListener('alpine:init', () => {
             const parts = path.split(/[\\/]/);
             if (parts.length < 3) return path.slice(0, maxLen - 3) + '...';
             return `${parts[0]}\\${parts[1]}\\...\\${parts[parts.length - 1]}`;
-        },
-
-        async init() {
-            try {
-                const res = await fetch('/get_scan_path');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.scanPath) await this.scan(data.scanPath);
-                }
-            } catch (e) { console.error('取得掃描路徑失敗', e); }
-
-            const adjustGalleryTop = () => {
-                const actionButtons = document.getElementById('actionButtons');
-                const gallery = document.getElementById('gallery');
-                if (actionButtons && gallery) gallery.style.top = actionButtons.offsetHeight + 'px';
-            };
-            window.addEventListener('resize', adjustGalleryTop);
-            adjustGalleryTop();
         },
 
         async refrechCharacter(sn) {
