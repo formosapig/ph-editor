@@ -5,7 +5,6 @@ document.addEventListener('alpine:init', () => {
         // State
         currentScanPath: '',
         allImages: [],
-        displayedImages: [],
         selectedSet: [],
         sortAscending: true,
         sortKey: 'filename',
@@ -29,10 +28,60 @@ document.addEventListener('alpine:init', () => {
             return this.selectedSet.length;
         },
         get totalFilesCount() {
-            return this.displayedImages.length;
+            return this.filteredAndSortedImages.length;
         },
         get isAnyMenuOpen() {
             return this.showSortMenu || this.showFilterMenu;
+        },
+        get filteredAndSortedImages() {
+            let list = [...this.allImages];
+
+            // --- 1. 優先過濾 Status ---
+            list = list.filter(item => {
+                const status = item.status || 'draft';
+                return this.activeStatuses.includes(status);
+            });
+
+            // --- 2. 套用關鍵字 Filter ---
+            const rawKw = this.filterKeyword.trim().toLowerCase();
+            if (rawKw && this.filterKey) {
+                const parts = rawKw.match(/"[^"]*"|\S+/g) || [];
+                const searchKeywords = parts.map(part => {
+                    const isExact = part.startsWith('"') && part.endsWith('"');
+                    return {
+                        keyword: isExact ? part.replace(/^"|"$/g, '') : part,
+                        isExact: isExact
+                    };
+                });
+
+                list = list.filter(item => {
+                    const val = (item[this.filterKey] || '').toString().toLowerCase();
+                    return searchKeywords.some(searchObj => {
+                        if (searchObj.isExact) {
+                            return val === searchObj.keyword;
+                        } else {
+                            return val.includes(searchObj.keyword);
+                        }
+                    });
+                });
+            }
+
+            // --- 3. 最後進行排序 (穩定排序) ---
+            list = list.map((img, idx) => ({ ...img, __originalIndex: idx }))
+                .sort((a, b) => {
+                    const valA = (a[this.sortKey] || '').toString();
+                    const valB = (b[this.sortKey] || '').toString();
+                    const cmp = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+                    
+                    if (cmp !== 0) {
+                        return this.sortAscending ? cmp : -cmp;
+                    }
+                    // 若值相同，保持原始順序 (穩定排序)
+                    return a.__originalIndex - b.__originalIndex;
+                })
+                .map(({ __originalIndex, ...img }) => img);
+
+            return list;
         },
 
         async init() {
@@ -61,6 +110,23 @@ document.addEventListener('alpine:init', () => {
                     this.refrechCharacter(sn);
                 }
             };
+
+            // 監控畫面最終顯示的結果
+            this.$watch('filteredAndSortedImages', (newList) => {
+                // 如果目前沒選任何東西，直接跳過節省效能
+                if (this.selectedSet.length === 0) return;
+
+                // 建立一個目前可見 SN 的集合 (Set) 提升比對速度
+                const visibleSNs = new Set(newList.map(img => img.sn));
+
+                // 過濾選取清單：只留下「還在畫面上」的 SN
+                const validSelected = this.selectedSet.filter(sn => visibleSNs.has(sn));
+
+                // 只有在真的有 SN 被踢掉時，才更新狀態（避免觸發無意義的響應）
+                if (validSelected.length !== this.selectedSet.length) {
+                    this.selectedSet = validSelected;
+                }
+            });
         },
 
         async scan(path) {
@@ -85,13 +151,10 @@ document.addEventListener('alpine:init', () => {
                 if (!data.images || data.images.length === 0) {
                     alert('沒有找到 PNG 檔案');
                     this.allImages = [];
-                    this.displayedImages = [];
                     return;
                 }
                 this.globalTagStyles = data.tag_styles || {};
                 this.allImages = data.images;
-                this.displayedImages = [...data.images];
-                this.applyFilter(this.filterKey); // 修正: 這裡應傳入 key
             } catch (e) {
                 alert('網路或伺服器錯誤');
                 console.error(e);
@@ -112,26 +175,10 @@ document.addEventListener('alpine:init', () => {
 
         applySort(key) {
             this.sortKey = key;
-            this.stableSortImages();
         },
 
         toggleSortOrder() {
             this.sortAscending = !this.sortAscending;
-            this.stableSortImages();
-        },
-
-        stableSortImages() {
-            this.displayedImages = [...this.displayedImages]
-                .map((img, idx) => ({ ...img, __originalIndex: idx }))
-                .sort((a, b) => {
-                    const valA = (a[this.sortKey] || '').toString();
-                    const valB = (b[this.sortKey] || '').toString();
-                    const cmp = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
-                    return cmp !== 0
-                        ? (this.sortAscending ? cmp : -cmp)
-                        : a.__originalIndex - b.__originalIndex;
-                })
-                .map(({ __originalIndex, ...img }) => img);
         },
 
         toggleFilter() {
@@ -141,38 +188,7 @@ document.addEventListener('alpine:init', () => {
 
         applyFilter(key) {
             this.filterKey = key;
-            const rawKw = this.filterKeyword.trim().toLowerCase();
             this.selectedSet = [];
-
-            let filteredBase = this.allImages.filter(item => {
-                const status = item.status || 'draft'; 
-                return this.activeStatuses.includes(status);
-            });
-
-            if (!rawKw || !this.filterKey) {
-                this.displayedImages = filteredBase;
-                return;
-            }
-
-            const parts = rawKw.match(/"[^"]*"|\S+/g) || [];
-            const searchKeywords = parts.map(part => {
-                const isExact = part.startsWith('"') && part.endsWith('"');
-                return {
-                    keyword: isExact ? part.replace(/^"|"$/g, '') : part,
-                    isExact: isExact
-                };
-            });
-
-            this.displayedImages = filteredBase.filter(item => {
-                const val = (item[key] || '').toString().toLowerCase();
-                return searchKeywords.some(searchObj => {
-                    if (searchObj.isExact) {
-                        return val === searchObj.keyword;
-                    } else {
-                        return val.includes(searchObj.keyword);
-                    }
-                });
-            });
         },
 
         compareSelected() {
@@ -225,7 +241,7 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
-                [this.allImages, this.displayedImages].forEach(list => {
+                this.allImages.forEach(list => {
                     const img = list.find(i => i.sn === sn);
                     if (img) img.file_id = newFilename;
                 });
@@ -249,7 +265,6 @@ document.addEventListener('alpine:init', () => {
                     else list.push(newChar);
                 };
                 updateList(this.allImages);
-                updateList(this.displayedImages);
                 this.selectedSet = [newChar.sn];
                 this.showMessage(`複製成功: ${newChar.file_id}`);
             } catch (err) {
@@ -268,9 +283,8 @@ document.addEventListener('alpine:init', () => {
                 const successfullyDeletedSNs = (data.results || [])
                     .filter(r => r.status === 'success').map(r => r.sn);
                 
-                this.selectedSet = [];
+                //this.selectedSet = [];
                 this.allImages = this.allImages.filter(img => !successfullyDeletedSNs.includes(img.sn));
-                this.displayedImages = this.displayedImages.filter(img => !successfullyDeletedSNs.includes(img.sn));
                 this.showMessage(`成功刪除 ${successfullyDeletedSNs.length} 個角色`);
             } catch (err) {
                 this.showMessage(err.displayMessage || '系統錯誤');
@@ -324,8 +338,8 @@ document.addEventListener('alpine:init', () => {
             const isCtrlPressed = event.ctrlKey || event.metaKey;
             if (isCtrlPressed || isBlankClick) {
                 if (!isBlankClick) {
-                    this.displayedImages.forEach(item => {
-                        if (!this.selectedSet.includes(item.sn)) this.selectedSet.push(item.sn);
+                    this.filteredAndSortedImages.forEach(item => {
+                         if (!this.selectedSet.includes(item.sn)) this.selectedSet.push(item.sn);
                     });
                 } else {
                     this.selectedSet = [];
@@ -358,22 +372,13 @@ document.addEventListener('alpine:init', () => {
                 const newData = await response.json();
                 const allIndex = this.allImages.findIndex(c => c.sn === sn);
                 if (allIndex !== -1) {
+                    // 先丟進去，之後 fileterAndSort 會篩
+                    if (!this.selectedSet.includes(sn)) this.selectedSet.push(sn);
                     this.allImages[allIndex] = { ...this.allImages[allIndex], ...newData };
-                    this.applyFilter(this.filterKey);
-                    // 注意 applyFilter 會強制清空 selectedSet!!
-                    const isStillVisible = this.displayedImages.some(c => c.sn === sn);
-                    if (isStillVisible) {
-                        if (!this.selectedSet.includes(sn)) this.selectedSet.push(sn);
-                    }
                     return true;
                 }
                 return false;
             } catch (error) { return false; }
-        },
-
-        toggleStatus() {
-            // Alpine 不需要 setTimeout 0，但保留邏輯以防異步 model 延遲
-            this.$nextTick(() => this.applyFilter(this.filterKey));
         },
 
         showMessage(text) {

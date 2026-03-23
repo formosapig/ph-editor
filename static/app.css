@@ -358,6 +358,20 @@ button.active {
   text-overflow: ellipsis;
 }
 
+/* 新增：管理勳章容器 */
+.management-badges {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;   /* 兩個 emoji 之間的間距 */
+    z-index: 11;
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.5)); /* 讓 emoji 在深色背景更明顯 */
+    font-size: 18px; /* 稍微放大增加存在感 */
+    pointer-events: auto; /* 若需要 title 提示則設為 auto */
+}
+
 .filename-label {
   /* 關鍵：調整這個 margin-top 以確保與 profile-badge 不重疊 */
   /* 這個值需要大於 profile-badge 突出圖片的高度，再加上您想要的文字與徽章間距 */

@@ -26,16 +26,16 @@
             
             <div class="center-status-toggle">
                 <label class="status-btn" :class="{ active: activeStatuses.includes('archived') }">
-                    <input type="checkbox" x-model="activeStatuses" value="archived" @change="toggleStatus" hidden> 📦封存
+                    <input type="checkbox" x-model="activeStatuses" value="archived" hidden> 📦封存
                 </label>
                 <label class="status-btn" :class="{ active: activeStatuses.includes('draft') }">
-                    <input type="checkbox" x-model="activeStatuses" value="draft" @change="toggleStatus" hidden> 🧩草稿
+                    <input type="checkbox" x-model="activeStatuses" value="draft" hidden> 🧩草稿
                 </label>
                 <label class="status-btn" :class="{ active: activeStatuses.includes('refinement') }">
-                    <input type="checkbox" x-model="activeStatuses" value="refinement" @change="toggleStatus" hidden> 🎨潤飾
+                    <input type="checkbox" x-model="activeStatuses" value="refinement" hidden> 🎨潤飾
                 </label>
                 <label class="status-btn" :class="{ active: activeStatuses.includes('finalized') }">
-                    <input type="checkbox" x-model="activeStatuses" value="finalized" @change="toggleStatus" hidden> 📌定稿
+                    <input type="checkbox" x-model="activeStatuses" value="finalized" hidden> 📌定稿
                 </label>
             </div>
 
@@ -53,7 +53,7 @@
     </div>
 
     <div id="gallery" class="clickable-area" @click="handleGalleryClick">
-        <template x-for="item in displayedImages" :key="item.sn">
+        <template x-for="item in filteredAndSortedImages" :key="item.sn">
             <div class="thumb-container"
                  :class="{ selected: isSelected(item.sn) }"
                  @click="toggleSelect(item.sn, $event)">
@@ -73,6 +73,12 @@
                          x-text="item.tag_name">
                     </div>
                     <div x-show="item.scenario_scene" class="scenario-badge" x-text="item.scenario_scene"></div>
+                    <div class="management-badges">
+                        <span x-show="item.ccm_managed" 
+                            title="時空因果矩陣管理中">🌌</span>
+                        <span x-show="item.epoch_managed" 
+                            title="歲月建模管理中">⏳</span>
+                    </div>
                 </div>
                 <div>
                     <div class="filename-label">
@@ -95,7 +101,7 @@
             <div class="option" :class="{ active: sortKey === 'scenario_scene' }" @click="applySort('scenario_scene')">🎬 場景</div>      
             <div class="option" :class="{ active: sortKey === 'tag_name' }" @click="applySort('tag_name')">🏷️ 標籤</div>
             <div class="divider"></div>
-            <div class="option" @click="toggleSortOrder" x-text="sortAscending ? '⬆️ 昇序' : '⬇️ 降序'"></div>
+            <div class="option" @click="toggleSortOrder" x-text="sortAscending ? '⬇️ 昇序' : '⬆️ 降序'"></div>
         </div>
     </template>
 
@@ -107,7 +113,7 @@
             <div class="option" :class="{ active: filterKey === 'tag_name' }" @click="applyFilter('tag_name')">🏷️ 標籤</div>
             <div class="option" :class="{ active: filterKey === '' }" @click="applyFilter('')">🧹 清除</div>
             <div class="divider"></div>
-            <input type="text" x-model="filterKeyword" placeholder="輸入關鍵字..." />
+            <input type="text" x-model.debounce.500ms="filterKeyword" placeholder="輸入關鍵字..." />
         </div>
     </template>
 

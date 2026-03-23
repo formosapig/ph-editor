@@ -194,7 +194,7 @@ class CharacterFileEntry:
         
     def to_dict(self, tag_resolver=None):
         t_style, t_name = tag_resolver(self.sn) if tag_resolver else ("", "")
-        return {
+        res = {
             "sn": self.sn,
             "file_id": self.file_id,
             "profile_name": self.get_profile_name(),
@@ -204,6 +204,10 @@ class CharacterFileEntry:
             "tag_style": t_style,
             "tag_name": t_name
         }
+        if self.scenario_id in [SpecialScenario.REVERBERATION, SpecialScenario.SILHOUETTE]:
+            res["ccm_managed"] = True;
+        #res["epoch_managed"] = True;
+        return res;
 
     def __repr__(self):
         lines = [

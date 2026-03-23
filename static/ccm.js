@@ -168,8 +168,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     title: backstage["title"],
                     tag_id: backstage["!tag_id"],
                     profile_id: meta["!profile_id"],
+                    scenario_color: backstage["scenario_color"],
                     color: backstage["color"] || '#555',
-                    background: backstage["background"] || '#aaa'
+                    background: '#333'//backstage["background"] || '#aaa'
                 };
             });
             return matchedMetas;
@@ -251,11 +252,24 @@ window.addEventListener('DOMContentLoaded', () => {
 	
         // 取得當前事件方塊應套用的主題色
         getScenarioStyle(scId, profileId) {
+            //const backstages = this.getBackstagesByScenario(scId);
+            //const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.color);
+            //return {
+            //    borderColor: (primaryBG && primaryBG.color) || '#555'
+            //};
             const backstages = this.getBackstagesByScenario(scId);
-            const primaryBG = backstages.find(bg => bg.profile_id === profileId && bg.color);
-            return {
-                borderColor: (primaryBG && primaryBG.color) || '#555'
-            };
+            let fallback = null;
+
+            for (let i = 0; i < backstages.length; i++) {
+                const bg = backstages[i];
+                if (bg.profile_id !== profileId) continue;
+
+                // 核心邏輯：發現頂級直接閃人，發現次級先存起來
+                if (bg.scenario_color) return { borderColor: bg.scenario_color };
+                if (!fallback && bg.color) fallback = bg.color;
+            }
+
+            return { borderColor: fallback || '#555' };
         },
 	
         async reloadData() {

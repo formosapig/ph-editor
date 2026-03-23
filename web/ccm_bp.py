@@ -145,7 +145,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
                         final_year = 2000 + min_age
 
                     # B. 建立虛擬 Scenario
-                    new_scenario_id = OFFSET_REVERBERATION + int(profile_id)
+                    new_scenario_id = OFFSET_REVERBERATION + int(profile_id) * 1000 + int(final_year)
                     
                     # C. 組合文字邏輯
                     # scene = stage['short'] (例如：懷春) + profile['name'] (例如：小美)
@@ -162,7 +162,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
 
                     # D. 更新回傳狀態
                     item_copy["!scenario_id"] = new_scenario_id
-                    backstage['color'] = "#39FF14"  # 螢光綠代表共鳴成功
+                    backstage['scenario_color'] = "#4A7C59"
                     backstage['age'] = min_age
                     
                     logger.info(f"歲月迴響成功：{scene_name} ({final_year}年)")
@@ -189,6 +189,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
                 }
 
                 item_copy["!scenario_id"] = new_scenario_id
+                backstage['scenario_color'] = "#7F8C31"
                 #backstage['age'] = '-'
         else:
             # 計算 age...
