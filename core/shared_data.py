@@ -1,6 +1,7 @@
 # ph-editor/core/shared_data.py
 import json
 import logging
+import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 # 全域字典，儲存所有載入的角色檔案數據
 # Key: FILE_ID, 角色檔案的 ID (通常是檔名，不含路徑)
 # Value: CharacterFileEntry 物件
+data_lock = threading.RLock()
 characters_db: Dict[str, CharacterFileEntry] = {}
 
 _extra_data_manager: Optional[ExtraDataManager] = None
@@ -64,16 +66,17 @@ def get_wish_list() -> List[Dict[str, Any]]:
 
 # ---- 其他的唷~~~ -----
 def add_or_update_character_with_path(scan_path: str, file_id: str) -> Optional[CharacterFileEntry]:
-    try:
-        character_file_entry_obj = (
-            CharacterFileEntry.load(scan_path, file_id, _extra_data_manager)
-        )
-        characters_db[character_file_entry_obj.sn] = character_file_entry_obj
-        return character_file_entry_obj
+    with data_lock:
+        try:
+            character_file_entry_obj = (
+                CharacterFileEntry.load(scan_path, file_id, _extra_data_manager)
+            )
+            characters_db[character_file_entry_obj.sn] = character_file_entry_obj
+            return character_file_entry_obj
 
-    except Exception as e:
-        logger.error(f"處理 FILE ID '{file_id}' 時發生例外：{e}")
-        return None
+        except Exception as e:
+            logger.error(f"處理 FILE ID '{file_id}' 時發生例外：{e}")
+            return None
 
 
 def get_character_file_entry(sn: str) -> Optional[CharacterFileEntry]:
@@ -81,20 +84,21 @@ def get_character_file_entry(sn: str) -> Optional[CharacterFileEntry]:
 
 
 def remove_character_file_entry(sn: str):
-    entry = characters_db.get(sn)
-    
-    if not entry:
-        logger.error(f"移除失敗:找不到 SN:'{sn}'")
-        raise ValueError(f"找不到指定的角色資料: {sn}")
-
-    try:
-        entry.remove_metadata()
-        characters_db.pop(sn, None)
-        logger.info(f"成功將 SN:{sn} 從管理系統中移除。")
+    with data_lock:
+        entry = characters_db.get(sn)
         
-    except Exception as e:
-        logger.error(f"移除 Entry SN:{sn} 時發生錯誤: {e}")
-        raise RuntimeError(f"系統清理失敗: {str(e)}")
+        if not entry:
+            logger.error(f"移除失敗:找不到 SN:'{sn}'")
+            raise ValueError(f"找不到指定的角色資料: {sn}")
+
+        try:
+            entry.remove_metadata()
+            characters_db.pop(sn, None)
+            logger.info(f"成功將 SN:{sn} 從管理系統中移除。")
+            
+        except Exception as e:
+            logger.error(f"移除 Entry SN:{sn} 時發生錯誤: {e}")
+            raise RuntimeError(f"系統清理失敗: {str(e)}")
 
 
 def get_character_data(sn: str) -> Optional[CharacterData]:
@@ -103,104 +107,111 @@ def get_character_data(sn: str) -> Optional[CharacterData]:
 
 
 def update_character_data(sn: str, main_key: str, sub_key: str, data: any):
-    entry = get_character_file_entry(sn)
-    if not entry:
-       raise KeyError(f"Character {sn} not found")
-    entry.update_character_data(main_key, sub_key, data)
+    with data_lock:
+        entry = get_character_file_entry(sn)
+        if not entry:
+            raise KeyError(f"Character {sn} not found")
+        entry.update_character_data(main_key, sub_key, data)
 
 
 def clear_characters_db():
-    characters_db.clear()
-    #logger.info("角色數據庫已全部清空。")
-    _extra_data_manager.reload()
-    #logger.info("額外資料已重讀。")
+    with data_lock:
+        characters_db.clear()
+        #logger.info("角色數據庫已全部清空。")
+        _extra_data_manager.reload()
+        #logger.info("額外資料已重讀。")
 
 
 def process_profile_data(
     sn: str, updated_profile: Dict[str, Any]
 ) -> Tuple[bool, Optional[int]]:
-    profile_id = updated_profile.get("!id")
-    success = False
-    new_profile_id = None
-        
-    if profile_id == 0:
-        success = _extra_data_manager.add_profile(updated_profile)
-        new_profile_id = updated_profile.get("!id", None) if success else None
-    else:
-        success = _extra_data_manager.update_profile(updated_profile)
-
-    if success: # 成功時,才更新 character_file_entry 的資料...
-        character_file_entry_obj = get_character_file_entry(sn)
-        if character_file_entry_obj is None:
-            logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry")
-            return False, None
-        updated_profile_id = updated_profile.get("!id")
-        logger.debug(f"PROFILE_ID: ${updated_profile_id}")
-        character_file_entry_obj.update_profile_id(updated_profile_id)
+    with data_lock:
+        profile_id = updated_profile.get("!id")
+        success = False
+        new_profile_id = None
             
-    return success, new_profile_id
+        if profile_id == 0:
+            success = _extra_data_manager.add_profile(updated_profile)
+            new_profile_id = updated_profile.get("!id", None) if success else None
+        else:
+            success = _extra_data_manager.update_profile(updated_profile)
+
+        if success: # 成功時,才更新 character_file_entry 的資料...
+            character_file_entry_obj = get_character_file_entry(sn)
+            if character_file_entry_obj is None:
+                logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry")
+                return False, None
+            updated_profile_id = updated_profile.get("!id")
+            logger.debug(f"PROFILE_ID: ${updated_profile_id}")
+            character_file_entry_obj.update_profile_id(updated_profile_id)
+                
+        return success, new_profile_id
 
 
 def process_scenario_data(
     sn: str, updated_scenario: Dict[str, Any]
 ) -> Tuple[bool, Optional[int]]:
-    scenario_id = updated_scenario.get("!id")
-    success = False
-    new_scenario_id = None
-    if scenario_id in [SpecialScenario.SILHOUETTE, SpecialScenario.REVERBERATION]:
-        original_data = _extra_data_manager.get_scenario(scenario_id)
-        if (original_data):
-            updated_scenario.clear()
-            updated_scenario.update(original_data)
-        success = True    
-    elif scenario_id == SpecialScenario.NEW:
-        success = _extra_data_manager.add_scenario(updated_scenario)
-        new_scenario_id = updated_scenario.get("!id", None) if success else None
-        if not success and (entry := get_character_file_entry(sn)):
-            entry.remove_scenario()
-    else:
-        success = _extra_data_manager.update_scenario(updated_scenario)
+    with data_lock:
+        scenario_id = updated_scenario.get("!id")
+        success = False
+        new_scenario_id = None
+        if scenario_id in [SpecialScenario.SILHOUETTE, SpecialScenario.REVERBERATION]:
+            original_data = _extra_data_manager.get_scenario(scenario_id)
+            if (original_data):
+                updated_scenario.clear()
+                updated_scenario.update(original_data)
+            success = True    
+        elif scenario_id == SpecialScenario.NEW:
+            success = _extra_data_manager.add_scenario(updated_scenario)
+            new_scenario_id = updated_scenario.get("!id", None) if success else None
+            if not success and (entry := get_character_file_entry(sn)):
+                entry.remove_scenario()
+        else:
+            success = _extra_data_manager.update_scenario(updated_scenario)
 
-    if success: # 成功時,才更新 character_file_entry 的資料...
-        character_file_entry_obj = get_character_file_entry(sn)
-        if character_file_entry_obj is None:
-            logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry。")
-            return False, None
-        updated_scenario_id = updated_scenario.get("!id")
-        logger.debug(f"SCENARIO_ID: ${updated_scenario_id}")
-        character_file_entry_obj.update_scenario_id(updated_scenario_id)
-            
-    return success, new_scenario_id
+        if success: # 成功時,才更新 character_file_entry 的資料...
+            character_file_entry_obj = get_character_file_entry(sn)
+            if character_file_entry_obj is None:
+                logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry。")
+                return False, None
+            updated_scenario_id = updated_scenario.get("!id")
+            logger.debug(f"SCENARIO_ID: ${updated_scenario_id}")
+            character_file_entry_obj.update_scenario_id(updated_scenario_id)
+                
+        return success, new_scenario_id
   
     
 def update_backstage_data(
     sn: str, updated_backstage: Dict[str, Any]
 ) -> bool:
-    # 更新 backstage 資料永遠成功.
-    _extra_data_manager.update_backstage(sn, updated_backstage)
-        
-    character_file_entry_obj = get_character_file_entry(sn)
-    if character_file_entry_obj is None:
-        raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
-    if '!tag_id' in updated_backstage:
-        character_file_entry_obj.update_tag_id(updated_backstage['!tag_id'])
+    with data_lock:
+        # 更新 backstage 資料永遠成功.
+        _extra_data_manager.update_backstage(sn, updated_backstage)
             
-    return True
+        character_file_entry_obj = get_character_file_entry(sn)
+        if character_file_entry_obj is None:
+            raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
+        if '!tag_id' in updated_backstage:
+            character_file_entry_obj.update_tag_id(updated_backstage['!tag_id'])
+                
+        return True
     
     
 def update_remark_data(sn: str, remark: str) -> bool:
-    character_file_entry_obj = get_character_file_entry(sn)
-    if character_file_entry_obj is None:
-        raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
-    character_file_entry_obj.update_remark(remark)
-    return True    
+    with data_lock:
+        character_file_entry_obj = get_character_file_entry(sn)
+        if character_file_entry_obj is None:
+            raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
+        character_file_entry_obj.update_remark(remark)
+        return True    
     
 def update_status_data(sn: str, status: str) -> bool:
-    character_file_entry_obj = get_character_file_entry(sn)
-    if character_file_entry_obj is None:
-        raise KeyError(f"[ERROR] SM:{sn} 找不到對應的 CharacterFileEntry")
-    character_file_entry_obj.update_status(status)
-    return True    
+    with data_lock:
+        character_file_entry_obj = get_character_file_entry(sn)
+        if character_file_entry_obj is None:
+            raise KeyError(f"[ERROR] SM:{sn} 找不到對應的 CharacterFileEntry")
+        character_file_entry_obj.update_status(status)
+        return True    
 
 def process_tag_info(sn: str) -> tuple[str, str]:
     tag_style = ""
@@ -233,58 +244,60 @@ def process_tag_info(sn: str) -> tuple[str, str]:
 
 
 def get_tag_count(id: int) -> int:
-    metadata_dict = _extra_data_manager.get_metadata_map()
-    
-    # 用 set 儲存符合條件的 profile_id
-    # set 的特性是元素不重複，且最後 len(set) 就是你要的數量
-    matched_profile_ids = set()
-
-    for metadata in metadata_dict.values():
-        profile_id = metadata.get("!profile_id")
+    with data_lock:
+        metadata_dict = _extra_data_manager.get_metadata_map()
         
-        # 如果 profile_id 不存在 (None 或空值)，直接跳過這筆
-        if not profile_id:
-            continue
+        # 用 set 儲存符合條件的 profile_id
+        # set 的特性是元素不重複，且最後 len(set) 就是你要的數量
+        matched_profile_ids = set()
+
+        for metadata in metadata_dict.values():
+            profile_id = metadata.get("!profile_id")
             
-        backstage_data = metadata.get("backstage", {})
-        
-        # 檢查 code 是否匹配
-        is_match = backstage_data.get("!tag_id") == id
+            # 如果 profile_id 不存在 (None 或空值)，直接跳過這筆
+            if not profile_id:
+                continue
                 
-        # 只要其中一個中，且 profile_id 有值，就塞進 set
-        if is_match:
-            matched_profile_ids.add(profile_id)
+            backstage_data = metadata.get("backstage", {})
+            
+            # 檢查 code 是否匹配
+            is_match = backstage_data.get("!tag_id") == id
+                    
+            # 只要其中一個中，且 profile_id 有值，就塞進 set
+            if is_match:
+                matched_profile_ids.add(profile_id)
 
-    # 最後直接回傳 set 的長度（Size）
-    return len(matched_profile_ids)
+        # 最後直接回傳 set 的長度（Size）
+        return len(matched_profile_ids)
 
 
 def get_color_trait_count(code: str) -> int:
-    metadata_dict = _extra_data_manager.get_metadata_map()
-    
-    # 用 set 儲存符合條件的 profile_id
-    # set 的特性是元素不重複，且最後 len(set) 就是你要的數量
-    matched_profile_ids = set()
-
-    for metadata in metadata_dict.values():
-        profile_id = metadata.get("!profile_id")
+    with data_lock:
+        metadata_dict = _extra_data_manager.get_metadata_map()
         
-        # 如果 profile_id 不存在 (None 或空值)，直接跳過這筆
-        if not profile_id:
-            continue
+        # 用 set 儲存符合條件的 profile_id
+        # set 的特性是元素不重複，且最後 len(set) 就是你要的數量
+        matched_profile_ids = set()
+
+        for metadata in metadata_dict.values():
+            profile_id = metadata.get("!profile_id")
             
-        backstage_data = metadata.get("backstage", {})
-        
-        # 檢查 code 是否匹配
-        is_persona_match = backstage_data.get("!persona_code") == code
-        is_shadow_match = backstage_data.get("!shadow_code") == code
+            # 如果 profile_id 不存在 (None 或空值)，直接跳過這筆
+            if not profile_id:
+                continue
+                
+            backstage_data = metadata.get("backstage", {})
+            
+            # 檢查 code 是否匹配
+            is_persona_match = backstage_data.get("!persona_code") == code
+            is_shadow_match = backstage_data.get("!shadow_code") == code
 
-        # 只要其中一個中，且 profile_id 有值，就塞進 set
-        if is_persona_match or is_shadow_match:
-            matched_profile_ids.add(profile_id)
+            # 只要其中一個中，且 profile_id 有值，就塞進 set
+            if is_persona_match or is_shadow_match:
+                matched_profile_ids.add(profile_id)
 
-    # 最後直接回傳 set 的長度（Size）
-    return len(matched_profile_ids)
+        # 最後直接回傳 set 的長度（Size）
+        return len(matched_profile_ids)
 
 
 def get_suggest_file_id(sn: str) -> str:
@@ -354,27 +367,30 @@ def find_another_sn_by_scenario_id(
     """
     if scenario_id is None or sn_to_exclude is None:
         return None
-    
-    for entry in characters_db.values():
-        scenario_match = (entry.scenario_id == scenario_id)
-        sn_mismatch = (entry.sn != sn_to_exclude)
-        if scenario_match and sn_mismatch:
-            return entry.sn
-            
+
+    with data_lock:    
+        for entry in characters_db.values():
+            scenario_match = (entry.scenario_id == scenario_id)
+            sn_mismatch = (entry.sn != sn_to_exclude)
+            if scenario_match and sn_mismatch:
+                return entry.sn
+                
     return None
     
 def add_wish(data: Dict[str, Any]):
-    wishes = get_wish_list()
-    data['id'] = int(time.time() * 1000)
-    data['date'] =time.strftime("%Y-%m-%d %H:%M")
-    wishes.insert(0, data)
-    _extra_data_manager.update_wish_list()    
-    return data
+    with data_lock:
+        wishes = get_wish_list()
+        data['id'] = int(time.time() * 1000)
+        data['date'] =time.strftime("%Y-%m-%d %H:%M")
+        wishes.insert(0, data)
+        _extra_data_manager.update_wish_list()    
+        return data
     
 def delete_wish(wish_id: int):
-    wishes = get_wish_list()
-    wishes[:] = [w for w in wishes if w['id'] != wish_id]
-    _extra_data_manager.update_wish_list()
+    with data_lock:
+        wishes = get_wish_list()
+        wishes[:] = [w for w in wishes if w['id'] != wish_id]
+        _extra_data_manager.update_wish_list()
     
 
 

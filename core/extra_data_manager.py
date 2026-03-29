@@ -1,14 +1,15 @@
 # ph-editor/core/extra_data_manager.py
+from functools import wraps
 import json
 import logging
 import copy
+import threading
 import nanoid
 from typing import Any, Dict, List, Optional, Tuple
 
 # 假設 UserConfigManager 已經存在，且負責提供檔案路徑
 from core.constants import SpecialScenario
 from core.user_config_manager import UserConfigManager
-#from .shared_data import get_character_file_entry
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +74,17 @@ DEFAULT_METADATA_TEMPLATE = {
 
 ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
 
+def synchronized(f):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        with self._lock:
+            return f(self, *args, **kwargs)
+    return wrapper
+
+
 class ExtraDataManager():
     def __init__(self):
+        self._lock = threading.RLock()
         # 記憶體中的快取資料，將所有資料集中管理
         self._general_data: Optional[Dict[str, Any]] = None
         self._profile_map: Dict[int, Dict[str, Any]] = {}
@@ -113,6 +123,7 @@ class ExtraDataManager():
             # 返回預設模板的深層複製，避免共用同一份模板物件
             return copy.deepcopy(default_template)
             
+    @synchronized            
     def initialize_data(self):
         """程式啟動時，載入所有資料。"""
         # 載入 general.json，key_type 為 None
@@ -138,7 +149,8 @@ class ExtraDataManager():
         self._wish_list = self._load_or_create(
             UserConfigManager.get_wish_file_path, [], key_type=None
         )
-        
+    
+    @synchronized
     def reload(self):
         """清除並重新載入所有資料。"""
         #logger.info("開始重新載入 ExtraDataManager 資料...")
@@ -154,13 +166,15 @@ class ExtraDataManager():
         #logger.info("ExtraDataManager 資料重新載入完成。")
         
     # 分別儲存各類資料的方法
+    @synchronized
     def _save_general_data(self):
         """儲存一般設定資料。"""
         if self._general_data:
             UserConfigManager.save_json_file(
                 UserConfigManager.get_general_file_path(), self._general_data
             )
-            
+
+    @synchronized        
     def _save_profile_data(self):
         """儲存角色設定資料。"""
         if self._profile_map:
@@ -168,6 +182,7 @@ class ExtraDataManager():
                 UserConfigManager.get_profile_file_path(), self._profile_map
             )
             
+    @synchronized        
     def _save_scenario_data(self):
         """儲存場景設定資料。"""
         if self._scenario_map:
@@ -175,62 +190,20 @@ class ExtraDataManager():
                 UserConfigManager.get_scenario_file_path(), self._scenario_map
             )
             
+    @synchronized            
     def _save_metadata_data(self):
         """儲存後台資料。"""
         if self._metadata_map:
-            #self._ensure_permanent_id()
             UserConfigManager.save_json_file(
                 UserConfigManager.get_metadata_file_path(), self._metadata_map
             )
             
+    @synchronized            
     def _save_wish_data(self):
         if self._wish_list:
             UserConfigManager.save_json_file(
                 UserConfigManager.get_wish_file_path(), self._wish_list
             )
-    
-    ''' 奇怪的一次性的函式, 把 file_id 抽掉換成 sn '''
-    def _ensure_permanent_id(self):
-        """
-        確保所有資料都有唯一的永久 SN 作為 Key。
-        1. 遍歷 metadata_map。
-        2. 若發現舊格式 (以 file_id 為 Key)，則轉換為 SN。
-        3. 這是為了支援 file_id 可變更性及 epoch (檔案指向) 功能。
-        """
-        # 排除容易混淆的字元，共 32 碼
-        alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
-        new_map = {}
-        modified = False
-
-        # 建立現有的 key 集合（包含已經是 SN 的項目）用於碰撞檢查
-        current_keys = set(self._metadata_map.keys())
-
-        for key, value in self._metadata_map.items():
-            # 判斷邏輯：如果內容裡沒有 file_id，說明目前的 key 就是原始 ID
-            if isinstance(value, dict) and "file_id" not in value:
-                # 產生唯一的 8 碼 SN
-                while True:
-                    sn = nanoid.generate(alphabet, size=8)
-                    if sn not in current_keys and sn not in new_map:
-                        break
-                
-                # 執行搬移：將舊 key 存入內容，新 SN 成為索引
-                value["file_id"] = key
-                
-                # 【預留優化】：如果之後要做 epoch，建議在此初始化指向欄位
-                if "next_epoch_sn" not in value:
-                    value["next_epoch_sn"] = None
-                    
-                new_map[sn] = value
-                modified = True
-            else:
-                # 已經轉換過或者是正確格式的資料
-                new_map[key] = value
-
-        if modified:
-            self._metadata_map = new_map
-
-
 
     # IDataAccessor
     def get_profile(self, profile_id: int) -> Dict[str, Any]:
@@ -242,6 +215,7 @@ class ExtraDataManager():
     def get_metadata(self, sn: str) -> Dict[str, Any]:
         return self._metadata_map.get(sn, {})
     
+    @synchronized
     def find_metadata_by_file_id(self, file_id: str) -> Tuple[str, Dict[str, Any]]:
         """
         透過 file_id 尋找資料。
@@ -263,26 +237,27 @@ class ExtraDataManager():
         return new_sn, new_data
 
     # --- 對外提供的資料存取介面 ---
+    @synchronized
     def get_general_data(self) -> Dict[str, Any]:
-        """獲取全域 general 資料。"""
-        return self._general_data
-        
+        return copy.deepcopy(self._general_data) if self._general_data is not None else {}
+
+    @synchronized        
     def get_profile_map(self) -> Dict[int, Dict[str, Any]]:
-        """獲取所有 profile 資料。"""
-        return self._profile_map
-       
+        return copy.deepcopy(self._profile_map)
+
+    @synchronized   
     def get_scenario_map(self) -> Dict[int, Dict[str, Any]]:
-        """獲取所有 scenario 資料。"""
-        return self._scenario_map
-        
+        return copy.deepcopy(self._scenario_map)
+
+    @synchronized        
     def get_metadata_map(self) -> Dict[str, Dict[str, Any]]:
-        return self._metadata_map    
-            
+        return copy.deepcopy(self._metadata_map)
+
+    @synchronized
     def get_wish_list(self) -> List[Dict[str, Any]]:
-        return self._wish_list
-            
+        return copy.deepcopy(self._wish_list)
+
     # --- 對外提供的更新介面 (會由 CharacterFileEntry 呼叫) ---
-    
     def _is_data_changed(
         self, current_data: Dict[str, Any], updated_data: Dict[str, Any]
     ) -> bool:
@@ -299,7 +274,8 @@ class ExtraDataManager():
         # 無不同
         logger.warning(f"ID {current_id} not changed.")
         return False
-    
+
+    @synchronized
     def update_general_data(self, new_data: Dict[str, Any]):
         """更新全域 general 資料。"""
         logger.debug("準備寫入全域資料了!!")
@@ -309,7 +285,8 @@ class ExtraDataManager():
             self._save_general_data()
             logger.debug("寫入全域資料：")
             logger.debug(json.dumps(new_data, ensure_ascii=False, indent=2))
-            
+
+    @synchronized
     def add_profile(self, updated_profile: Dict[str, Any]) -> bool:
         ''' 新增一個 profile data, 並返回是否新增成功 '''
         # 1. 檢查跟 default 是不是一樣, 一樣返回 false.
@@ -328,7 +305,8 @@ class ExtraDataManager():
         else:
             logger.error(f"無效的 PROFILE_ID: {updated_profile.get('!id')}")
             return False
-        
+
+    @synchronized        
     def update_profile(self, updated_profile: Dict[str, Any]) -> bool:
         """更新一個現有的 profile。"""
         updated_profile_id = updated_profile.get("!id")
@@ -349,21 +327,24 @@ class ExtraDataManager():
 
         self._commit_profile(updated_profile_id, updated_profile) 
         return True
-        
+
+    @synchronized
     def _commit_profile(self, profile_id: int, profile_data: Dict[str, Any]):
         ordered_data = self._deep_sort(profile_data, ORDER_PROFILE)
         self._profile_map[profile_id] = copy.deepcopy(ordered_data)
         
         self._save_profile_data()
         logger.info(f"Profile {profile_id} 提交成功並存檔。")
-    
+
+    @synchronized
     def update_profile_id(self, sn: str, profile_id: int):
         logger.debug(f"update PROFILE_ID: ${profile_id} to ${sn}")
         # 要修改內容,直接內部讀取
         metadata = self._metadata_map.get(sn, {})
         metadata['!profile_id'] = profile_id;
         self._commit_metadata(sn, metadata)
-        
+
+    @synchronized
     def add_scenario(self, updated_scenario: Dict[str, Any]) -> bool:
         ''' 新增一個 scenario data, 並返回是否新增成功 '''
         # 1. 檢查跟 default 是不是一樣, 一樣返回 false.
@@ -382,7 +363,8 @@ class ExtraDataManager():
         else:
             logger.error(f"無效的 SCENARIO_ID: {updated_scenario.get('!id')}")
             return False
-        
+
+    @synchronized        
     def update_scenario(self, updated_scenario: Dict[str, Any]) -> bool:
         """更新一個現有的 scenario。"""
         updated_scenario_id = updated_scenario.get("!id")
@@ -403,7 +385,8 @@ class ExtraDataManager():
 
         self._commit_scenario(updated_scenario_id, updated_scenario)
         return True
-        
+
+    @synchronized
     def _commit_scenario(self, scenario_id: int, scenario_data: Dict[str, Any]):
         # 排序
         ordered_data = self._deep_sort(scenario_data, ORDER_SCENARIO)
@@ -417,7 +400,8 @@ class ExtraDataManager():
         # 執行即時儲存
         self._save_scenario_data()
         logger.info(f"Scenario {scenario_id} 提交成功並存檔。")        
-        
+
+    @synchronized
     def update_scenario_id(self, sn: str, scenario_id: int):
         logger.debug(f"update SCENARIO_ID: ${scenario_id} to ${sn}")
         # 要修改內容,直接內部讀取
@@ -425,6 +409,7 @@ class ExtraDataManager():
         metadata['!scenario_id'] = scenario_id;
         self._commit_metadata(sn, metadata)
 
+    @synchronized
     def remove_scenario(self, sn: str):
         logger.debug(f"remove scenario at ${sn}")
         # 要修改內容,直接內部讀取
@@ -432,26 +417,31 @@ class ExtraDataManager():
         metadata.pop("!scenario_id", None)
         self._commit_metadata(sn, metadata)                
 
+    @synchronized
     def update_backstage(self, sn: str, backstage_data: dict):
         metadata = self._metadata_map.get(sn, {})
         metadata['backstage'] = backstage_data
         self._commit_metadata(sn, metadata)
 
+    @synchronized
     def update_remark(self, sn: str, remark: str):
         metadata = self._metadata_map.get(sn, {})
         metadata['!remark'] = remark
         self._commit_metadata(sn, metadata)
 
+    @synchronized
     def update_status(self, sn: str, status: str):
         metadata = self._metadata_map.get(sn, {})
         metadata['!status'] = status
         self._commit_metadata(sn, metadata)
 
+    @synchronized
     def update_file_id(self, sn: str, file_id: str):
         metadata = self._metadata_map.get(sn, {})
         metadata['!file_id'] = file_id
         self._commit_metadata(sn, metadata)
 
+    @synchronized
     def _commit_metadata(self, sn: str, metadata_data: Dict[str, Any]):
         if "!file_id" not in metadata_data:
             logger.error(f"SN:{sn} 的資料沒有 file_id 。")
@@ -460,7 +450,8 @@ class ExtraDataManager():
         self._metadata_map[sn] = ordered_data
         self._save_metadata_data()
         logger.info(f"SN:{sn} 儲存 metadata 成功。")        
-    
+
+    @synchronized
     def update_wish_list(self):
         self._save_wish_data()
     
@@ -494,7 +485,8 @@ class ExtraDataManager():
             backstage['shadow'] = last_color_trait['trait']['zh']
             
         return backstage
-        
+
+    @synchronized
     def remove_metadata(self, sn: str):
         if sn in self._metadata_map:
             del self._metadata_map[sn]
