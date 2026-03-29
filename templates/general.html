@@ -120,7 +120,7 @@
               <select x-model="item.type">
                 <option disabled value="">請選擇類型</option>
                 <template x-for="typeItem in tag_type_settings_array" :key="typeItem.key">
-                    <option :value="typeItem.key" x-text="typeItem.name.zh"></option>
+                    <option :value="typeItem.key" x-text="typeItem.name.zh" :selected="item.type === typeItem.key"></option>
                 </template>
               </select>
             </td>

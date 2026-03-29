@@ -19,6 +19,7 @@ function setupApp() {
             .map(([key, value]) => ({ key, ...value }))
             .sort((a, b) => a.order - b.order)
         : [{ key: '', name: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
+    console.log(this.tag_type_settings_array)
 
       // 初始化 tag_array
       this.tag_array = initData.tagList?.length > 0 
