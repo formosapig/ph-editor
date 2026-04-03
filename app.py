@@ -375,5 +375,6 @@ def delete_wish(wish_id):
 
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", port=5000, debug = True, threaded = False) #單執行緒
-    app.run(host="0.0.0.0", port=5000, debug = True, threaded = True) #單執行緒
+    # 因為 mac 鎖死了 5000 -> Air Playpy
+    app.run(host="0.0.0.0", port=5001, debug = True, threaded = True) #單執行緒
     # serve(app, host="0.0.0.0", port=5000)
