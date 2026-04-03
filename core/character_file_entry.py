@@ -51,6 +51,7 @@ class CharacterFileEntry:
             self.remark = "" # 空字串...
             self.status = "draft"
             self.tag_id = None
+            self.backstage_data = {}
         else:
             # 使用 .get() 方法安全地存取字典鍵值，避免 KeyError
             self.profile_id = metadata.get('!profile_id')
@@ -58,8 +59,8 @@ class CharacterFileEntry:
             self.remark = metadata.get('!remark', "")
             self.status = metadata.get('!status', "draft")
             # 存取巢狀字典時，也使用 .get() 來確保安全
-            backstage_data = metadata.get('backstage', {})
-            self.tag_id = backstage_data.get('!tag_id')
+            self.backstage_data = metadata.get('backstage', {})
+            self.tag_id = self.backstage_data.get('!tag_id')
         
     ''' 以下是一堆 getter '''
     def get_profile_name(self) -> str:
@@ -105,13 +106,23 @@ class CharacterFileEntry:
         return scene.strip()
 
     def get_character_title(self) -> str:
-        """ character 的 title 存放在 metadta.backstage """
+        '''""" character 的 title 存放在 metadta.backstage """
         metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
         if metadata is None:
             return ""
         else:
-            return metadata.get('backstage', {}).get('title', "").strip()
-        
+            return metadata.get('backstage', {}).get('title', "").strip()'''
+        title = (self.backstage_data or {}).get('title') or ""
+        return str(title).strip()
+
+    def get_resonance(self) -> str:
+        res = (self.backstage_data or {}).get('resonance') or ""
+        return str(res).strip()
+    
+    def get_tag_name(self) -> str:
+        tag_name = (self.backstage_data or {}).get('tag') or ""
+        return str(tag_name).strip()
+
     def get_filename(self) -> str:
         return self.filename
 

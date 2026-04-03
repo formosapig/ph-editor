@@ -84,7 +84,7 @@ function setupApp() {
       return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid;
     },
 
-    async submit() {
+    /*async submit() {
       // 整理資料格式
       const filteredTagStyles = {};
       [...this.tag_type_settings_array].sort((a, b) => a.order - b.order).forEach(item => {
@@ -116,7 +116,68 @@ function setupApp() {
       } catch (err) {
         this.showMessage(`送出失敗：${err.message}`, 'error');
       }
-    },
+    },*/
+
+    async submit() {
+  // 1. 建立 Type 排序對照表 (從 tag_type_settings_array 取得 order)
+  const typeOrderMap = {};
+  const filteredTagStyles = {};
+
+  this.tag_type_settings_array.forEach(item => {
+    if (item.key.trim()) {
+      const key = item.key.trim();
+      typeOrderMap[key] = item.order || 999;
+      filteredTagStyles[key] = {
+        name: { zh: item.name.zh },
+        order: item.order,
+        color: item.color,
+        background: item.background
+      };
+    }
+  });
+
+  // 2. 執行排序並更新畫面 (this.tag_array)
+  // 先過濾掉沒有名稱的無效行，再進行排序
+  this.tag_array = this.tag_array
+    .filter(i => i.name.zh.trim() !== '')
+    .sort((a, b) => {
+      // 條件 1: 依照 type 的 order 排序
+      const orderA = typeOrderMap[a.type] ?? 999;
+      const orderB = typeOrderMap[b.type] ?? 999;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      // 條件 2: type 相同時，依照 id 排序 (由小到大)
+      return a.id - b.id;
+    });
+
+  // 3. 準備送出的資料 (此時 this.tag_array 已經是排序過的狀態)
+  const dataToSend = {
+    color_traits: this.color_traits.filter(i => i.trait.zh.trim()),
+    tag_styles: filteredTagStyles,
+    tag_list: this.tag_array, 
+    profile_group: this.profile_group_array.filter(i => i.name.zh.trim())
+  };
+
+  try {
+    const res = await fetch('/general/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dataToSend),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.message || '伺服器錯誤');
+    }
+
+    this.showMessage('資料儲存並排序成功！', 'info');
+  } catch (err) {
+    this.showMessage(`送出失敗：${err.message}`, 'error');
+  }
+},
 
     // 訊息框與同步邏輯 (保持原樣但整合進 Alpine)
     showMessage(message, type = 'info') {

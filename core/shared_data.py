@@ -271,6 +271,36 @@ def get_tag_count(id: int) -> int:
         return len(matched_profile_ids)
 
 
+def get_tag_stats(tag_id: int) -> dict:
+    """
+    回傳該標籤的統計數據：
+    p: Unique Profiles (人數)
+    f: Total Files (總存檔數/出現次數)
+    """
+    with data_lock:
+        metadata_dict = _extra_data_manager.get_metadata_map()
+        
+        matched_profile_ids = set()
+        file_count = 0
+
+        for metadata in metadata_dict.values():
+            profile_id = metadata.get("!profile_id")
+            if not profile_id:
+                continue
+                
+            backstage_data = metadata.get("backstage", {})
+            
+            # 檢查標籤 ID 是否匹配
+            if backstage_data.get("!tag_id") == tag_id:
+                matched_profile_ids.add(profile_id)
+                file_count += 1
+
+        return {
+            "p": len(matched_profile_ids),
+            "f": file_count
+        }
+    
+
 def get_color_trait_count(code: str) -> int:
     with data_lock:
         metadata_dict = _extra_data_manager.get_metadata_map()
@@ -299,7 +329,7 @@ def get_color_trait_count(code: str) -> int:
         # 最後直接回傳 set 的長度（Size）
         return len(matched_profile_ids)
 
-
+'''
 def get_suggest_file_id(sn: str) -> str:
     """
     根據角色、情境或標籤資料，生成一個建議的檔案名稱。不包含副檔名。
@@ -355,7 +385,52 @@ def get_suggest_file_id(sn: str) -> str:
     suggested_file_id = f"{profile_name}{age_str}【{title_part}】"
            
     return suggested_file_id.strip()
+'''
+def get_suggest_file_id(sn: str) -> str:
+    """
+    根據角色、場景（真實、歲月迴響、時光剪影）或標籤資料，生成建議檔名。
+    """
+    default_file_id = "未知"
+    
+    entry = get_character_file_entry(sn)
+    if not entry or entry.profile_id is None or entry.scenario_id is None:
+        return default_file_id
 
+    profile_data = entry.get_profile()
+    if not profile_data:
+        return default_file_id
+
+    profile_name = profile_data.get("name", "")
+    title = (entry.get_character_title() or "").strip()
+    scenario_data = entry.get_scenario()
+    
+    # 取得場景 ID (假設 entry 內有 scenario_id，若無則從 scenario_data 獲取)
+    scenario_id = entry.scenario_id if hasattr(entry, 'scenario_id') else 0
+
+    # --- 規則 1: 歲月迴響 (REVERBERATION) ---
+    if scenario_id == SpecialScenario.REVERBERATION:
+        return f"{profile_name}({entry.get_resonance()})【{title}】".strip()
+
+    # --- 規則 2: 時光剪影 (SILHOUETTE) ---
+    if scenario_id == SpecialScenario.SILHOUETTE:
+        return f"{entry.get_tag_name()}({profile_name})【{title}】".strip()
+
+    # --- 規則 3: 真實場景 (scenario_id > 0) ---
+    if scenario_id > 0 and scenario_data:
+        born_year = profile_data.get("born")
+        scenario_year = scenario_data.get("year")
+        age_str = ""
+        
+        if born_year and scenario_year:
+            try:
+                age = int(scenario_year) - int(born_year)
+                age_str = f"({age})"
+            except (ValueError, TypeError):
+                pass
+        
+        return f"{profile_name}{age_str}【{title}】".strip()
+
+    return default_file_id
 
 def find_another_sn_by_scenario_id(
     scenario_id: int,

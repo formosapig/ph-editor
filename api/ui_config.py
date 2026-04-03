@@ -13,6 +13,7 @@ from core.shared_data import (
     get_scenario_map,
     get_default_backstage,
     get_tag_count,
+    get_tag_stats,
     get_color_trait_count,
 )
 from game_data.cup_data import generate_cup_options
@@ -275,6 +276,41 @@ def get_backstage_options():
     tag_options = []
     processed_tag_types = set() # 用來追蹤已經處理過的 tag_type，避免重複添加標題
 
+
+    for tag in tag_list:
+        tag_id = tag.get("id")
+        tag_type = tag.get("type", "")
+        tag_type_name = tag_type_map.get(tag_type, {}).get("name", {}).get("zh", tag_type)
+        tag_name = tag.get("name", {}).get("zh", f"id:{tag_id}")
+
+        # 1. 檢查分類標題
+        if tag_type not in processed_tag_types:
+            tag_options.append({
+                "label": f"🗂️ {tag_type_name}",
+                "value": "",
+                "disabled": True
+            })
+            processed_tag_types.add(tag_type)
+
+        # 2. 取得多維度統計
+        stats = get_tag_stats(tag_id)
+        p_count = stats["p"]
+        f_count = stats["f"]
+
+        # 3. 格式化 Label: 名稱 (人p / 檔f)
+        # 如果完全沒人用，就只顯示名稱
+        if f_count > 0:
+            display_label = f"{tag_name} ({p_count} / {f_count})"
+        else:
+            display_label = tag_name
+
+        tag_options.append({
+            "label": display_label,
+            "pureLabel": tag_name,
+            "value": tag_id
+        })
+
+    '''
     for tag in tag_list:
         tag_type = tag.get("type", "")
         tag_type_name = (
@@ -301,16 +337,17 @@ def get_backstage_options():
             "pureLabel": tag_name,
             "value": tag.get("id")
         })
-
+    '''
     dropdowns.append(
         {
-            "displayLabel": "標籤",  # or anything fitting your UI
+            "displayLabel": "標籤 (profile/file)",  # or anything fitting your UI
             "dataKey": "!tag_id",
             "labelKey": "tag",
             "options": tag_options,
             "defaultValue": default_tag_id,
         }
     )
+    
 
     # ===== 第二 & 第三組 dropdown：Color Trait 下拉選單 =====
     color_traits = general_data.get("color_traits", [])
