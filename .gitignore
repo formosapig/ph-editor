@@ -1,66 +1,54 @@
-# Python cache
+# --- Python & Environment ---
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
 *.so
+.Python
+env/
+# 使用萬用字元，通殺 venv, venv-ph, venv_ph, .venv_ph 等
+*venv*/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Flask debug/instance files
+# --- Flask & Database ---
 instance/
+.webassets-cache
 *.db
 *.sqlite
 *.log
 
-# Virtual environments
-venv/
-env/
-venv_ph/
-.venv/
-.env/
-.vent_ph/
-
-# Editor/IDE settings
-.vscode/
-.idea/
-*.swp
-*.swo
+# --- Mac 系統垃圾 (重點！) ---
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+*.icloud
 
-# OS system files
+# --- Windows 系統垃圾 ---
 Thumbs.db
 ehthumbs.db
 desktop.ini
 
-# Node.js (如果前端用過 npm)
+# --- Editor Settings ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# --- Project Specific ---
 node_modules/
-
-# Personal files
 user_config/
+launch_ph.bat
+tests/test_assets/*
+!tests/test_assets/.gitkeep
 
-# Compiled static assets (if applicable)
-*.min.js
-*.min.css
-
-# Test coverage reports
-htmlcov/
-coverage.*
-.tox/
-.pytest_cache/
-
-# Environment variable files
-.env
-.env.*
-
-# Package distribution
+# --- Distribution / Build ---
 build/
 dist/
 *.egg-info/
-
-# personal bat
-launch_ph.bat
-
-# 忽略 test_assets 資料夾內的所有檔案
-tests/test_assets/*
-
-# 但保留 .gitkeep 或 .keep 這類空白佔位檔（讓資料夾能存在於 Git 中）
-!tests/test_assets/.gitkeep
