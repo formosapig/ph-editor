@@ -106,22 +106,26 @@ class CharacterFileEntry:
         return scene.strip()
 
     def get_character_title(self) -> str:
-        '''""" character 的 title 存放在 metadta.backstage """
+        """ character 的 title 存放在 metadta.backstage """
         metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
         if metadata is None:
             return ""
         else:
-            return metadata.get('backstage', {}).get('title', "").strip()'''
-        title = (self.backstage_data or {}).get('title') or ""
-        return str(title).strip()
+            return metadata.get('backstage', {}).get('title', "").strip()
 
     def get_resonance(self) -> str:
-        res = (self.backstage_data or {}).get('resonance') or ""
-        return str(res).strip()
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('resonance', "").strip()
     
     def get_tag_name(self) -> str:
-        tag_name = (self.backstage_data or {}).get('tag') or ""
-        return str(tag_name).strip()
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('tag', "").strip()
 
     def get_filename(self) -> str:
         return self.filename

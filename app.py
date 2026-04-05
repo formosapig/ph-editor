@@ -1,7 +1,9 @@
 # ph-editor/app.py
 import logging
+import platform
 import os,time
 import traceback
+import unicodedata
 from wsgiref.simple_server import WSGIRequestHandler
 
 from flask import (
@@ -190,6 +192,9 @@ def get_scan_path():
 def scan_folder():
     folder_path = request.json.get("path")
 
+    # 偵測是否為 Mac 環境
+    is_mac = platform.system() == "Darwin"
+
     if not folder_path:
         return jsonify({"error": "缺少資料夾路徑"}), 400
 
@@ -209,6 +214,13 @@ def scan_folder():
     logger.debug(f"開始掃描資料夾 '{folder_path}'...")
     for root, _, files in os.walk(folder_path):
         for file_name_with_ext in files:
+
+            # --- 關鍵修正：處理 Mac 的 NFD 檔名 ---
+            if is_mac:
+                # 將 Mac 拆散的 NFD 檔名「黏回去」變成 NFC
+                file_name_with_ext = unicodedata.normalize('NFC', file_name_with_ext)
+            # -----------------------------------
+
             if file_name_with_ext.lower().endswith(".png"):
                 file_path = os.path.join(root, file_name_with_ext)
                 file_id = os.path.splitext(file_name_with_ext)[0]
