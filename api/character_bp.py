@@ -28,7 +28,8 @@ from core.shared_data import (
 from core.user_config_manager import UserConfigManager
 from utils.character_file_utils import reload_character_data
 from utils.decorators import inject_character_file_entry, require_json_data, require_scan_path
-from utils.exceptions import JSONError, NotFoundError, ValidationError
+from utils.exceptions import APIError, JSONError, NotFoundError, ValidationError
+from utils.utils import sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -386,9 +387,18 @@ def patch_rename(sn, entry, data, scan_path):
 
     if os.path.exists(new_path_full):
         raise FileExistsError(f"目標檔案已存在: {new_file_id}")
-
-    os.rename(old_path_full, new_path_full)
-    logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
+    
+    try:
+        os.rename(old_path_full, new_path_full)
+        logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
+    except OSError as e:
+        # 重點：在這裡攔截作業系統錯誤，並拋出你已經有 Handler 處理的 APIError
+        # e.errno 123 在 Windows 就是檔名語法錯誤
+        logger.error(f"Rename failed: {str(e)}")
+        raise ValidationError(f"作業系統拒絕改名：{e.strerror} (請檢查檔名是否包含非法字元)")
+    except Exception as e:
+        # 其他可能的權限錯誤
+        raise APIError(f"重新命名失敗：{str(e)}", status_code=500)
         
     entry.change_file_id(new_file_id)
     return jsonify({"success": True})

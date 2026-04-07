@@ -6,6 +6,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.constants import SpecialScenario
+from utils.utils import sanitize_filename
 
 # 假設這些是從其他模組引入的
 from .character_data import CharacterData
@@ -407,16 +408,17 @@ def get_suggest_file_id(sn: str) -> str:
     # 取得場景 ID (假設 entry 內有 scenario_id，若無則從 scenario_data 獲取)
     scenario_id = entry.scenario_id if hasattr(entry, 'scenario_id') else 0
 
+    result = ""
     # --- 規則 1: 歲月迴響 (REVERBERATION) ---
     if scenario_id == SpecialScenario.REVERBERATION:
-        return f"{profile_name}({entry.get_resonance()})【{title}】".strip()
+        result = f"{profile_name}({entry.get_resonance()})【{title}】"
 
     # --- 規則 2: 時光剪影 (SILHOUETTE) ---
-    if scenario_id == SpecialScenario.SILHOUETTE:
-        return f"{entry.get_tag_name()}({profile_name})【{title}】".strip()
+    elif scenario_id == SpecialScenario.SILHOUETTE:
+        result = f"{entry.get_tag_name()}『{profile_name}』【{title}】"
 
     # --- 規則 3: 真實場景 (scenario_id > 0) ---
-    if scenario_id > 0 and scenario_data:
+    elif scenario_id > 0 and scenario_data:
         born_year = profile_data.get("born")
         scenario_year = scenario_data.get("year")
         age_str = ""
@@ -428,9 +430,11 @@ def get_suggest_file_id(sn: str) -> str:
             except (ValueError, TypeError):
                 pass
         
-        return f"{profile_name}{age_str}【{title}】".strip()
-
-    return default_file_id
+        result = f"{profile_name}{age_str}【{title}】"
+    else:    
+        return default_file_id
+    
+    return sanitize_filename(result)
 
 def find_another_sn_by_scenario_id(
     scenario_id: int,

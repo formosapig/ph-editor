@@ -241,14 +241,15 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
-                this.allImages.forEach(list => {
-                    const img = list.find(i => i.sn === sn);
-                    if (img) img.file_id = newFilename;
-                });
+                const img = this.allImages.find(i => i.sn === sn);
+                if (img) {
+                    img.file_id = newFilename;
+                }
 
                 this.selectedSet = [];
                 this.showMessage(`檔案已成功重新命名為：${newFilename}`);
             } catch (e) {
+                console.error("JS 執行階段錯誤:", e); // 這行很重要，能在 Console 看到底是 fetch 失敗還是解析失敗
                 this.showMessage('網路或伺服器錯誤');
             }
         },

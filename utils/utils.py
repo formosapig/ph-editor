@@ -103,3 +103,40 @@ def format_hsv_to_string(h, s, v):
     
 def format_hsva_to_string(h, s, v, a):
     return f"({h},{s},{v},{a})"
+
+
+def sanitize_filename(filename: str, use_full_width: bool = True) -> str:
+    """
+    清洗檔名，移除或替換 Windows 禁止的非法字元。
+    """
+    if not filename:
+        return ""
+    
+    # 1. 先處理前後空白
+    filename = filename.strip()
+    
+    # 2. 定義非法字元與對應的替換字 (全形)
+    mapping = {
+        ':': '：',
+        '/': '／',
+        '\\': '＼',
+        '*': '＊',
+        '?': '？',
+        '"': '＂',
+        '<': '＜',
+        '>': '＞',
+        '|': '｜'
+    }
+    
+    if use_full_width:
+        # 替換為全形，保持視覺效果
+        for char, full_char in mapping.items():
+            filename = filename.replace(char, full_char)
+    else:
+        # 或者直接替換成底線
+        filename = re.sub(r'[\\/:*?"<>|]', "_", filename)
+    
+    # 3. 額外處理 Windows 不允許檔名結尾是句點或空格
+    filename = filename.rstrip('. ')
+    
+    return filename
