@@ -394,47 +394,11 @@ def get_suggest_file_id(sn: str) -> str:
     default_file_id = "未知"
     
     entry = get_character_file_entry(sn)
-    if not entry or entry.profile_id is None or entry.scenario_id is None:
+    if not entry:
         return default_file_id
 
-    profile_data = entry.get_profile()
-    if not profile_data:
-        return default_file_id
+    return entry.get_suggest_file_id()
 
-    profile_name = profile_data.get("name", "")
-    title = (entry.get_character_title() or "").strip()
-    scenario_data = entry.get_scenario()
-    
-    # 取得場景 ID (假設 entry 內有 scenario_id，若無則從 scenario_data 獲取)
-    scenario_id = entry.scenario_id if hasattr(entry, 'scenario_id') else 0
-
-    result = ""
-    # --- 規則 1: 歲月迴響 (REVERBERATION) ---
-    if scenario_id == SpecialScenario.REVERBERATION:
-        result = f"{profile_name}({entry.get_resonance()})【{title}】"
-
-    # --- 規則 2: 時光剪影 (SILHOUETTE) ---
-    elif scenario_id == SpecialScenario.SILHOUETTE:
-        result = f"{entry.get_tag_name()}『{profile_name}』【{title}】"
-
-    # --- 規則 3: 真實場景 (scenario_id > 0) ---
-    elif scenario_id > 0 and scenario_data:
-        born_year = profile_data.get("born")
-        scenario_year = scenario_data.get("year")
-        age_str = ""
-        
-        if born_year and scenario_year:
-            try:
-                age = int(scenario_year) - int(born_year)
-                age_str = f"({age})"
-            except (ValueError, TypeError):
-                pass
-        
-        result = f"{profile_name}{age_str}【{title}】"
-    else:    
-        return default_file_id
-    
-    return sanitize_filename(result)
 
 def find_another_sn_by_scenario_id(
     scenario_id: int,
@@ -462,7 +426,7 @@ def add_wish(data: Dict[str, Any]):
         data['id'] = int(time.time() * 1000)
         data['date'] =time.strftime("%Y-%m-%d %H:%M")
         wishes.insert(0, data)
-        _extra_data_manager.update_wish_list()    
+        _extra_data_manager.update_wish_list()
         return data
     
 def delete_wish(wish_id: int):

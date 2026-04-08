@@ -16,4 +16,8 @@ class SpecialScenario(IntEnum):
         obj = int.__new__(cls, value)
         obj._value_ = value
         obj.label = label
-        return obj    
+        return obj
+    
+    @classmethod
+    def is_real_scene(cls, scenario_id: int) -> bool:
+        return scenario_id is not None and scenario_id > 0

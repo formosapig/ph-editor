@@ -5,6 +5,8 @@ import copy
 
 from typing import Dict, Any
 
+from utils.utils import sanitize_filename
+
 from .character_data import CharacterData
 from .constants import PLAYHOME_MARKER, SpecialScenario
 from .extra_data_manager import ExtraDataManager
@@ -207,7 +209,59 @@ class CharacterFileEntry:
         
         logger.info(f"刪除 Metadata : {self.file_id}")    
         
+    def get_suggest_file_id(self) -> str:
+        """
+        根據角色、場景（真實、歲月迴響、時光剪影）或標籤資料，生成建議檔名。
+        """
+        default_file_id = "未知"
+        
+        if self.profile_id is None or self.scenario_id is None:
+            return default_file_id
+
+        profile_data = self.get_profile()
+        if not profile_data:
+            return default_file_id
+
+        profile_name = profile_data.get("name", "")
+        title = (self.get_character_title() or "").strip()
+        scenario_data = self.get_scenario()
+        
+        result = ""
+        # --- 規則 1: 歲月迴響 (REVERBERATION) ---
+        if self.scenario_id == SpecialScenario.REVERBERATION:
+            result = f"{profile_name}({self.get_resonance()})【{title}】"
+
+        # --- 規則 2: 時光剪影 (SILHOUETTE) ---
+        elif self.scenario_id == SpecialScenario.SILHOUETTE:
+            result = f"{self.get_tag_name()}『{profile_name}』【{title}】"
+
+        # --- 規則 3: 真實場景 (scenario_id > 0) ---
+        elif self.scenario_id > 0 and scenario_data:
+            born_year = profile_data.get("born")
+            scenario_year = scenario_data.get("year")
+            age_str = ""
+            
+            if born_year and scenario_year:
+                try:
+                    age = int(scenario_year) - int(born_year)
+                    age_str = f"({age})"
+                except (ValueError, TypeError):
+                    pass
+            
+            result = f"{profile_name}{age_str}【{title}】"
+        else:    
+            return default_file_id
+        
+        return sanitize_filename(result)
+
     def to_dict(self, tag_resolver=None):
+        meat = 0
+        form = 0
+        code = 0
+
+        if self.file_id == self.get_suggest_file_id():
+            code = code + 1
+
         t_style, t_name = tag_resolver(self.sn) if tag_resolver else ("", "")
         res = {
             "sn": self.sn,
@@ -217,12 +271,29 @@ class CharacterFileEntry:
             "remark": self.get_remark(),
             "status": self.get_status(),
             "tag_style": t_style,
-            "tag_name": t_name
+            "tag_name": t_name,
+            "soul": self.calculate_soul(),
+            "meat": meat,
+            "form": form,
+            "code": code
         }
         if self.scenario_id in [SpecialScenario.REVERBERATION, SpecialScenario.SILHOUETTE]:
             res["ccm_managed"] = True;
         #res["epoch_managed"] = True;
         return res;
+
+    def calculate_soul(self) -> int:
+        soul = 0
+        if self.profile_id is not None and self.profile_id != 0:
+            soul += 1
+        scen = self.scenario_id    
+        if SpecialScenario.is_real_scene(scen):
+            soul += 1 if (self.get_character_title()) else 0
+        elif scen == SpecialScenario.SILHOUETTE:
+            soul += 1 if (self.get_tag_name()) else 0
+        elif scen == SpecialScenario.REVERBERATION:
+            soul += 1 if (self.get_resonance()) else 0
+        return soul
 
     def __repr__(self):
         lines = [

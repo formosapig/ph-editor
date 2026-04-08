@@ -255,7 +255,9 @@ class ExtraDataManager():
 
     @synchronized
     def get_wish_list(self) -> List[Dict[str, Any]]:
-        return copy.deepcopy(self._wish_list)
+        # 不能 deepcopy 因為直接改本體...
+        #return copy.deepcopy(self._wish_list)
+        return self._wish_list
 
     # --- 對外提供的更新介面 (會由 CharacterFileEntry 呼叫) ---
     def _is_data_changed(

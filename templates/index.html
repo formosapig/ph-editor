@@ -66,6 +66,23 @@
                          height="352"
                          loading="lazy"
                          draggable="false">
+                    <!-- 魂肉形體測試 -->                         
+                    <div class="stat-container-v">
+    <svg width="40" height="20" viewBox="0 0 40 20">
+        <rect x="0" :y="20 - (item.soul || 0) * 4" width="8" :height="(item.soul || 0) * 4" 
+              rx="2" class="bar-fill soul" x-show="item.soul !== undefined" />
+        
+        <rect x="10" :y="20 - (item.meat || 0) * 4" width="8" :height="(item.meat || 0) * 4" 
+              rx="2" class="bar-fill meat" x-show="item.meat !== undefined" />
+        
+        <rect x="20" :y="20 - (item.form || 0) * 4" width="8" :height="(item.form || 0) * 4" 
+              rx="2" class="bar-fill form" x-show="item.form !== undefined" />
+        
+        <rect x="30" :y="20 - (item.code || 0) * 4" width="8" :height="(item.code || 0) * 4" 
+              rx="2" class="bar-fill code" x-show="item.code !== undefined" />
+    </svg>
+</div>
+                    <!-- 魂肉形體測試結束 -->
                     <div x-show="item.profile_name" class="profile-badge" x-text="item.profile_name"></div>
                     <div x-show="item.tag_name" 
                          class="tag-label"
