@@ -4,6 +4,7 @@ import json
 import logging
 import copy
 import threading
+import time
 import nanoid
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -72,7 +73,7 @@ DEFAULT_METADATA_TEMPLATE = {
     "backstage": DEFAULT_BACKSTAGE_TEMPLATE
 }
 
-ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!status", "!remark", "backstage"]
+ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!status", "!remark", "backstage", "modified"]
 
 def synchronized(f):
     @wraps(f)
@@ -324,7 +325,7 @@ class ExtraDataManager():
                 
         # 資料都沒變, 但是外部需要成功, 來執行 character_file_entry <-> profile_id 的更新喔! 
         if not self._is_data_changed(current_profile, updated_profile):
-            logger.info("資料沒有變動，無需更新。")
+            #logger.info("資料沒有變動，無需更新。")
             return True 
 
         self._commit_profile(updated_profile_id, updated_profile) 
@@ -340,7 +341,7 @@ class ExtraDataManager():
 
     @synchronized
     def update_profile_id(self, sn: str, profile_id: int):
-        logger.debug(f"update PROFILE_ID: ${profile_id} to ${sn}")
+        #logger.debug(f"update PROFILE_ID: ${profile_id} to ${sn}")
         # 要修改內容,直接內部讀取
         metadata = self._metadata_map.get(sn, {})
         metadata['!profile_id'] = profile_id;
@@ -448,10 +449,11 @@ class ExtraDataManager():
         if "!file_id" not in metadata_data:
             logger.error(f"SN:{sn} 的資料沒有 file_id 。")
             return
+        metadata_data["modified"] = int(time.time())
         ordered_data = self._deep_sort(metadata_data, ORDER_METADATA)
         self._metadata_map[sn] = ordered_data
         self._save_metadata_data()
-        logger.info(f"SN:{sn} 儲存 metadata 成功。")        
+        #logger.info(f"SN:{sn} 儲存 metadata 成功。")        
 
     @synchronized
     def update_wish_list(self):

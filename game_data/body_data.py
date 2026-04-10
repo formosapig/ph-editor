@@ -1,5 +1,8 @@
 # ph-editor/game_data/body_data.py
 
+from typing import Optional
+
+
 BODY_DETAILS = {
     # 皮膚
     'skin': [
@@ -143,3 +146,24 @@ def is_nashi(category: str, item_id: int) -> bool:
     return (category == "pubic_hair" and item_id == 5) or \
            (category == "tan_lines" and item_id == 0) or \
            (category == "tattoo" and item_id == 0)
+
+def calculate_value_by_height(height: int) -> Optional[int]:
+    base_value = 50
+    min_height = 140
+    max_height = 177
+    range_start_value = 50
+    range_end_value = 100
+
+    height_range_diff = max_height - min_height
+
+    if height_range_diff == 0:
+        return int(base_value) if height >= min_height else None
+
+    raw_result = base_value + ((height - min_height) / height_range_diff) * (range_end_value - range_start_value)
+
+    rounded_result = round(raw_result)
+
+    if 0 <= rounded_result <= 100:
+        return int(rounded_result)
+    else:
+        return None

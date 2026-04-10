@@ -288,8 +288,8 @@ def patch_data(sn, main_tab, sub_tab, data):
             )
 
     # 新增：印出前端傳來的資料 json 字串到後端日誌
-    logger.debug("結果：")
-    logger.debug(json.dumps(new_data, ensure_ascii = False, indent = 2))
+    #logger.debug("結果：")
+    #logger.debug(json.dumps(new_data, ensure_ascii = False, indent = 2))
 
     # 更新子節點
     if main_tab != "story":

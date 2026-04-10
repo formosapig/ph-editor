@@ -244,6 +244,19 @@ def process_tag_info(sn: str) -> tuple[str, str]:
     return tag_style, tag_name
 
 
+def get_profile_count(id: int) -> int:
+    with data_lock:
+        metadata_dict = _extra_data_manager.get_metadata_map()
+        count = 0
+        for metadata in metadata_dict.values():
+            profile_id = metadata.get("!profile_id")
+            if not profile_id:
+                continue
+            if profile_id == id:    
+                count += 1        
+
+        return count
+
 def get_tag_count(id: int) -> int:
     with data_lock:
         metadata_dict = _extra_data_manager.get_metadata_map()

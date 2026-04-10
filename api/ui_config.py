@@ -9,6 +9,7 @@ from config.dropdown_config import dropdown_config_map
 from core.constants import SpecialScenario
 from core.shared_data import (
     get_general_data,
+    get_profile_count,
     get_profile_map,
     get_scenario_map,
     get_default_backstage,
@@ -113,9 +114,14 @@ def get_profile_list():
             profile_options.append({"label": "👤未分組", "value": "", "disabled": True})
             current_group_id = 0
 
+        p_id = profile.get("!id", "")
+        p_name = profile.get("name", f"id:{p_id}")
+        p_count = str(get_profile_count(p_id))
+
         profile_options.append({
-            "label": profile.get("name", f"id:{profile.get('!id', '')}"),
-            "value": profile.get("!id", ""),
+            "label": f"{p_name}({p_count})",
+            "pureLabel": p_name,
+            "value": p_id,
         })
 
     # --- 第二部分：Profile Group 下拉選單資料處理 ---

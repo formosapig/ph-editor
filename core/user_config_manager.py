@@ -106,7 +106,7 @@ class UserConfigManager:
             with open(file_path, "w", encoding="utf-8") as f:
                 # 使用 indent 讓檔案更易讀
                 json.dump(converted_data, f, indent=4, ensure_ascii=False)
-            logger.info(f"檔案已成功儲存: {file_path}")
+            #logger.info(f"檔案已成功儲存: {file_path}")
         except IOError as e:
             logger.error(f"儲存檔案失敗: {file_path} -> {e}")
             raise e

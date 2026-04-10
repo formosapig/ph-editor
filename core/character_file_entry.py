@@ -5,7 +5,9 @@ import copy
 
 from typing import Dict, Any
 
-from utils.utils import sanitize_filename
+from game_data.body_data import calculate_value_by_height
+from game_data.cup_data import get_sister_cup_value
+from utils.utils import get_nested_value, sanitize_filename
 
 from .character_data import CharacterData
 from .constants import PLAYHOME_MARKER, SpecialScenario
@@ -114,6 +116,14 @@ class CharacterFileEntry:
             return ""
         else:
             return metadata.get('backstage', {}).get('title', "").strip()
+
+    def get_character_detail(self) -> str:
+        """ character 的 detail 存放在 metadta.backstage """
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('detail', "").strip()
 
     def get_resonance(self) -> str:
         metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
@@ -255,7 +265,8 @@ class CharacterFileEntry:
         return sanitize_filename(result)
 
     def to_dict(self, tag_resolver=None):
-        meat = 0
+        soul = self.calculate_soul()
+        meat = self.calculate_meat()
         form = 0
         code = 0
 
@@ -272,10 +283,11 @@ class CharacterFileEntry:
             "status": self.get_status(),
             "tag_style": t_style,
             "tag_name": t_name,
-            "soul": self.calculate_soul(),
+            "soul": soul,
             "meat": meat,
             "form": form,
-            "code": code
+            "code": code,
+            "score": f"{(soul * 2 + 1) * (meat * 2 + 1) * (form * 2 + 1) * (code * 2 + 1):05d}"
         }
         if self.scenario_id in [SpecialScenario.REVERBERATION, SpecialScenario.SILHOUETTE]:
             res["ccm_managed"] = True;
@@ -288,12 +300,34 @@ class CharacterFileEntry:
             soul += 1
         scen = self.scenario_id    
         if SpecialScenario.is_real_scene(scen):
-            soul += 1 if (self.get_character_title()) else 0
+            soul += 1
         elif scen == SpecialScenario.SILHOUETTE:
             soul += 1 if (self.get_tag_name()) else 0
         elif scen == SpecialScenario.REVERBERATION:
             soul += 1 if (self.get_resonance()) else 0
+        if self.get_character_title():
+            soul += 1
+        if self.get_character_detail():
+            soul += 1    
         return soul
+    
+    def calculate_meat(self) -> int:
+        meat = 0
+        profile = self.get_profile()
+        data = self.character_data.get_data()
+        # 身高設定
+        val_origin_height = profile.get('height', 0)
+        val_setting_height = calculate_value_by_height(val_origin_height)
+        val_game_height = get_nested_value(data, "body.overall.height", -1)
+        if val_setting_height == val_game_height:
+            meat += 1
+        # 罩杯設定
+        val_origin_cup = profile.get('cup', "")
+        val_setting_cup = get_sister_cup_value(val_origin_cup)
+        val_game_cup = get_nested_value(data, "body.breast.size", -1)
+        if val_setting_cup == val_game_cup:
+            meat += 1
+        return meat
 
     def __repr__(self):
         lines = [
