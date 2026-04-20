@@ -234,8 +234,8 @@ def patch_data(sn, main_tab, sub_tab, data):
         raise JSONError("缺少 data 欄位。")
 
     # 新增：印出前端傳來的資料 json 字串到後端日誌
-    logger.debug(f"{sn} patch {main_tab}/{sub_tab} ：")
-    logger.debug("\n" + json.dumps(new_data, ensure_ascii = False, indent = 4))
+    #logger.debug(f"{sn} patch {main_tab}/{sub_tab} ：")
+    #logger.debug("\n" + json.dumps(new_data, ensure_ascii = False, indent = 4))
 
     character_data_obj = get_character_data(sn)
     if not character_data_obj:

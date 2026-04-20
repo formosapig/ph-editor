@@ -16,7 +16,7 @@ from core.shared_data import (
     get_scenario_map,
     get_metadata_map,
 )
-from game_data.life_stage_data import get_lifestage_by_id, get_min_age
+from game_data.life_stage_data import get_lifestage_by_id, get_resonance_age
 
 logger = logging.getLogger(__name__)
 ccm_bp = Blueprint("ccm_bp", __name__, url_prefix="/ccm")
@@ -132,17 +132,17 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
             if profileData and res_id:
                 # 1. 取得人生階段資料與最小年齡
                 stage = get_lifestage_by_id(int(res_id))
-                min_age = get_min_age(int(res_id))
+                resonance_age = get_resonance_age(int(res_id))
                 
-                if stage and min_age is not None:
+                if stage and resonance_age is not None:
                     # A. 計算年份：出生年份 + 人生階段最小年齡
                     born_value = profileData.get("born")
                     try:
                         # 如果 born 沒填，預設從 2000 年開始
                         base_year = int(born_value) if born_value is not None else 2000
-                        final_year = base_year + min_age
+                        final_year = base_year + resonance_age
                     except (ValueError, TypeError):
-                        final_year = 2000 + min_age
+                        final_year = 2000 + resonance_age
 
                     # B. 建立虛擬 Scenario
                     new_scenario_id = OFFSET_REVERBERATION + int(profile_id) * 1000 + int(final_year)
@@ -163,9 +163,9 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
                     # D. 更新回傳狀態
                     item_copy["!scenario_id"] = new_scenario_id
                     backstage['scenario_color'] = "#4A7C59"
-                    backstage['age'] = min_age
+                    backstage['age'] = resonance_age
                     
-                    logger.info(f"歲月迴響成功：{scene_name} ({final_year}年)")
+                    #logger.info(f"歲月迴響成功：{scene_name} ({final_year}年)")
                 else:
                     logger.warning(f"跳過時空迴響：無效的 Resonance ID {res_id}")
             else:

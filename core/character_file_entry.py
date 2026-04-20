@@ -36,9 +36,9 @@ class CharacterFileEntry:
             raise TypeError("character_data 必須是 CharacterData 類型的實例。")
 
         self.file_id: str = file_id
-        #self.filename: str = os.path.join(
-        #    scan_path, file_id + ".png"
-        #)  # 組成完整檔案路徑
+        self.filename: str = os.path.join(
+            scan_path, file_id + ".png"
+        )  # 組成完整檔案路徑
         self.character_data: CharacterData = character_data
         
         #if not self.scenario_id is None:
