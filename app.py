@@ -1,6 +1,8 @@
 # ph-editor/app.py
 import logging
 import platform
+import random
+import string
 import os,time
 import traceback
 import unicodedata
@@ -8,10 +10,14 @@ from wsgiref.simple_server import WSGIRequestHandler
 
 from flask import (
     Flask,
+    flash,
     jsonify,
+    redirect,
     render_template,
     request,
     send_from_directory,
+    session,
+    url_for,
 )
 from waitress import serve
 from werkzeug.routing import IntegerConverter
@@ -50,6 +56,7 @@ UserConfigManager.ensure_dir()
 # app = Flask(__name__)
 # 建立 Flask 應用程式實例，並只設定變數的分隔符號
 app = Flask(__name__, template_folder='templates')
+app.secret_key = 'gohome!Is1very3Handome'
 
 # 讓 url <int:number> 支援負數
 app.url_map.converters['int'] = type('SignedInt', (IntegerConverter,), {'regex': r'-?\d+'})
@@ -170,6 +177,31 @@ def smart_clean_thumbnails(cache_dir, threshold=500, days=3):
 
 
 smart_clean_thumbnails(CACHE_DIR)  # 應用啟動時執行清理
+
+
+@app.before_request
+def check_auth():
+    # 只要不是訪問登入頁或靜態檔案，沒登入就踢走
+    if request.endpoint not in ['login', 'static'] and not session.get('is_admin'):
+        return redirect('/login')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if request.form.get('password') == 'geobess':
+            session['is_admin'] = True
+            return redirect('/')
+        else:
+            # 密碼錯誤，顯示隨機數字（符合你的需求）
+            flash(str(random.randint(100000, 999999)))
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
 
 
 @app.route("/")

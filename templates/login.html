@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>PHEditor - 驗證</title>
+    <style>
+        body {
+            margin: 0;
+            background: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        input {
+            padding: 15px;
+            font-size: 32px;
+            border: none;
+            border-bottom: 2px solid #eee;
+            outline: none;
+            text-align: center;
+            transition: all 0.3s;
+            width: 320px;
+            background: transparent;
+        }
+        /* 當被禁用（錯誤顯示數字）時的樣式 */
+        input:disabled {
+            color: #333;
+            border-bottom-color: transparent;
+            cursor: default;
+            letter-spacing: 6px;
+            font-weight: bold;
+        }
+        input:focus { border-bottom-color: #007bff; }
+        
+        .hint {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 15px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .show-hint { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    [% with messages = get_flashed_messages() %]
+    <form method="POST">
+        [% if messages %]
+            <input type="text" value="[[ messages[0] ]]" disabled>
+        [% else %]
+            <input type="text" name="password" placeholder="Key" autofocus autocomplete="off">
+        [% endif %]
+    </form>
+    [% endwith %]
+
+</body>
+</html>

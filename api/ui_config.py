@@ -12,8 +12,6 @@ from core.shared_data import (
     get_profile_count,
     get_profile_map,
     get_scenario_map,
-    get_default_backstage,
-    get_tag_count,
     get_tag_stats,
     get_color_trait_count,
 )
