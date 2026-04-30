@@ -37,7 +37,7 @@ def edit(sn, entry):
     return render_template(
         "edit.html",
         sn=sn,
-        sub_sn=sub_sn,  # sub file 我們並不編輯它，只秀截圖
+        #sub_sn=sub_sn,  # sub file 我們並不編輯它，只秀截圖
         file_id=entry.file_id,
         remark=entry.get_remark(),
         status=entry.get_status(),

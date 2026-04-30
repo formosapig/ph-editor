@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>edere</title>
+  <title>INCARNATIO</title>
   <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
   <script src="[[ url_for('static', filename='edit.js') ]]" type="module"></script>
   <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
@@ -12,7 +12,6 @@
     remark: [[ remark | tojson ]],
     status: [[ status | tojson ]],
     initialData: [[ data | safe ]],
-    sub_sn: [[ sub_sn | tojson if sub_sn else "null" ]]
 })' x-init="init()" x-cloak>
 
     <div style="display: flex; align-items: center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">

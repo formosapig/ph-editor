@@ -3,7 +3,6 @@ import { request } from './request.js'
 document.addEventListener('alpine:init', () => {
     Alpine.data('characterEditor', (params) => ({
         sn: params.sn,
-        sub_sn: params.sub_sn,
         globalParsedData: params.initialData || {},
         status: params.status,
 
@@ -123,7 +122,7 @@ document.addEventListener('alpine:init', () => {
             let apiUrl = `/api/ui_config/options/${this.activeMainTab}/${this.activeSubTab}`;
             if (this.activeMainTab === 'story') {
                 if (this.activeSubTab === 'profile') apiUrl = `/api/ui_config/profiles`;
-                if (this.activeSubTab === 'scenario') apiUrl = `/api/ui_config/scenarios`;
+                if (this.activeSubTab === 'scenario') apiUrl = `/api/ui_config/${encodeURIComponent(this.sn)}/scenarios`;
                 if (this.activeSubTab === 'backstage') apiUrl = `/api/ui_config/backstage_options`;
             }
 
