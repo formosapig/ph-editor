@@ -21,6 +21,9 @@ document.addEventListener('alpine:init', () => {
         remarkHasChanged: false,
         hasChanged: false,
 
+        // 請求令牌
+        currentRequestId: 0,
+
         mainTabs: {
             story: '故事', hair: '頭髮', face: '臉部',
             body: '身體', clothing: '服裝', accessory: '配件'
@@ -114,6 +117,8 @@ document.addEventListener('alpine:init', () => {
 
         // --- 下拉選單邏輯 ---
         async fetchDropdowns() {
+            const requestId = ++this.currentRequestId;
+
             this.dropdowns = [];
             let apiUrl = `/api/ui_config/options/${this.activeMainTab}/${this.activeSubTab}`;
             if (this.activeMainTab === 'story') {
@@ -124,30 +129,37 @@ document.addEventListener('alpine:init', () => {
 
             try {
                 const result = await request(apiUrl);
+                if (requestId !== this.currentRequestId) {
+                    console.warn("捨棄過時的請求結果");
+                    return;
+                }
                 this.dropdowns = result.dropdowns || [];
             } catch (e) {
-                this.dropdowns = [];
-                this.showMessage(e.displayMessage, 'warning');
+                if (requestId === this.currentRequestId) {
+                    this.dropdowns = [];
+                    this.showMessage(e.displayMessage, 'warning');
+                }
             }
         },
 
         async handleDropdownChange(config, event) {
+            const targetTab = this.activeMainTab;
+            const targetSub = this.activeSubTab;
             const val = JSON.parse(event.target.value);
             const selectedOption = event.target.options[event.target.selectedIndex];
             const optObj = config.options.find(o => JSON.stringify(o.value) === event.target.value);
             const label = optObj ? (optObj.pureLabel || optObj.label) 
                                  : selectedOption.text;
 
-            const dataRef = this.globalParsedData[this.activeMainTab][this.activeSubTab];
-
             // 如果是切換 Profile/Scenario ID，需要抓取詳細資料
             if (config.dataKey === "!id" && val !== "") {
                 const type = this.activeSubTab === 'profile' ? 'profile' : 'scenario';
                 const res = await fetch(`/api/${type}/detail/${val}`);
                 const detailData = await res.json();
-                this.globalParsedData[this.activeMainTab][this.activeSubTab] = detailData;
+                this.globalParsedData[targetTab][targetSub] = detailData;
             } else {
                 // 通用更新
+                const dataRef = this.globalParsedData[targetTab][targetSub];
                 if (val === "") {
                     delete dataRef[config.dataKey];
                     if (config.labelKey) delete dataRef[config.labelKey];
@@ -158,7 +170,9 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
             }
-            this.renderContent();
+            if (this.activeMainTab === targetTab && this.activeSubTab === targetSub) {
+                this.renderContent();
+            }
             this.hasChanged = true;
             this.saveContent();
         },
