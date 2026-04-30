@@ -176,7 +176,8 @@ def smart_clean_thumbnails(cache_dir, threshold=500, days=3):
         logger.debug("雖然達到了 500 張，但目前沒有超過 3 天的舊檔，先放它們一馬。")
 
 
-smart_clean_thumbnails(CACHE_DIR)  # 應用啟動時執行清理
+smart_clean_thumbnails(CACHE_DIR)         # 應用啟動時執行清理
+UserConfigManager.cleanup_plain_backups() # 應用啟動時執行清理
 
 
 @app.before_request

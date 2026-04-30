@@ -161,9 +161,77 @@ class UserConfigManager:
         except IOError as e:
             logger.error(f"儲存檔案失敗: {file_path} -> {e}")
             raise e
+        
+        # --- 新增：把所有明碼資料幹掉的方法 ---
+    
+    @staticmethod
+    def cleanup_plain_backups():
+        """
+        刪除 user_config 目錄下所有明碼備份檔：
+        包含 .bak, .bin 結尾，以及 bin. 開頭的檔案
+        """
+        if not os.path.exists(UserConfigManager.config_dir):
+            return
+
+        print(f"🧹 開始清理 {UserConfigManager.config_dir} 中的明碼檔案...")
+        
+        count = 0
+        for filename in os.listdir(UserConfigManager.config_dir):
+            # 定義明碼檔案的特徵
+            is_bak = filename.endswith(".bak")
+            is_bin_ext = filename.endswith(".bin")
+            is_bin_prefix = filename.startswith("bin.")
             
-# 測試用
+            if is_bak or is_bin_ext or is_bin_prefix:
+                file_path = os.path.join(UserConfigManager.config_dir, filename)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        print(f"🗑️ 已刪除: {filename}")
+                        count += 1
+                except Exception as e:
+                    print(f"❌ 無法刪除 {filename}: {e}")
+        
+        print(f"✨ 清理完成，共刪除 {count} 個檔案。")
+            
+# --- 這是修改後的執行區塊 ---
 if __name__ == "__main__":
-    print("scan_path:", UserConfigManager.load_scan_path())
-    UserConfigManager.save_scan_path("D:/illusion/PlayHome/UserData/Chara")
-    print("寫入 scan_path 完成")
+    # 定義所有要備份的 JSON 檔案路徑
+    target_files = {
+        "general": UserConfigManager.get_general_file_path(),
+        "profile": UserConfigManager.get_profile_file_path(),
+        "scenario": UserConfigManager.get_scenario_file_path(),
+        "metadata": UserConfigManager.get_metadata_file_path(),
+        "wish": UserConfigManager.get_wish_file_path(),
+    }
+
+    print("=== 開始產生成明碼備份 (.bak) ===")
+    
+    for desc, path in target_files.items():
+        if os.path.exists(path):
+            try:
+                # 1. 讀取並解密檔案內容
+                decrypted_data = UserConfigManager.load_json_file(path)
+                
+                # 2. 重新構造檔名
+                # dirname 拿到 "user_config"
+                # basename 拿到 "general.json" -> splitext 拿到 "general"
+                dir_name = os.path.dirname(path)
+                file_name_full = os.path.basename(path)
+                file_name_only, _ = os.path.splitext(file_name_full)
+                
+                # 組合成 bin.xxxx 格式
+                new_filename = f"bin.{file_name_only}"
+                new_path = os.path.join(dir_name, new_filename)
+                
+                # 3. 以明碼方式寫入
+                with open(new_path, "w", encoding="utf-8") as f:
+                    json.dump(decrypted_data, f, indent=4, ensure_ascii=False)
+                
+                print(f"✅ {desc} 轉換成功 -> {new_path}")
+            except Exception as e:
+                print(f"❌ {desc} 處理失敗: {e}")
+        else:
+            print(f"ℹ️ {desc} 不存在，跳過 (路徑: {path})")
+
+    print("=== 備份作業完成 ===")
