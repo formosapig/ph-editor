@@ -36,8 +36,8 @@ DEFAULT_PROFILE_TEMPLATE = {
     "about": "關於角色",
 }
 
-# On'yomi = 音讀,中文轉日文音...
-ORDER_PROFILE = ["!id", "name", "onyomi", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
+# On'yomi = 音讀,中文轉日文音... , name -> 音讀以脫敏
+ORDER_PROFILE = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
 
 DEFAULT_SCENARIO_TEMPLATE = {
     "!id": SpecialScenario.NEW.value,
