@@ -86,6 +86,25 @@ class CharacterFileEntry:
                 
         return name.strip()
     
+    def get_profile_born(self) -> int:
+        """ Profile 資料中取得 born """
+        if self.profile_id is None:
+            return 1911
+
+        profile_data: Dict[str, Any] = self.data_source.get_profile(self.profile_id)
+        if not profile_data:
+            raise ValueError(
+                f"❌ 無法從 Profile ID '{self.profile_id}' 取得有效的 Profile 資料。"
+            )
+
+        born = profile_data.get("born")
+        if not isinstance(born, int):
+            raise ValueError(
+                f"❌ Profile ID '{self.profile_id}' 的 'born' 欄位無效或為空。"
+            )
+                
+        return born
+
     def get_scenario_scene(self) -> str:
         """ Scenario 資料中取得 scene(標題) """
         if self.scenario_id is None:

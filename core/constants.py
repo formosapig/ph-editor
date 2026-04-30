@@ -4,10 +4,14 @@ from enum import IntEnum
 # 特定檔案標頭（header）字串，用於辨識角色資料起始點
 PLAYHOME_MARKER = b"PlayHome"
 
+# 角色年代限制
+CHARACTER_MIN_ACTIVE_AGE = 15
+CHARACTER_MAX_ACTIVE_AGE = 65
+
 # Scenario special define
 class SpecialScenario(IntEnum):
     # 定義方式：(數值, 顯示名稱)
-    NEW = (-1, "新場景")
+    NEW = (-1, "新場景") # 附帶刪除功能，選這個然後內容不動，視為刪除。
     SILHOUETTE = (-2, "時光剪影")
     REVERBERATION = (-3, "歲月迴響")
 

@@ -1,4 +1,5 @@
 # ph-editor/api/ui_config.py
+import datetime
 import importlib
 import locale
 import logging
@@ -6,7 +7,7 @@ import logging
 from flask import Blueprint, jsonify
 
 from config.dropdown_config import dropdown_config_map
-from core.constants import SpecialScenario
+from core.constants import CHARACTER_MAX_ACTIVE_AGE, CHARACTER_MIN_ACTIVE_AGE, SpecialScenario
 from core.shared_data import (
     get_general_data,
     get_profile_count,
@@ -17,6 +18,7 @@ from core.shared_data import (
 )
 from game_data.cup_data import generate_cup_options
 from game_data.life_stage_data import generate_lifestage_options
+from utils.decorators import inject_character_file_entry
 
 logger = logging.getLogger(__name__)
 
@@ -167,8 +169,16 @@ def get_profile_list():
     return jsonify({"dropdowns": dropdown_configs})
     
     
-@api_ui_config_bp.get("/scenarios")
-def get_scenario_list():
+@api_ui_config_bp.get("/<sn>/scenarios")
+@inject_character_file_entry
+def get_scenario_list(entry):
+    born = entry.get_profile_born()
+    min_active_year = born + CHARACTER_MIN_ACTIVE_AGE if born else None
+    potential_max = born + CHARACTER_MAX_ACTIVE_AGE
+    current_year = datetime.date.today().year  # 取得今年 (2026)
+    max_active_year = min(potential_max, current_year) if born else None
+
+
     scenario_map = get_scenario_map()
     
     special_features = [
@@ -180,10 +190,23 @@ def get_scenario_list():
     special_ids = {int(s) for s in SpecialScenario}
     other_scenarios = {k: v for k, v in scenario_map.items() if k not in special_ids}
 
+    filtered_list = []
+    for s in other_scenarios.values():
+        s_year = s.get("year")
+        
+        # 篩選邏輯：
+        # a. 如果沒設定 born，保留所有場景
+        # b. 如果場景本身沒年份，視為通用場景，保留
+        # c. 如果場景有年份，必須在活躍區間內
+        if not born or not s_year:
+            filtered_list.append(s)
+        elif min_active_year <= s_year <= max_active_year:
+            filtered_list.append(s)
+
+    # 3. 排序：針對篩選後的結果進行排序
     locale.setlocale(locale.LC_COLLATE, "zh_TW.UTF-8")
-    # 將其轉為 options 並根據 name 中文排序
     sorted_scenarios = sorted(
-        other_scenarios.values(),
+        filtered_list,
         key=sort_key_with_int_year
     )
 
@@ -219,6 +242,17 @@ def get_scenario_list():
             "value": scenario_id,
         })
 
+    # 年代
+    year_options = []
+    year_options.append({"label": "請選擇年代", "value": ""})
+    
+    for y in range(min_active_year, max_active_year + 1):
+        age = y - born  # 計算年紀
+        year_options.append({
+            "label": f"{y} ({age}歲)",
+            "value": y
+        })
+
     season_options = [
         {"label": "無", "value": ""},
         {"label": "🌸春", "value": "spring"},
@@ -233,6 +267,13 @@ def get_scenario_list():
             "dataKey": "!id",
             "labelKey": "scene",
             "options": options,
+            "defaultValue": ""
+        },
+        {
+            "displayLabel": "年代",
+            "dataKey": "year",
+            "labelKey": "",
+            "options": year_options,
             "defaultValue": ""
         },
         {
