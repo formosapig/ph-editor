@@ -208,7 +208,7 @@ class CharacterFileEntry:
         """
         self.file_id = new_id
         self.data_source.update_file_id(self.sn, new_id)
-        logger.debug(f"更新為: {self.file_id}")    
+        #logger.debug(f"更新為: {self.file_id}")    
 
     def remove_metadata(self):
         try:
@@ -268,10 +268,7 @@ class CharacterFileEntry:
         soul = self.calculate_soul()
         meat = self.calculate_meat()
         form = 0
-        code = 0
-
-        if self.file_id == self.get_suggest_file_id():
-            code = code + 1
+        code = self.calculate_code()
 
         t_style, t_name = tag_resolver(self.sn) if tag_resolver else ("", "")
         res = {
@@ -328,6 +325,25 @@ class CharacterFileEntry:
         if val_setting_cup == val_game_cup:
             meat += 1
         return meat
+
+    def calculate_code(self) -> int:
+        code = 0
+
+        # 檔名正規化
+        if self.file_id == self.get_suggest_file_id():
+            code += 1
+        
+        # 在 metadata 修改好, 修改了 png
+        metadata = self.data_source.get_metadata(self.sn)
+        meta_timestamp = metadata.get('modified') if metadata else None
+        if meta_timestamp is None or not os.path.exists(self.filename):
+            return code
+
+        file_mtime = int(os.path.getmtime(self.filename))
+        if file_mtime > meta_timestamp:
+            code += 1
+
+        return code
 
     def __repr__(self):
         lines = [

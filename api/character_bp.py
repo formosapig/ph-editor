@@ -377,7 +377,7 @@ def patch_rename(sn, entry, data, scan_path):
     old_path_full = os.path.join(scan_path, f"{old_file_id}.png")
     new_path_full = os.path.join(scan_path, f"{new_file_id}.png")
 
-    logger.debug(f"{old_path_full} -> {new_path_full}")
+    #logger.debug(f"{old_path_full} -> {new_path_full}")
 
     if not old_path_full.startswith(scan_path) or not new_path_full.startswith(scan_path):
         return jsonify({"success": False, "error": "不允許的操作：路徑超出掃描目錄範圍"}), 403
@@ -390,7 +390,7 @@ def patch_rename(sn, entry, data, scan_path):
     
     try:
         os.rename(old_path_full, new_path_full)
-        logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
+        #logger.info(f"成功重新命名：{old_path_full} -> {new_path_full}")
     except OSError as e:
         # 重點：在這裡攔截作業系統錯誤，並拋出你已經有 Handler 處理的 APIError
         # e.errno 123 在 Windows 就是檔名語法錯誤
