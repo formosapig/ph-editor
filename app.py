@@ -186,6 +186,15 @@ def check_auth():
         return redirect('/login')
 
 
+@app.after_request
+def add_header(response):
+    # 禁止快取敏感內容
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -201,7 +210,7 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect('/login')
+    return redirect('https://www.google.com')
 
 
 @app.route("/")

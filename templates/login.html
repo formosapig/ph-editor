@@ -2,47 +2,59 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>PHEditor - 驗證</title>
+    <title>System Configuration</title>
     <style>
         body {
             margin: 0;
-            background: #fff;
+            /* 改為深色背景，減少藍光刺激 */
+            background: #1a1a1a; 
             height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             font-family: 'Courier New', Courier, monospace;
+            color: #d1d1d1;
         }
         input {
             padding: 15px;
             font-size: 32px;
             border: none;
-            border-bottom: 2px solid #eee;
+            /* 邊框改為較暗的顏色 */
+            border-bottom: 2px solid #333; 
             outline: none;
             text-align: center;
             transition: all 0.3s;
             width: 320px;
             background: transparent;
+            /* 輸入文字改為淺灰色 */
+            color: #e0e0e0; 
+            color: transparent;
         }
         /* 當被禁用（錯誤顯示數字）時的樣式 */
         input:disabled {
-            color: #333;
+            color: #ff5555; /* 錯誤提示改為柔和的紅色 */
             border-bottom-color: transparent;
             cursor: default;
             letter-spacing: 6px;
             font-weight: bold;
         }
-        input:focus { border-bottom-color: #007bff; }
+        /* 焦點狀態改為暗藍色 */
+        input:focus { border-bottom-color: #0056b3; }
         
         .hint {
             font-size: 12px;
-            color: #ccc;
+            color: #666;
             margin-top: 15px;
             opacity: 0;
             transition: opacity 0.5s;
         }
         .show-hint { opacity: 1; }
+
+        /* 針對 Placeholder 的顏色優化 */
+        input::placeholder {
+            color: #444;
+        }
     </style>
 </head>
 <body>
@@ -52,10 +64,9 @@
         [% if messages %]
             <input type="text" value="[[ messages[0] ]]" disabled>
         [% else %]
-            <input type="text" name="password" placeholder="Key" autofocus autocomplete="off">
+            <input type="text" name="password" placeholder="invalid cache" autofocus autocomplete="off">
         [% endif %]
     </form>
     [% endwith %]
-
 </body>
 </html>

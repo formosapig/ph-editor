@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>編輯檔案</title>
+  <title>edere</title>
   <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
   <script src="[[ url_for('static', filename='edit.js') ]]" type="module"></script>
   <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
@@ -92,5 +92,7 @@
     </div>
 
     <div id="result-message" :class="messageType" x-text="messageText"></div>
+    
+    <script src="[[ url_for('static', filename='base.js') ]]"></script>
 </body>
 </html>
