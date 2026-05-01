@@ -128,6 +128,23 @@ class CharacterFileEntry:
                 
         return scene.strip()
 
+    def is_reverberation(self) -> bool:
+        """ Scenario 資料中取得 !echo """
+        if self.scenario_id is None:
+            return False
+
+        # 特殊 scenario id 都濾掉
+        if self.scenario_id in [SpecialScenario.NEW, SpecialScenario.SILHOUETTE, SpecialScenario.REVERBERATION]:
+            return False
+
+        scenario_data: Dict[str, Any] = self.data_source.get_scenario(self.scenario_id)
+        if not scenario_data:
+            raise ValueError(
+                f"❌ 無法從 Scenario ID '{self.scenario_id}' 取得有效的 Scenario 資料。"
+            )
+
+        return scenario_data.get("!echo") == 1
+
     def get_character_title(self) -> str:
         """ character 的 title 存放在 metadta.backstage """
         metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)

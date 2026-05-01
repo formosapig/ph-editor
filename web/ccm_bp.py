@@ -124,7 +124,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
         # 處理「歲月迴響」特殊邏輯
         if scenario_id == SpecialScenario.REVERBERATION and profile_id:
             profileData = profiles.get(profile_id)
-    
+            '''
             # 從資料中取得 resonance ID (這就是你的 !res_id)
             # 如果沒設，預設可以用 3 (半步青春) 作為保底
             res_id = backstage.get("!resonance_id") 
@@ -171,6 +171,7 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
             else:
                 # 如果 res_id 是空的，表示「世界靜默」
                 logger.info(f"時空迴響靜默：Profile ID {profile_id} 未設定人生共鳴")
+            '''    
         elif scenario_id == SpecialScenario.SILHOUETTE:
             # 處理「時光剪影」特殊邏輯
             tag_id = backstage.get("!tag_id")
@@ -200,6 +201,10 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
                 born = profileData.get('born', None)
                 if year and born:
                     backstage['age'] = year - born
+
+                # 檢查 echo
+                if scenarioData.get('!echo') == 1:
+                    backstage['scenario_color'] = "#4A7C59"
 
         clean_metadatas[k] = item_copy
 

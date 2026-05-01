@@ -5,7 +5,7 @@ import logging
 from flask import Blueprint, Response, jsonify, request
 from core.constants import SpecialScenario
 from core.shared_data import get_character_file_entry, get_scenario_map, listen_reverberation
-from utils.exceptions import NoUpdateRequired
+from utils.exceptions import InvalidOperationError, NoUpdateRequired, NotFoundError
 
 
 logger = logging.getLogger(__name__)
@@ -43,9 +43,16 @@ def get_reverberation(year):
     sn = request.args.get('sn')
 
     entry = get_character_file_entry(sn)
-    if not entry or entry.scenario_id != SpecialScenario.REVERBERATION:
-        raise NoUpdateRequired()
+    if not entry:
+        raise NotFoundError()
     
-    echo = listen_reverberation(year)
-
-    return jsonify(echo)
+    # 是歲月迴響場景時，不能改 year
+    if entry.is_reverberation():
+        raise InvalidOperationError()
+    
+    # 當 scenario id 是 SpecialScenario.REVERBERATION 時，吐回歲月迴響
+    if entry.scenario_id == SpecialScenario.REVERBERATION:
+        echo = listen_reverberation(year)
+        return jsonify(echo)
+    
+    raise NoUpdateRequired()

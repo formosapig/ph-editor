@@ -147,6 +147,65 @@ document.addEventListener('alpine:init', () => {
             const val = JSON.parse(event.target.value);
             const selectedOption = event.target.options[event.target.selectedIndex];
             const optObj = config.options.find(o => JSON.stringify(o.value) === event.target.value);
+            const label = optObj ? (optObj.pureLabel || optObj.label) : selectedOption.text;
+
+            // 預設需要走通用更新
+            let shouldPerformGeneralUpdate = true;
+
+            // 1. 處理 Profile/Scenario ID 抓取
+            if (config.dataKey === "!id" && val !== "") {
+                const type = this.activeSubTab === 'profile' ? 'profile' : 'scenario';
+                const res = await fetch(`/api/${type}/detail/${val}`);
+                const detailData = await res.json();
+                this.globalParsedData[targetTab][targetSub] = detailData;
+                
+                // 既然已經替換了整個物件，通常就不需要再走後面的 Key 賦值
+                shouldPerformGeneralUpdate = false; 
+
+            // 2. 處理 Year 的特殊 API 邏輯
+            } else if (config.dataKey === "year" && val !== "" && targetSub === 'scenario') {
+                const res = await fetch(`/api/scenario/reverberation/${val}?sn=${encodeURIComponent(this.sn)}`);
+                if (res.status === 200) {
+                    this.globalParsedData[targetTab][targetSub] = await res.json();
+                    // 如果後端回傳的是完整的新資料，就不需要走通用更新
+                    shouldPerformGeneralUpdate = false;
+                } else if (res.status === 204) {
+                    shouldPerformGeneralUpdate = true;
+                } else {
+                    // 如果 API 失敗 (例如 404/500)，旗標保持 true，讓它流向通用更新
+                    console.warn("API 失敗，改走通用更新流程");
+                    return;
+                }
+            }
+
+            // 3. 通用更新 (原本的 else 區塊)
+            if (shouldPerformGeneralUpdate) {
+                const dataRef = this.globalParsedData[targetTab][targetSub];
+                if (val === "") {
+                    delete dataRef[config.dataKey];
+                    if (config.labelKey) delete dataRef[config.labelKey];
+                } else {
+                    dataRef[config.dataKey] = val;
+                    if (config.labelKey && config.labelKey !== config.dataKey) {
+                        dataRef[config.labelKey] = label;
+                    }
+                }
+            }
+
+            // 4. 後續工作 (不受影響，必定執行)
+            if (this.activeMainTab === targetTab && this.activeSubTab === targetSub) {
+                this.renderContent();
+            }
+            this.hasChanged = true;
+            this.saveContent();
+        },
+
+        /*async handleDropdownChange(config, event) {
+            const targetTab = this.activeMainTab;
+            const targetSub = this.activeSubTab;
+            const val = JSON.parse(event.target.value);
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const optObj = config.options.find(o => JSON.stringify(o.value) === event.target.value);
             const label = optObj ? (optObj.pureLabel || optObj.label) 
                                  : selectedOption.text;
 
@@ -180,7 +239,7 @@ document.addEventListener('alpine:init', () => {
             }
             this.hasChanged = true;
             this.saveContent();
-        },
+        },*/
 
         isOptionSelected(config, opt) {
             const current = this.globalParsedData[this.activeMainTab]?.[this.activeSubTab]?.[config.dataKey];
