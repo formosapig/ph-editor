@@ -192,6 +192,8 @@ def get_scenario_list(entry):
 
     filtered_list = []
     for s in other_scenarios.values():
+        if s.get("!echo") == 1:
+            continue
         s_year = s.get("year")
         
         # 篩選邏輯：

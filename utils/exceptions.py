@@ -28,3 +28,11 @@ class ErrorTest(APIError):
 class JSONError(APIError):
     def __init__(self, message="無效的 json 格式。"):
         super().__init__(message, status_code=400)
+
+class NoUpdateRequired(APIError):
+    """
+    當前端請求更新，但後端判斷不需要改動資料時拋出。
+    使用 204 No Content，這在 Fetch API 中代表請求成功但無回傳值。
+    """
+    def __init__(self, message="No update required"):
+        super().__init__(message, status_code=204)

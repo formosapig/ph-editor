@@ -156,6 +156,12 @@ document.addEventListener('alpine:init', () => {
                 const res = await fetch(`/api/${type}/detail/${val}`);
                 const detailData = await res.json();
                 this.globalParsedData[targetTab][targetSub] = detailData;
+            } else if (config.dataKey === "year" && val !== "" && targetSub === 'scenario') {
+                // 無腦調用 flask ，由 flask 擋住    
+                const res = await fetch(`/api/scenario/reverberation/${val}?sn=${encodeURIComponent(this.sn)}`);
+                if (res.status === 200) {
+                    this.globalParsedData[targetTab][targetSub] = await res.json();
+                }
             } else {
                 // 通用更新
                 const dataRef = this.globalParsedData[targetTab][targetSub];

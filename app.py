@@ -24,7 +24,7 @@ from werkzeug.routing import IntegerConverter
 
 from api.character_bp import api_characters_bp
 from api.profile import api_profile_bp
-from api.scenario import api_scenario_bp
+from api.scenario_bp import api_scenario_bp
 from api.ui_config import api_ui_config_bp
 from config.logging_setup import setup_logging
 from utils.exceptions import APIError
@@ -90,6 +90,10 @@ app.register_blueprint(api_ui_config_bp)
 @app.errorhandler(APIError)
 def handle_custom_api_error(e):
     """處理主動拋出的 APIError (符合 RESTful 規範)"""
+    # 如果是 204，直接回傳空回應
+    if e.status_code == 204:
+        return '', 204
+    
     return jsonify({
         "error": e.message,
         "code": e.__class__.__name__, # 多帶一個錯誤類型方便前端判斷

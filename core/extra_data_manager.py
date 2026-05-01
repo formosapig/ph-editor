@@ -46,7 +46,7 @@ DEFAULT_SCENARIO_TEMPLATE = {
     "notes": "如果沒有任何變更，並且觸發儲存，會變成移除場景設定。"
 }
 
-ORDER_SCENARIO = ["!id", "scene", "year", "season", "plot", "notes"]
+ORDER_SCENARIO = ["!id", "!echo", "scene", "year", "season", "plot", "notes"]
 
 DEFAULT_BACKSTAGE_TEMPLATE = {
     "!tag_id": 1,
@@ -391,6 +391,57 @@ class ExtraDataManager():
         return True
 
     @synchronized
+    def upsert_reverberation(self, year: int, updated_scenario: Dict[str, Any]) -> bool:
+        """
+        念念不忘，必有迴響。
+        """
+        # 1. 尋找宿命中的 target_id (使用 next 疊代器比 for-loop 更具現代感)
+        target_id = next(
+            (sid for sid, s in self._scenario_map.items() 
+             if s.get("!echo") == 1 and s.get("year") == year), 
+            None
+        )
+
+        # 情況 A: 舊識重逢 (Update)
+        if target_id is not None:
+            current_scenario = self._scenario_map[target_id]
+            # 建立比對副本，不影響原始輸入
+            comparison_data = {**updated_scenario, "!id": target_id}
+            
+            if not self._is_data_changed(current_scenario, comparison_data):
+                logger.info(f"年份 {year} 的迴響無變動，靜如止水。")
+                return True 
+
+            echo = copy.deepcopy(comparison_data)
+            self._commit_scenario(target_id, echo)
+            logger.info(f"已更新年份 {year} 的迴響 (ID: {target_id})。")
+            return True
+
+        # 情況 B: 初次邂逅 (Add)
+        else:
+            # 先檢查是否與模板雷同，避免創造無意義的虛無
+            DEFAULT_REVERBERATION = self.get_scenario(SpecialScenario.REVERBERATION)
+            if not self._is_data_changed(DEFAULT_REVERBERATION, updated_scenario):
+                logger.warning(f"年份 {year} 的新資料與預設值相同，不留痕跡。")
+                return False
+
+            new_id = max(self._scenario_map.keys(), default=0) + 1
+            updated_scenario.update({"!id": new_id, "!echo": 1})
+            self._commit_scenario(new_id, updated_scenario)
+            logger.info(f"已為年份 {year} 撥動弦線，建立新迴響 (ID: {new_id})。")
+            return True
+        
+    @synchronized
+    def create_new_reverberation(self, year: int) -> Dict[str, Any]:
+        DEFAULT_REVERBERATION = self.get_scenario(SpecialScenario.REVERBERATION)
+        new_reverberation = copy.deepcopy(DEFAULT_REVERBERATION)
+        new_id = max(self._scenario_map.keys(), default=0) + 1
+        new_reverberation.update({"!id": new_id, "!echo": 1, "year": year})
+        self._commit_scenario(new_id, new_reverberation)
+        logger.info(f"已為年份 {year} 撥動弦線，建立新迴響 (ID: {new_id})。")
+        return new_reverberation
+            
+    @synchronized
     def _commit_scenario(self, scenario_id: int, scenario_data: Dict[str, Any]):
         # 排序
         ordered_data = self._deep_sort(scenario_data, ORDER_SCENARIO)
@@ -403,11 +454,11 @@ class ExtraDataManager():
         
         # 執行即時儲存
         self._save_scenario_data()
-        logger.info(f"Scenario {scenario_id} 提交成功並存檔。")        
+        #logger.info(f"Scenario {scenario_id} 提交成功並存檔。")        
 
     @synchronized
     def update_scenario_id(self, sn: str, scenario_id: int):
-        logger.debug(f"update SCENARIO_ID: ${scenario_id} to ${sn}")
+        logger.debug(f"update SCENARIO_ID: {scenario_id} to {sn}")
         # 要修改內容,直接內部讀取
         metadata = self._metadata_map.get(sn, {})
         metadata['!scenario_id'] = scenario_id;

@@ -156,12 +156,19 @@ def process_scenario_data(
         scenario_id = updated_scenario.get("!id")
         success = False
         new_scenario_id = None
-        if scenario_id in [SpecialScenario.SILHOUETTE, SpecialScenario.REVERBERATION]:
+        if scenario_id == SpecialScenario.SILHOUETTE:
             original_data = _extra_data_manager.get_scenario(scenario_id)
             if (original_data):
                 updated_scenario.clear()
                 updated_scenario.update(original_data)
-            success = True    
+            success = True
+        elif scenario_id == SpecialScenario.REVERBERATION:
+            some_year = updated_scenario.get("year")
+            if some_year:
+                # 念念不忘，必有迴響
+                success = _extra_data_manager.upsert_reverberation(some_year, updated_scenario)
+            else:
+                success = True
         elif scenario_id == SpecialScenario.NEW:
             success = _extra_data_manager.add_scenario(updated_scenario)
             new_scenario_id = updated_scenario.get("!id", None) if success else None
@@ -176,12 +183,27 @@ def process_scenario_data(
                 logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry。")
                 return False, None
             updated_scenario_id = updated_scenario.get("!id")
-            logger.debug(f"SCENARIO_ID: ${updated_scenario_id}")
+            logger.debug(f"SCENARIO_ID: {updated_scenario_id}")
             character_file_entry_obj.update_scenario_id(updated_scenario_id)
                 
         return success, new_scenario_id
   
+
+def listen_reverberation(year: int) -> Dict[str, Any]:
+    with data_lock:
+        scenario_map = _extra_data_manager.get_scenario_map()
+        echo = None
     
+        for s_data in scenario_map.values():
+            if s_data.get('!echo') == 1 and s_data.get('year') == year:
+                echo = s_data
+                break
+
+        if not echo:
+            echo = _extra_data_manager.create_new_reverberation(year)
+
+        return echo
+
 def update_backstage_data(
     sn: str, updated_backstage: Dict[str, Any]
 ) -> bool:
