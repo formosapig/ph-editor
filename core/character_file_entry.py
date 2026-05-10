@@ -120,6 +120,10 @@ class CharacterFileEntry:
                 f"❌ 無法從 Scenario ID '{self.scenario_id}' 取得有效的 Scenario 資料。"
             )
 
+        # 是歲月迴響時，也濾掉
+        if scenario_data.get("!echo"):
+            return ""
+
         scene = scenario_data.get("scene")
         if not isinstance(scene, str) or not scene.strip():
             raise ValueError(
@@ -322,8 +326,8 @@ class CharacterFileEntry:
             "code": code,
             "score": f"{(soul * 2 + 1) * (meat * 2 + 1) * (form * 2 + 1) * (code * 2 + 1):05d}"
         }
-        if self.scenario_id in [SpecialScenario.REVERBERATION, SpecialScenario.SILHOUETTE]:
-            res["ccm_managed"] = True;
+        #if self.scenario_id in [SpecialScenario.REVERBERATION, SpecialScenario.SILHOUETTE]:
+        #    res["ccm_managed"] = True;
         #res["epoch_managed"] = True;
         return res;
 
