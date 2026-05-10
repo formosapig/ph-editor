@@ -3,8 +3,12 @@
     let timeout;
     let countdownInterval;
     let isPaused = false; 
-    let remainingAtPause = 0; // 紀錄暫停那一刻剩餘的時間
-    const INACTIVE_TIME = 44687; 
+    
+    // --- 定義兩種模式的時間 ---
+    const NORMAL_TIME = 44687;    // 44秒
+    const EXTENDED_TIME = 699633;  // 約11.6分鐘
+    let currentInactiveTime = NORMAL_TIME;
+    
     const syncChannel = new BroadcastChannel('session_manager');
 
     const injectStyles = () => {
@@ -18,22 +22,19 @@
                 background: rgba(10, 10, 10, 0.85);
                 color: #00ff41;
                 font-family: 'Consolas', 'Monaco', monospace;
-                font-size: 13px;
+                font-size: 14px;
+                font-weight: bold;
                 border: 1px solid #00ff41;
                 border-radius: 4px;
                 z-index: 2147483647;
-                cursor: pointer; /* 點擊感 */
+                cursor: pointer;
                 user-select: none;
                 transition: all 0.2s ease;
                 box-shadow: 0 0 8px rgba(0, 255, 65, 0.2);
             }
-            /* 暫停態：變灰、邊框黯淡 */
             #session-countdown.is-paused {
-                color: #888 !important;
-                border-color: #555 !important;
-                background: rgba(40, 40, 40, 0.9);
-                box-shadow: none;
-                animation: none !important;
+                color: #4da6ff !important;
+                border-color: #4da6ff !important;
             }
             #session-countdown.warning {
                 color: #ff3e3e;
@@ -52,49 +53,58 @@
         countdownEl = document.createElement('div');
         countdownEl.id = 'session-countdown';
         document.body.appendChild(countdownEl);
-
-        // 點擊事件：切換暫停/恢復
-        //countdownEl.addEventListener('click', () => {
-        //    togglePause(true);
-        //});
     };
 
-    function togglePause(propagate = true) {
-        isPaused = !isPaused;
-        
+    // 修改：切換模式時確保所有變數同步
+    function applyMode(pausedState) {
+        isPaused = pausedState;
         if (isPaused) {
-            // 進入時停：清除計時器
-            clearInterval(countdownInterval);
-            clearTimeout(timeout);
+            currentInactiveTime = EXTENDED_TIME;
             countdownEl.classList.add('is-paused');
-            // countdownEl.innerText = "PAUSED";
+            countdownEl.style.color = '#4da6ff'; 
+            countdownEl.style.borderColor = '#4da6ff';
         } else {
-            // 恢復運作：從初始值重新開始 (或可根據需求微調回原本秒數)
+            currentInactiveTime = NORMAL_TIME;
             countdownEl.classList.remove('is-paused');
-            resetTimer(false);
+            countdownEl.style.color = '#00ff41';
+            countdownEl.style.borderColor = '#00ff41';
         }
+        // 切換模式後，必須立即重設計時器以套用新的 currentInactiveTime
+        resetTimer(false); 
+    }
+
+    function togglePause(propagate = true) {
+        const newState = !isPaused;
+        applyMode(newState);
 
         if (propagate) {
-            syncChannel.postMessage({ type: 'TOGGLE_PAUSE', paused: isPaused });
+            syncChannel.postMessage({ type: 'TOGGLE_PAUSE', paused: newState });
         }
     }
 
     function updateCountdownUI(msLeft) {
-        if (!countdownEl || isPaused) return;
+        if (!countdownEl) return;
         const seconds = Math.ceil(msLeft / 1000);
-        countdownEl.innerText = `${seconds}`;
+        
+        // 優化顯示：超過 60 秒顯示 分:秒
+        //if (seconds >= 60) {
+        //    const m = Math.floor(seconds / 60);
+        //    const s = seconds % 60;
+        //    countdownEl.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        //} else {
+            countdownEl.innerText = `${seconds}`;
+        //}
         
         if (seconds <= 10) countdownEl.classList.add('warning');
         else countdownEl.classList.remove('warning');
     }
 
     function startVisualCountdown() {
-        if (isPaused) return;
         clearInterval(countdownInterval);
         const startTime = Date.now();
         
         countdownInterval = setInterval(() => {
-            const remaining = INACTIVE_TIME - (Date.now() - startTime);
+            const remaining = currentInactiveTime - (Date.now() - startTime);
             if (remaining <= 0) {
                 clearInterval(countdownInterval);
                 updateCountdownUI(0);
@@ -103,11 +113,14 @@
             }
         }, 1000);
         
-        updateCountdownUI(INACTIVE_TIME);
+        updateCountdownUI(currentInactiveTime);
     }
 
     function terminateSession(isManual = false) {
-        if (isPaused && !isManual) return;
+        // 如果是自動觸發且處於暫停（長時間）模式，邏輯上這裡應該還是要執行，
+        // 因為長模式只是「時間變長」，不是「永遠不登出」。
+        // 若你希望長模式下「絕對不自動登出」，才保留 isPaused 攔截。
+        // 但根據金流需求，建議長模式到期一樣登出，所以移除攔截。
         
         document.body.style.display = 'none';
         if (isManual) syncChannel.postMessage({ type: 'FORCE_TERMINATE' });
@@ -121,11 +134,10 @@
     }
 
     function resetTimer(propagate = true) {
-        if (isPaused) return; 
-        
         clearTimeout(timeout);
         startVisualCountdown();
-        timeout = setTimeout(() => terminateSession(true), INACTIVE_TIME);
+        // 使用當前選定的時間模式進行倒數
+        timeout = setTimeout(() => terminateSession(true), currentInactiveTime);
 
         if (propagate) {
             syncChannel.postMessage({ type: 'RESET_TIMER' });
@@ -136,55 +148,40 @@
         injectStyles();
         createUI();
 
-        // 監聽鍵盤/滑鼠活動
-        //['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
-        //    document.addEventListener(event, () => {
-        //        if (!isPaused) resetTimer(true);
-        //    }, true);
-        //});
-        // --- 監聽使用者操作 (加入節流防護) ---
         const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
         let lastActivity = 0;
-        const THROTTLE_DELAY = 1000; // 1 秒內只允許重置一次
+        const THROTTLE_DELAY = 1000;
 
         activityEvents.forEach(event => {
             document.addEventListener(event, () => {
-                if (isPaused) return; // 暫停中直接無視
-
                 const now = Date.now();
-                // 只有距離上次重置超過 1 秒，才再次執行重置
                 if (now - lastActivity > THROTTLE_DELAY) {
-                    resetTimer(true);
+                    resetTimer(true); // 這裡不再檢查 isPaused，移動即重置
                     lastActivity = now;
-                    // console.log(`[Session] 偵測到 ${event}，重設計時器`);
                 }
             }, true);
         });
 
-        // 快捷鍵：Escape/Backquote
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Backquote') {
-                e.preventDefault(); // 攔截預設符號輸入
-
+                e.preventDefault();
                 if (e.ctrlKey || e.metaKey) {
-                    // 情況 A: Ctrl + ` -> 切換暫停 (就像開關 Terminal)
-                    console.log("Ctrl + ` 觸發：切換時停領域...");
                     togglePause(true);
                 } else {
-                    // 情況 B: 單純 ` -> 執行緊急避險
                     terminateSession(true);
                 }
             }
         }, true);
 
-        // 跨分頁同步
+        // --- 完善跨分頁通訊 ---
         syncChannel.onmessage = (event) => {
-            if (event.data.type === 'RESET_TIMER') resetTimer(false);
-            else if (event.data.type === 'FORCE_TERMINATE') {
-                isPaused = false;
-                terminateSession(true);   
+            if (event.data.type === 'RESET_TIMER') {
+                resetTimer(false); // 接收來自其他分頁的重置訊號
+            } else if (event.data.type === 'FORCE_TERMINATE') {
+                terminateSession(false);   
             } else if (event.data.type === 'TOGGLE_PAUSE') {
-                if (isPaused !== event.data.paused) togglePause(false);
+                // 收到切換模式訊號，同步狀態並重設計時器
+                applyMode(event.data.paused);
             }
         };
 
