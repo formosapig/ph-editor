@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class UserConfigManager:
     config_dir = "user_config"
     scan_path_file = os.path.join(config_dir, "scan_path.txt")
+    ui_settings_file = os.path.join(config_dir, "ui_settings.txt")
     cache_dir = os.path.join(config_dir, "cache")  # ✅ 加入 cache 目錄
     general_file = os.path.join(config_dir, "general.json")
     profile_file = os.path.join(config_dir, "profile.json")
@@ -45,6 +46,23 @@ class UserConfigManager:
         UserConfigManager.ensure_dir()
         with open(UserConfigManager.scan_path_file, "w", encoding="utf-8") as f:
             f.write(path_str)
+
+    @staticmethod
+    def load_ui_settings() -> dict:
+        UserConfigManager.ensure_dir()
+        if not os.path.exists(UserConfigManager.ui_settings_file):
+            return {}
+        try:
+            with open(UserConfigManager.ui_settings_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}    
+
+    @staticmethod
+    def save_ui_settings(settings_dict: dict):
+        UserConfigManager.ensure_dir()
+        with open(UserConfigManager.ui_settings_file, "w", encoding="utf-8") as f:
+            json.dump(settings_dict, f, indent=4, ensure_ascii=False)
 
     @staticmethod
     def get_general_file_path() -> str:

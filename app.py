@@ -234,6 +234,20 @@ def get_scan_path():
     return jsonify({"scanPath": path or ""})
 
 
+@app.route("/get_ui_settings", methods=["GET"])
+def get_ui_settings():
+    # 預期 load_ui_settings 回傳一個 dict，例如 {"filterKey": "file_id", "sortKey": "score"}
+    settings = UserConfigManager.load_ui_settings() 
+    return jsonify(settings or {})
+
+
+@app.route("/save_ui_settings", methods=["POST"])
+def save_ui_settings():
+    data = request.json
+    UserConfigManager.save_ui_settings(data) # 將前端傳來的 JSON 存檔
+    return jsonify({"status": "success"})
+
+
 @app.route("/scan", methods=["POST"])
 def scan_folder():
     folder_path = request.json.get("path")

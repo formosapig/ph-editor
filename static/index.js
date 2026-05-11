@@ -19,6 +19,7 @@ document.addEventListener('alpine:init', () => {
         newWishType: '📙',
         newWishContent: '',
         messages: [],
+        debounceTimer: null,
 
         // Getters (Alpine 內部的 Getters 會自動追蹤響應式)
         get scanPathDisplay() {
@@ -86,6 +87,18 @@ document.addEventListener('alpine:init', () => {
 
         async init() {
             try {
+                const res = await fetch('/get_ui_settings');
+                const saved = await res.json();
+
+                if (saved.filterKey) this.filterKey = saved.filterKey;
+                if (saved.filterKeyword) this.filterKeyword = saved.filterKeyword;
+                if (saved.sortKey) this.sortKey = saved.sortKey;
+                this.sortAscending = saved.sortAscending ?? true;
+            } catch (e) {
+                console.error("載入設定失敗", e);
+            }
+
+            try {
                 const res = await fetch('/get_scan_path');
                 if (res.ok) {
                     const data = await res.json();
@@ -110,6 +123,13 @@ document.addEventListener('alpine:init', () => {
                     this.refrechCharacter(sn);
                 }
             };
+
+            this.$nextTick(() => {
+                this.$watch('filterKey', () => this.debounceSave());
+                this.$watch('filterKeyword', () => this.debounceSave());
+                this.$watch('sortKey', () => this.debounceSave());
+                this.$watch('sortAscending', () => this.debounceSave());
+            });
 
             // 監控畫面最終顯示的結果
             this.$watch('filteredAndSortedImages', (newList) => {
@@ -159,6 +179,32 @@ document.addEventListener('alpine:init', () => {
                 alert('網路或伺服器錯誤');
                 console.error(e);
             }
+        },
+
+        debounceSave() {
+            clearTimeout(this.debounceTimer);
+            // 這裡要加 async 才能在裡面用 await
+            this.debounceTimer = setTimeout(async () => { 
+                const payload = {
+                    filterKey: this.filterKey,
+                    filterKeyword: this.filterKeyword,
+                    sortKey: this.sortKey,
+                    sortAscending: this.sortAscending
+                };
+
+                try {
+                    const response = await fetch('/save_ui_settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error('存檔失敗');
+                    console.log('✅ UI 設定已同步');
+                } catch (err) {
+                    console.error('❌ 永固化出錯:', err);
+                }
+            }, 500);
         },
 
         changeFolder() {
