@@ -74,7 +74,7 @@ DEFAULT_METADATA_TEMPLATE = {
     "backstage": DEFAULT_BACKSTAGE_TEMPLATE
 }
 
-ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!status", "!remark", "backstage", "modified"]
+ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!remark", "backstage", "modified"]
 
 def synchronized(f):
     @wraps(f)
@@ -482,12 +482,6 @@ class ExtraDataManager():
     def update_remark(self, sn: str, remark: str):
         metadata = self._metadata_map.get(sn, {})
         metadata['!remark'] = remark
-        self._commit_metadata(sn, metadata)
-
-    @synchronized
-    def update_status(self, sn: str, status: str):
-        metadata = self._metadata_map.get(sn, {})
-        metadata['!status'] = status
         self._commit_metadata(sn, metadata)
 
     @synchronized

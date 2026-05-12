@@ -408,7 +408,6 @@ def reload_file(file_id):
             "profile_name": character_file_obj.get_profile_name(),
             "scenario_scene": character_file_obj.get_scenario_scene(),
             "remark": character_file_obj.get_remark(),
-            "status": character_file_obj.get_status(),
         }
 
         # 4. 處理標籤資訊，這個函式也可能出錯

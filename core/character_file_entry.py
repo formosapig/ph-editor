@@ -53,7 +53,6 @@ class CharacterFileEntry:
             self.profile_id = None
             self.scenario_id = None
             self.remark = "" # 空字串...
-            self.status = "draft"
             self.tag_id = None
             self.backstage_data = {}
         else:
@@ -61,7 +60,6 @@ class CharacterFileEntry:
             self.profile_id = metadata.get('!profile_id')
             self.scenario_id = metadata.get('!scenario_id')
             self.remark = metadata.get('!remark', "")
-            self.status = metadata.get('!status', "draft")
             # 存取巢狀字典時，也使用 .get() 來確保安全
             self.backstage_data = metadata.get('backstage', {})
             self.tag_id = self.backstage_data.get('!tag_id')
@@ -227,20 +225,6 @@ class CharacterFileEntry:
     def get_remark(self) -> str:
         return self.remark
 
-    def update_status(self, status: str):
-        valid_statuses = ["archived", "draft", "refinement", "finalized"]
-        if status not in valid_statuses:
-            logger.warning(f"嘗試設定無效的狀態: {status}，已忽略。")
-            return
-        self.status = status
-        self.data_source.update_status(self.sn, status)
-
-    def get_status(self) -> str:
-        """取得目前檔案的製作狀態 (draft, refinement, finalized)。 預設是 draft"""
-        if not self.status:
-            self.status = "draft"
-        return self.status
-
     def change_file_id(self, new_id: str):
         """
         更新 file_id ， 並同步更新 medadata (JSON) 。
@@ -317,7 +301,6 @@ class CharacterFileEntry:
             "profile_name": self.get_profile_name(),
             "scenario_scene": self.get_scenario_scene(),
             "remark": self.get_remark(),
-            "status": self.get_status(),
             "tag_style": t_style,
             "tag_name": t_name,
             "soul": soul,
@@ -394,7 +377,6 @@ class CharacterFileEntry:
             f"{'Scenario ID':>14}: {self.scenario_id}",
             f"{'Tag ID':>14}: {self.tag_id}",
             f"{'Remark':>14}: {self.remark}",
-            f"{'Status':>14}: {self.status}",
         ]
         return "\n".join(lines)
 

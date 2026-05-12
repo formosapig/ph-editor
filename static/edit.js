@@ -4,7 +4,6 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('characterEditor', (params) => ({
         sn: params.sn,
         globalParsedData: params.initialData || {},
-        status: params.status,
 
         activeMainTab: 'story',
         activeSubTab: 'profile',
@@ -273,35 +272,6 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 this.showMessage(error.displayMessage, 'error');
             }
-        },
-
-        // --- 狀態 (Status) 處理 ---
-        async updateStatus(newStatus) {
-            console.log("Status trigger:", newStatus);
-
-            const url = `/api/characters/${encodeURIComponent(this.sn)}/status`;
-            try {
-                const result = await request(url, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ status: newStatus }) 
-                });
-
-                this.showMessage(result.message || '更新成功');
-                this.notifyParent();
-            } catch (error) {
-                this.showMessage(errorData.displayMessage || '狀態更新失敗', 'error');
-            }
-        },
-
-        // 輔助標籤切換 (原本漏掉的話也補上)
-        getStatusLabel(s) {
-            const map = { 
-                archived: '📦 封存', 
-                draft: '🧩 草稿', 
-                refinement: '🎨 潤飾', 
-                finalized: '📌 定稿' 
-            };
-            return map[s] || s;
         },
 
         showMessage(text, type = 'success') {

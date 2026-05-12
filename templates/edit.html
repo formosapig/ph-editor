@@ -10,7 +10,6 @@
 <body x-data='characterEditor({
     sn: [[ sn | tojson ]],
     remark: [[ remark | tojson ]],
-    status: [[ status | tojson ]],
     initialData: [[ data | safe ]],
 })' x-init="init()" x-cloak>
 
@@ -22,16 +21,6 @@
               x-ref="remark"
               @input="handleRemarkInput()"
               @blur="saveRemark()">[[ remark ]]</span>
-
-        <div class="status-radio-group">
-            <template x-for="s in ['archived', 'draft', 'refinement', 'finalized']">
-                <label class="status-radio-btn">
-                    <input type="radio" name="file-status" :value="s" 
-                           x-model="status" @change="updateStatus(s)">
-                    <span x-text="getStatusLabel(s)"></span>
-                </label>
-            </template>
-        </div>
     </div>
 
     <div class="tab-container">

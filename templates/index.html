@@ -23,21 +23,6 @@
                 <button @click="cloneSelected" :disabled="selectedCount !== 1 || isAnyMenuOpen" title="複製">💾</button>
                 <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
             </div>
-            
-            <div class="center-status-toggle">
-                <label class="status-btn" :class="{ active: activeStatuses.includes('archived') }">
-                    <input type="checkbox" x-model="activeStatuses" value="archived" hidden> 📦封存
-                </label>
-                <label class="status-btn" :class="{ active: activeStatuses.includes('draft') }">
-                    <input type="checkbox" x-model="activeStatuses" value="draft" hidden> 🧩草稿
-                </label>
-                <label class="status-btn" :class="{ active: activeStatuses.includes('refinement') }">
-                    <input type="checkbox" x-model="activeStatuses" value="refinement" hidden> 🎨潤飾
-                </label>
-                <label class="status-btn" :class="{ active: activeStatuses.includes('finalized') }">
-                    <input type="checkbox" x-model="activeStatuses" value="finalized" hidden> 📌定稿
-                </label>
-            </div>
 
             <div class="right-button">
                 <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📚</button>
@@ -98,13 +83,7 @@
                     </div>
                 </div>
                 <div>
-                    <div class="filename-label">
-                        <span x-show="item.status === 'archived'" title="封存">📦</span>
-                        <span x-show="item.status === 'draft'" title="草稿">🧩</span>
-                        <span x-show="item.status === 'refinement'" title="潤飾">🎨</span>
-                        <span x-show="item.status === 'finalized'" title="定稿">📌</span>
-                        <span x-text="item.file_id"></span>
-                    </div>
+                    <div x-text="item.file_id" class="filename-label"></div>
                     <div x-show="item.remark" class="file-id-remark" x-text="item.remark"></div>
                 </div>
             </div>

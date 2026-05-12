@@ -12,7 +12,6 @@ document.addEventListener('alpine:init', () => {
         filterKey: 'id',
         filterKeyword: '',
         showFilterMenu: false,
-        activeStatuses: ['archived', 'draft', 'refinement', 'finalized'],
         globalTagStyles: {},
         showWishing: false,
         wishes: [],
@@ -36,12 +35,6 @@ document.addEventListener('alpine:init', () => {
         },
         get filteredAndSortedImages() {
             let list = [...this.allImages];
-
-            // --- 1. 優先過濾 Status ---
-            list = list.filter(item => {
-                const status = item.status || 'draft';
-                return this.activeStatuses.includes(status);
-            });
 
             // --- 2. 套用關鍵字 Filter ---
             const rawKw = this.filterKeyword.trim().toLowerCase();

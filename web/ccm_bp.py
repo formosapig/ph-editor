@@ -110,7 +110,6 @@ def _prepare_metadatas(general_data, profiles, scenarios, metadatas):
     for k, v in metadatas.items():
         item_copy = copy.deepcopy(v)
         item_copy.pop("!remark", None)
-        item_copy.pop("!status", None)
         backstage = item_copy.setdefault('backstage', {})
         backstage.pop("notes", None)
         tag_id = backstage.get('!tag_id')

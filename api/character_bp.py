@@ -21,8 +21,6 @@ from core.shared_data import (
     update_backstage_data,
     update_character_data,
     update_remark_data,
-    update_status_data,
-
     get_suggest_file_id,
 )
 from core.user_config_manager import UserConfigManager
@@ -334,22 +332,6 @@ def patch_character_remark(sn, data):
     return jsonify({
         "success": True,
         "message": f"更新角色註解(REMARK)成功。",
-    })
-
-
-@api_characters_bp.patch("/<sn>/status")
-@require_json_data
-def patch_status(sn, data):
-    """ 更新角色的狀態 """
-    new_status = data.get('status')
-    if not new_status:
-        return jsonify({"error": "缺少 status 。"}), 400
-
-    update_status_data(sn, new_status)
-    
-    return jsonify({
-        "success": True,
-        "message": f"更新檔案狀態(STATUS)成功。",
     })
 
 

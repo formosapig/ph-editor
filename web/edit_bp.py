@@ -40,6 +40,5 @@ def edit(sn, entry):
         #sub_sn=sub_sn,  # sub file 我們並不編輯它，只秀截圖
         file_id=entry.file_id,
         remark=entry.get_remark(),
-        status=entry.get_status(),
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )    

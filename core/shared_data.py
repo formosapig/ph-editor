@@ -227,14 +227,7 @@ def update_remark_data(sn: str, remark: str) -> bool:
             raise KeyError(f"[ERROR] SN:{sn} 找不到對應的 CharacterFileEntry")
         character_file_entry_obj.update_remark(remark)
         return True    
-    
-def update_status_data(sn: str, status: str) -> bool:
-    with data_lock:
-        character_file_entry_obj = get_character_file_entry(sn)
-        if character_file_entry_obj is None:
-            raise KeyError(f"[ERROR] SM:{sn} 找不到對應的 CharacterFileEntry")
-        character_file_entry_obj.update_status(status)
-        return True    
+   
 
 def process_tag_info(sn: str) -> tuple[str, str]:
     tag_style = ""
