@@ -86,8 +86,8 @@ th {
 /* 名字與年份的組合 */
 .p-name {
   font-weight: bold;
-  font-size: 14px;
-  color: #ffffff;
+  font-size: var(--font-size-profile);
+  color: #ffffff; /* 暗底, 所以不要套用 profile-badge */
   margin-bottom: 6px;
 }
 
@@ -430,13 +430,7 @@ th:not(.corner-cell), .matrix-cell {
     padding: 2px 4px;  /* 稍微給一點內距會比較美觀 */
 }
 
-.profile-badge {
-    background-color: var(--color-profile-background);
-    color: var(--color-profile-text);
-    border: 1px solid var(--color-profile-border);
-    border-radius: 3px;
-    padding: 0px 4px;
-    font-size: 14px;
+.profile-badge-ccm {
     margin-top: -10px;
     z-index: 10;
 }

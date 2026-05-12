@@ -2,6 +2,8 @@
 :root {
     --main-color: #fff;
 
+    /* 字體大小全局管理 */
+    --font-size-profile: 12px;
     
     --color-age: #ffcc00;  /* year, age, born and so on */
     /* profile badge */
@@ -32,3 +34,21 @@
     animation: fadeInUp 0.3s ease-out; /* 進入動畫 */
 }
 
+.profile-badge {
+    background-color: var(--color-profile-background);
+    color: var(--color-profile-text);
+    font-size: var(--font-size-profile);
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+    padding: 2px 5px;
+    border: 1px solid var(--color-profile-border);
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    pointer-events: none;
+}
