@@ -358,63 +358,7 @@ def get_color_trait_count(code: str) -> int:
         # 最後直接回傳 set 的長度（Size）
         return len(matched_profile_ids)
 
-'''
-def get_suggest_file_id(sn: str) -> str:
-    """
-    根據角色、情境或標籤資料，生成一個建議的檔案名稱。不包含副檔名。
-    
-    Args:
-        file_id (str): 檔案的唯一 ID。
-        
-    Returns:
-        str: 不包含副檔名的建議檔名。
-    """
-    default_file_id = "未知"
-    
-    entry = get_character_file_entry(sn)
-    if not entry:
-        return default_file_id
 
-    if entry.profile_id is None:
-        return default_file_id
-    
-    profile_data = entry.get_profile()
-    if not profile_data:
-        return default_file_id
-
-    scenario_data = entry.get_scenario()
-
-    if not scenario_data:
-        tag_type, tag_name = process_tag_info(sn)
-        if not tag_name:
-            return default_file_id
-        
-        profile_name = profile_data.get("name", "")
-        suggested_file_id = f"《{tag_name}》~{profile_name}"
-        return suggested_file_id.strip()
-
-    born_year = profile_data.get("born")
-    scenario_year = scenario_data.get("year")
-    age_str = ""
-    if born_year and scenario_year and isinstance(born_year, (int, str)) and isinstance(scenario_year, (int, str)):
-        try:
-            age = int(scenario_year) - int(born_year)
-            age_str = f"({age})"
-        except (ValueError, TypeError):
-            pass
-
-    profile_name = profile_data.get("name", "")
-    scenario_scene = scenario_data.get("scene", "")
-    if not profile_name and not scenario_scene:
-            return default_file_id
-
-    title = entry.get_character_title()
-    title_part = f"-{title.strip()}" if title and title.strip() else ""
-    #suggested_file_id = f"{profile_name}{age_str}【{scenario_scene}{title_part}】"
-    suggested_file_id = f"{profile_name}{age_str}【{title_part}】"
-           
-    return suggested_file_id.strip()
-'''
 def get_suggest_file_id(sn: str) -> tuple[bool, str]:
     """
     根據角色、場景（真實、歲月迴響、時光剪影）或標籤資料，生成建議檔名。
@@ -446,6 +390,31 @@ def find_another_sn_by_scenario_id(
                 
     return None
     
+
+def get_snapshot_by_tag_id(tag_id: int) -> str:
+    """根據確定的 tag_id 直接獲取其標籤的快照 (snapshot) 資料"""
+    if tag_id is None:
+        return ""
+
+    # 1. 從全域管理器拿到所有標籤清單
+    general_data = _extra_data_manager.get_general_data()
+    all_tags_list = general_data.get('tag_list', [])
+    
+    # 2. 尋找對應的標籤
+    found_tag_data = None
+    for tag_item in all_tags_list:
+        if isinstance(tag_item, dict) and tag_item.get('id') == tag_id:
+            found_tag_data = tag_item
+            break
+            
+    if not found_tag_data:
+        raise ValueError(f"無法在全域標籤資料中找到 tag_id '{tag_id}' 的資訊。")
+
+    # 3. 只安全地抓取 snapshot.zh 的資料並回傳
+    tag_snapshot = found_tag_data.get('snapshot', {}).get('zh', "")
+    return tag_snapshot
+
+
 def add_wish(data: Dict[str, Any]):
     with data_lock:
         wishes = get_wish_list()
@@ -455,6 +424,7 @@ def add_wish(data: Dict[str, Any]):
         _extra_data_manager.update_wish_list()
         return data
     
+
 def delete_wish(wish_id: int):
     with data_lock:
         wishes = get_wish_list()
