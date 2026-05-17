@@ -13,73 +13,78 @@
     remark: [[ remark | tojson ]],
     initialData: [[ data | safe ]],
 })' x-cloak>
+    <div class="app-layout-wrapper">
+        <!-- 左側縮圖區 -->
+        <aside class="thumbnail-container">
+            <div class="thumbnail-assets">
+                <img :src="'/api/characters/' + sn + '/thumbnail'"
+                    alt="縮圖"
+                    draggable="false">
+                <span class="file-id-label">[[ file_id ]]</span>
+                <span class="file-id-remark"
+                    contenteditable="true"
+                    x-ref="remark"
+                    @input="handleRemarkInput()"
+                    @blur="saveRemark">[[ remark ]]</span>
+            </div>
 
-    <div style="display: flex; align-items: center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
-        <span class="file-id-label">[[ file_id ]]</span>
-
-        <span id="file-id-remark" 
-              contenteditable="true" 
-              x-ref="remark"
-              @input="handleRemarkInput()"
-              @blur="saveRemark()">[[ remark ]]</span>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab-buttons">
-            <template x-for="(label, key) in mainTabs">
-                <button class="tab-button" 
-                        :class="{ 'active': activeMainTab === key }"
-                        @click="switchMainTab(key)" 
-                        x-text="label"></button>
-            </template>
-        </div>
-
-        <div class="sub-tab-buttons">
-            <template x-for="sub in subTabsConfig[activeMainTab]">
-                <button class="sub-tab-button" 
-                        :class="{ 'active': activeSubTab === sub.key }"
-                        @click="switchSubTab(sub.key)" 
-                        x-text="sub.label"></button>
-            </template>
-        </div>
+            <!-- 資訊區（文字全部集中在下層） -->
+            <div class="thumbnail-info">
+                <span class="snapshot-content">[[ snapshot ]]</span>
+            </div>
+        </aside>
         
-        <div class="content-and-thumbnail-wrapper">
-            <div id="dropdown-container" class="floating-dropdown" :class="{ 'show': dropdowns.length > 0 }">
-                <template x-for="(config, index) in dropdowns">
-                    <div class="dropdown-slot" style="display: flex;">
-                        <label x-text="config.displayLabel"></label>
-                        <select @change="handleDropdownChange(config, $event)">
-                            <template x-for="opt in config.options">
-                                <option :value="JSON.stringify(opt.value)" 
-                                        :selected="isOptionSelected(config, opt)"
-                                        :disabled="!!opt.disabled"
-                                        x-text="opt.label"></option>
-                            </template>
-                        </select>
-                    </div>
+        <!-- 右側編輯區 -->
+        <main class="tab-container">
+            <div class="tab-buttons">
+                <template x-for="(label, key) in mainTabs">
+                    <button class="tab-button" 
+                            :class="{ 'active': activeMainTab === key }"
+                            @click="switchMainTab(key)" 
+                            x-text="label"></button>
                 </template>
             </div>
 
-            <div class="main-content-shell">
-                <div class="main-content" 
-                     contenteditable="true" 
-                     x-ref="mainContent"
-                     @input="handleContentInput()"
-                     @blur="saveContent()"></div>
+            <div class="sub-tab-buttons">
+                <template x-for="sub in subTabsConfig[activeMainTab]">
+                    <button class="sub-tab-button" 
+                            :class="{ 'active': activeSubTab === sub.key }"
+                            @click="switchSubTab(sub.key)" 
+                            x-text="sub.label"></button>
+                </template>
             </div>
             
-            <div class="thumbnail-container">
-                <!--<div class="main-thumb-wrapper">-->
-                    <img :src="'/api/characters/' + sn + '/thumbnail'"
-                         alt="主角縮圖"
-                         draggable="false">
-                <!--</div>-->
-            </div>
+            <section class="content-wrapper">
+                <!-- 下拉選單區 -->
+                <div id="dropdown-container" class="floating-dropdown" :class="{ 'show': dropdowns.length > 0 }">
+                    <template x-for="(config, index) in dropdowns">
+                        <div class="dropdown-slot" style="display: flex;">
+                            <label x-text="config.displayLabel"></label>
+                            <select @change="handleDropdownChange(config, $event)">
+                                <template x-for="opt in config.options">
+                                    <option :value="JSON.stringify(opt.value)" 
+                                            :selected="isOptionSelected(config, opt)"
+                                            :disabled="!!opt.disabled"
+                                            x-text="opt.label"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- 主要文字線輯區 -->
+                <div class="main-content-shell">
+                    <div class="main-content" 
+                        contenteditable="true" 
+                        x-ref="mainContent"
+                        @input="handleContentInput()"
+                        @blur="saveContent()"></div>
+                </div>
+            </section>
+        </main>
 
+    </div> <!-- app-layout-wrapper -->
 
-        </div>
-    </div>
-    
     <div class="toast-container">
         <template x-for="msg in messages" :key="msg.id">
             <div class="toast-message" :class="msg.type" x-text="msg.text"></div>

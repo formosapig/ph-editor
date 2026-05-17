@@ -8,7 +8,8 @@ from flask import (
 
 # get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
-    find_another_sn_by_scenario_id,
+    #find_another_sn_by_scenario_id,
+    get_snapshot_by_tag_id,
 )
 from utils.character_file_utils import (
     #reload_character_data,
@@ -32,13 +33,15 @@ def edit(sn, entry):
     result_content = entry.get_character_data()
     append_general_data(result_content)
 
-    sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
-    
+    #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
+    snapshot = get_snapshot_by_tag_id(entry.tag_id)
+
     return render_template(
         "edit.html",
         sn=sn,
         #sub_sn=sub_sn,  # sub file 我們並不編輯它，只秀截圖
         file_id=entry.file_id,
         remark=entry.get_remark(),
+        snapshot=snapshot,
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )    

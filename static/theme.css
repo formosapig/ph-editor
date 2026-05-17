@@ -4,12 +4,50 @@
 
     /* 字體大小全局管理 */
     --font-size-profile: 12px;
+
+    --color-body-background: #1a1a1a;
+    --color-body-color: #e0e0e0;
     
+    /* editor */
+    --color-editor-bg: #d2ddc5;
+    --color-editor-text: #2b3324;
+    --color-editor-caret: #b2533e;
+    --color-editor-focus-bg: #e2edd5;/*#f4f8f0;*/
+    --color-editor-focus-border: #bb8855;
+    --color-eidtor-focut-shadow: rgba(187, 136, 85, 0.15);
+
     --color-age: #ffcc00;  /* year, age, born and so on */
     /* profile badge */
     --color-profile-background: rgba(255, 222, 150, 0.85);
     --color-profile-text: #3b2a00;
     --color-profile-border: rgba(60, 40, 0, 0.80);
+
+    /* =================================================== */
+    /* 🆕 新增：Tab 分頁系統合理配色 */
+    /* =================================================== */
+    
+    /* 1. Tab 的大背景層（通常是裝載所有分頁按鈕的底條或容器） */
+    --color-tab-background: #222222;       /* 比 body 暗黑背景稍微亮一點點的深夜灰 */
+
+    /* 2. 主分頁（tab-main）：大分類，需要最醒目 */
+    --color-tab-main-bg: #2a2a2a;          /* 未選中時：低調的深灰 */
+    --color-tab-main: #a0a0a0;        /* 未選中時：沈穩的灰色文字 */
+    
+    --color-tab-main-active-bg: #ffcc00;   /* 被選中時：直接採用你的 age 金黃色（呼應全局） */
+    --color-tab-main-active: #ffcc00;
+
+    /* 3. 子分頁（tab-sub）：次要分類，走內斂、具細節的高級感 */
+    --color-tab-sub-bg: #1e1e1e;           /* 未選中時：接近背景的深灰 */
+    --color-tab-sub-text: #888888;         /* 未選中時：暗淡的文字 */
+    
+    --color-tab-sub-active-bg: #333333;    /* 被選中時：稍微亮起來的灰色 */
+    --color-tab-sub-active-border: #60a5fa;/* 被選中時：底部帶有一條你剛才 remark 愛用的亮藍色下劃線 */
+    --color-tab-sub-active-text: #ffffff;  /* 被選中時：文字完全變白 */
+
+    /* dropdown */
+    --color-dropdown-bg: #252a2e;
+    --color-dropdown-border: #38424a;
+    --color-dropdown-select-label: #bb8855;
 }
 
 /* toast */
