@@ -22,16 +22,50 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    flex-direction: column-reverse; /* 👈 改成由下往上長，最新的一定在最下面 */
+    align-items: center; /* 👈 確保多條時，每一條自己置中 */
+    pointer-events: none; /* 👈 防止容器擋住後面的按鈕點擊 */
 }
 
 .toast-message {
-    background: rgba(0, 0, 0, 0.85); /* 帶一點透明度更高級 */
-    color: white;
-    padding: 12px 24px;
-    border-radius: 50px; /* 膠囊形狀 */
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    animation: fadeInUp 0.3s ease-out; /* 進入動畫 */
+  background: rgba(18, 18, 18, 0.85); /* 現代深色底 */
+  color: #eeeeee;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  backdrop-filter: blur(8px); /* 現代必備：毛玻璃特效 */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeInUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 帶有一點點回彈的高級動效 */
+  pointer-events: auto;
+
+
+  /* 透過偽元素 (Before) 塞入一個狀態小圓點 */
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ccc; /* 預設灰色 */
+  }
+
+  /* 成功：只有小圓點變綠色，或是字體微微變亮 */
+  &.success {
+    &::before { background-color: #4caf50; } /* 綠點 */
+  }
+
+  /* 錯誤：小圓點變紅色 */
+  &.error {
+    &::before { background-color: #f44336; } /* 紅點 */
+    color: #ffcdd2; /* 讓錯誤文字帶點微紅，更好看 */
+  }
+
+  /* 警告：小圓點變橘色 */
+  &.warning {
+    &::before { background-color: #ff9800; } /* 橘點 */
+  }
 }
 
 .profile-badge {
@@ -51,4 +85,15 @@
     text-overflow: ellipsis;
 
     pointer-events: none;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9); /* 從下方 20px 微微放大升起 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

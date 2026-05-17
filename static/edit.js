@@ -21,6 +21,8 @@ document.addEventListener('alpine:init', () => {
 
         // 請求令牌
         currentRequestId: 0,
+        
+        messages: [],
 
         mainTabs: {
             story: '故事', hair: '頭髮', face: '臉部',
@@ -274,14 +276,24 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        showMessage(text, type = 'success') {
-            this.messageText = text;
-            this.messageType = type;
-        },
+        //showMessage(text, type = 'success') {
+        //    this.messageText = text;
+        //    this.messageType = type;
+        //},
 
         notifyParent() {
             const bc = new BroadcastChannel('edit_file_sync_bus');
             bc.postMessage({ sn: this.sn, action: "updated" });
+        },
+        
+        showMessage(text, type = 'success') {
+            const id = Date.now();
+            console.error("id : ", id);
+            this.messages.push({ id, text, type });
+            setTimeout(() => {
+                this.messages = this.messages.filter(m => m.id !== id);
+            }, 3000);
         }
+
     }));
 });

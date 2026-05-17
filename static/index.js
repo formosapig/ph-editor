@@ -257,6 +257,13 @@ document.addEventListener('alpine:init', () => {
             try {
                 const suggestionRes = await fetch(`api/characters/${encodeURIComponent(sn)}/suggest`);
                 const suggestionData = await suggestionRes.json();
+                
+                if (!suggestionData.success) {
+                    // 失敗：用 alert 秀出建議檔名（只有「確定」按鈕），並直接中斷（不走後續改名流程）
+                    alert(`${suggestionData.suggested}`);
+                    return; 
+                }
+                
                 const newFilenameInput = prompt('請輸入新的檔名：', suggestionData.suggested);
 
                 if (!newFilenameInput || newFilenameInput.trim() === '') return;

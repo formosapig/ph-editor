@@ -51,39 +51,6 @@ h1 {
     }
 }
 
-/* result message 顯示區 - 移到下方後，不再需要 margin-bottom，並確保 flex-shrink */
-#result-message {
-  white-space: pre-wrap;
-  padding: 6px 10px;
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.2;
-  border-left: 3px solid transparent;
-  background-color: #fafafa;
-  color: #444;
-}
-
-/* 成功 */
-#result-message.success {
-  background-color: #e6f7ec;
-  border-left-color: #4caf50;
-  color: #2e5939;
-}
-
-/* 錯誤 */
-#result-message.error {
-  background-color: #fdecea;
-  border-left-color: #f44336;
-  color: #812b25;
-}
-
-/* 警告 */
-#result-message.warning {
-  background-color: #fff8e1;
-  border-left-color: #ff9800;
-  color: #7a4f01;
-}
-
 /* Tab 容器 */
 .tab-container {
     position: relative;

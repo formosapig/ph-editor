@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>INCARNATIO</title>
+  <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
   <link rel="stylesheet" href="[[ url_for('static', filename='edit.css') ]]" />
   <script src="[[ url_for('static', filename='edit.js') ]]" type="module"></script>
   <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
@@ -11,7 +12,7 @@
     sn: [[ sn | tojson ]],
     remark: [[ remark | tojson ]],
     initialData: [[ data | safe ]],
-})' x-init="init()" x-cloak>
+})' x-cloak>
 
     <div style="display: flex; align-items: center; gap: 0.5em; margin-bottom: 10px; user-select: none; cursor: default;">
         <span class="file-id-label">[[ file_id ]]</span>
@@ -78,9 +79,13 @@
 
         </div>
     </div>
-
-    <div id="result-message" :class="messageType" x-text="messageText"></div>
     
+    <div class="toast-container">
+        <template x-for="msg in messages" :key="msg.id">
+            <div class="toast-message" :class="msg.type" x-text="msg.text"></div>
+        </template>
+    </div>
+
     <script src="[[ url_for('static', filename='base.js') ]]"></script>
 </body>
 </html>
