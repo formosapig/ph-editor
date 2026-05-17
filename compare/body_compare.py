@@ -97,6 +97,12 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
         f" {val_origin_height} cm {val_setting_height} → {val_game_height}"
         if val_setting_height is not None else f"{val_game_height}"
     )
+    result["b_pro_hei"] = (
+        f"{'❌ ' + str(val_game_height) + ' → ' if val_setting_height != val_game_height else ''}"
+        f"✔️ {val_setting_height} ({val_origin_height} cm)"
+        if val_setting_height is not None else
+        f"{val_game_height}"
+    )
     # 全部 (body.overall.height, body.overall.head_size)
     result["b_overall"] = get_nested_value(d, "body.overall.head_size", -1)
     # body.overall.#skin_name
