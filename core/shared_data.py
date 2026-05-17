@@ -415,15 +415,13 @@ def get_suggest_file_id(sn: str) -> str:
            
     return suggested_file_id.strip()
 '''
-def get_suggest_file_id(sn: str) -> str:
+def get_suggest_file_id(sn: str) -> tuple[bool, str]:
     """
     根據角色、場景（真實、歲月迴響、時光剪影）或標籤資料，生成建議檔名。
     """
-    default_file_id = "未知"
-    
     entry = get_character_file_entry(sn)
     if not entry:
-        return default_file_id
+        return False, "角色實體不存在"
 
     return entry.get_suggest_file_id()
 

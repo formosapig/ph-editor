@@ -338,9 +338,9 @@ def patch_character_remark(sn, data):
 @api_characters_bp.get("/<sn>/suggest")
 def get_suggest(sn):
     """ 取得建議的 file_id ，任何失敗都回傳 未知 """
-    suggest = get_suggest_file_id(sn)
+    is_success, suggest = get_suggest_file_id(sn)
 
-    return jsonify({"success": True, "suggested": suggest})
+    return jsonify({"success": is_success, "suggested": suggest})
 
 
 @api_characters_bp.patch("/<sn>/rename")

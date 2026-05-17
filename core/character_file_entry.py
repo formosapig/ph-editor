@@ -243,23 +243,21 @@ class CharacterFileEntry:
         
         logger.info(f"刪除 Metadata : {self.file_id}")    
         
-    def get_suggest_file_id(self) -> str:
+    def get_suggest_file_id(self) -> tuple[bool,str]:
         """
         根據角色、場景（真實、歲月迴響、時光剪影）或標籤資料，生成建議檔名。
         """
-        default_file_id = "未知"
+                
+        # 確保角色檔案
+        if self.profile_id is None or not (profile_data := self.get_profile()):
+            return False, "角色檔案缺失"
         
-        if self.profile_id is None or self.scenario_id is None:
-            return default_file_id
-
-        profile_data = self.get_profile()
-        if not profile_data:
-            return default_file_id
+        if self.scenario_id is None or not (scenario_data := self.get_scenario()):
+            return False, "場景資料缺失"
 
         profile_name = profile_data.get("name", "")
         title = (self.get_character_title() or "").strip()
-        scenario_data = self.get_scenario()
-        
+                
         result = ""
         # --- 規則 1: 歲月迴響 (REVERBERATION) ---
         if self.scenario_id == SpecialScenario.REVERBERATION:
@@ -284,9 +282,9 @@ class CharacterFileEntry:
             
             result = f"{profile_name}{age_str}【{title}】"
         else:    
-            return default_file_id
+            return False, "無效的場景資料"
         
-        return sanitize_filename(result)
+        return True, sanitize_filename(result)
 
     def to_dict(self, tag_resolver=None):
         soul = self.calculate_soul()
@@ -353,7 +351,7 @@ class CharacterFileEntry:
         code = 0
 
         # 檔名正規化
-        if self.file_id == self.get_suggest_file_id():
+        if self.file_id == self.get_suggest_file_id()[1]:
             code += 1
         
         # 在 metadata 修改好, 修改了 png
