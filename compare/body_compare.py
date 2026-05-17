@@ -93,11 +93,6 @@ def flatten_body_data(d: Dict[str, Any]) -> Dict[str, Any]:
     val_game_height = get_nested_value(d, "body.overall.height", -1)
     # 如果 val_setting_height 不是 None，就格式化顯示；否則給空字串
     result["b_pro_hei"] = (
-        f"{'❌️' if val_setting_height != val_game_height else ''}"
-        f" {val_origin_height} cm {val_setting_height} → {val_game_height}"
-        if val_setting_height is not None else f"{val_game_height}"
-    )
-    result["b_pro_hei"] = (
         f"{'❌ ' + str(val_game_height) + ' → ' if val_setting_height != val_game_height else ''}"
         f"✔️ {val_setting_height} ({val_origin_height} cm)"
         if val_setting_height is not None else
