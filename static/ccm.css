@@ -431,6 +431,7 @@ th:not(.corner-cell), .matrix-cell {
 }
 
 .profile-badge-ccm {
+    line-height: 1;
     margin-top: -10px;
     z-index: 10;
 }
