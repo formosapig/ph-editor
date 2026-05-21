@@ -366,6 +366,38 @@ class CharacterFileEntry:
 
         return code
 
+    def get_correct(self) -> str:
+        result_lines = []
+        
+        profile = self.get_profile()
+        data = self.character_data.get_data()
+        
+        # 身高設定
+        val_origin_height = profile.get('height', 0)
+        val_setting_height = calculate_value_by_height(val_origin_height)
+        val_game_height = get_nested_value(data, "body.overall.height", -1)
+        
+        # 只有數字不對時才輸出
+        if val_setting_height != val_game_height:
+            result_lines.append(
+                f"❌ {val_game_height} → {val_setting_height} ({val_origin_height} cm)"
+            )
+        
+        # 罩杯設定
+        val_origin_cup = profile.get('cup', "")
+        val_setting_cup = get_sister_cup_value(val_origin_cup)
+        val_game_cup = get_nested_value(data, "body.breast.size", -1)
+        
+        # 只有數字不對時才輸出
+        if val_setting_cup != val_game_cup:
+            result_lines.append(
+                f"❌ {val_game_cup} → {val_setting_cup} ({val_origin_cup})"
+            )
+        
+        # 用換行符連接，如果都不對則回傳空字串
+        return "\n".join(result_lines)
+
+
     def __repr__(self):
         lines = [
             f"{'SN':>14}: {self.sn}",
