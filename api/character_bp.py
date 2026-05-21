@@ -295,7 +295,7 @@ def patch_data(sn, main_tab, sub_tab, data):
 
     response_data = {
         "success": True,
-        "message": f"角色資料節點 [{main_tab}][{sub_tab}] 更新成功（尚未寫入檔案）。",
+        "message": f"角色資料節點 [{main_tab}][{sub_tab}] 更新成功。",
     }
 
     # 加入額外標記
