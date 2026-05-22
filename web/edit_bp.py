@@ -35,7 +35,7 @@ def edit(sn, entry):
 
     #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
     snapshot = get_snapshot_by_tag_id(entry.tag_id)
-    correct = entry.get_correct()
+    correct = entry.get_correct()[1]
 
     return render_template(
         "edit.html",
@@ -43,7 +43,7 @@ def edit(sn, entry):
         #sub_sn=sub_sn,  # sub file 我們並不編輯它，只秀截圖
         file_id=entry.file_id,
         remark=entry.get_remark(),
-        correct = entry.get_correct(),
+        correct = correct,
         snapshot=snapshot,
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )    

@@ -1,4 +1,5 @@
 # ph-editor/core/character_file_entry.py
+from datetime import datetime
 import logging
 import os
 import copy
@@ -366,9 +367,43 @@ class CharacterFileEntry:
 
         return code
 
-    def get_correct(self) -> str:
+    def get_correct(self) -> tuple[int, str]:
+        correct_count = 0
         result_lines = []
         
+        # profile
+        if self.profile_id is None or self.profile_id == 0:
+            correct_count += 1
+            result_lines.append(
+                f"❌ 簡介 : 無角色"
+            )
+
+        # scenario
+        if not SpecialScenario.is_valid_scene(self.scenario_id):
+            correct_count += 1
+            result_lines.append(
+                f"❌ 場景 : 不存在"
+            )
+
+        # backstage
+        if not self.get_tag_name():
+            correct_count += 1
+            result_lines.append(
+                f"❌ 標籤 : 未選擇"
+            )
+
+
+        if not self.get_character_title():
+            correct_count += 1
+            result_lines.append(
+                f"❌ 標題 : 無"
+            )
+        if not self.get_character_detail():
+            correct_count += 1
+            result_lines.append(
+                f"❌ 細節 : 無"
+            )
+
         profile = self.get_profile()
         data = self.character_data.get_data()
         
@@ -379,8 +414,9 @@ class CharacterFileEntry:
         
         # 只有數字不對時才輸出
         if val_setting_height != val_game_height:
+            correct_count += 1
             result_lines.append(
-                f"❌ {val_game_height} → {val_setting_height} ({val_origin_height} cm)"
+                f"❌ 身高 : {val_game_height} → {val_setting_height} ({val_origin_height} cm)"
             )
         
         # 罩杯設定
@@ -390,12 +426,29 @@ class CharacterFileEntry:
         
         # 只有數字不對時才輸出
         if val_setting_cup != val_game_cup:
+            correct_count += 1
             result_lines.append(
-                f"❌ {val_game_cup} → {val_setting_cup} ({val_origin_cup})"
+                f"❌ 罩杯 : {val_game_cup} → {val_setting_cup} ({val_origin_cup})"
             )
         
+        # 檔名正規化
+        if self.file_id != (suggest := self.get_suggest_file_id())[1]:
+            correct_count += 1
+            result_lines.append(f"❌ 檔名 : {'→ ' if suggest[0] else '' + suggest[1]}")
+            
+        # 在 metadata 修改好, 修改了 png
+        metadata = self.data_source.get_metadata(self.sn)
+        meta_timestamp = metadata.get('modified') if metadata else None
+        if meta_timestamp is not None and os.path.exists(self.filename):
+            file_mtime = int(os.path.getmtime(self.filename))
+            if file_mtime < meta_timestamp:
+                correct_count += 1
+                dt = datetime.fromtimestamp(file_mtime)
+                dt_str = f"{dt.year}/{dt.month}/{dt.day} {dt.strftime('%H:%M:%S')}"            
+                result_lines.append(f"❌ 修改 : {dt_str}")
+
         # 用換行符連接，如果都不對則回傳空字串
-        return "\n".join(result_lines)
+        return correct_count, "\n".join(result_lines)
 
 
     def __repr__(self):

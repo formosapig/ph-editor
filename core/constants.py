@@ -25,3 +25,11 @@ class SpecialScenario(IntEnum):
     @classmethod
     def is_real_scene(cls, scenario_id: int) -> bool:
         return scenario_id is not None and scenario_id > 0
+    
+    @classmethod
+    def is_valid_scene(cls, scenario_id: int) -> bool:
+        return (
+            scenario_id == cls.SILHOUETTE or 
+            scenario_id == cls.REVERBERATION or
+            cls.is_real_scene(scenario_id)
+        )
