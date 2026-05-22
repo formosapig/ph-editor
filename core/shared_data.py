@@ -394,7 +394,7 @@ def find_another_sn_by_scenario_id(
 def get_snapshot_by_tag_id(tag_id: int) -> str:
     """根據確定的 tag_id 直接獲取其標籤的快照 (snapshot) 資料"""
     if tag_id is None:
-        return ""
+        return "-"
 
     # 1. 從全域管理器拿到所有標籤清單
     general_data = _extra_data_manager.get_general_data()

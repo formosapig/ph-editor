@@ -118,9 +118,9 @@ body {
   background-color: rgba(224, 108, 117, 0.08);
   
   /* 文字設定 */
-  font-size: 14px;
+  font-size: 13px;
   color: ver(--color-body-color);                 /* 文字也用同色系的紅 */
-  line-height: 1.2;
+  line-height: 1.1;
   white-space: pre-wrap;
   word-break: break-all;
   

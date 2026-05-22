@@ -288,7 +288,7 @@ document.addEventListener('alpine:init', () => {
         
         showMessage(text, type = 'success') {
             const id = Date.now();
-            console.error("id : ", id);
+            //console.error("id : ", id);
             this.messages.push({ id, text, type });
             setTimeout(() => {
                 this.messages = this.messages.filter(m => m.id !== id);
