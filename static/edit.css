@@ -63,7 +63,7 @@ body {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
     align-items: center;
   }
 
@@ -106,12 +106,12 @@ body {
 
 .correct {
   width: 100%;
-  margin-top: 12px;
+  
   box-sizing: border-box;
   
   /* 錯誤提示的外觀：紅色系邊框 + 淡紅底色（在 #1a1a1a 上會呈現暗紅） */
   border: 1px solid #e06c75;      /* 柔和的紅色，不刺眼但明確 */
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 8px 12px;
   
   /* 背景：在 #1a1a1a 上疊一層極淡的紅 */
@@ -129,13 +129,13 @@ body {
 
 .snapshot-content {
   width: 100%;          /* 寬度貼齊 25% 容器 */
-  margin-top: 12px;
+  
   box-sizing: border-box;
   
   /* 介面外觀：保留高質感設定，但沒有多餘的標題 */
   border: 1px solid var(--color-body-color);
-  border-radius: 4px; 
-  padding: 8px;
+  border-radius: 6px; 
+  padding: 8px 12px;
   
   /* 文字設定 */
   font-size: 14px;
