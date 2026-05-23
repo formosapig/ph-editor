@@ -76,10 +76,28 @@ document.addEventListener('alpine:init', () => {
                 const parts = rawKw.match(/"[^"]*"|\S+/g) || [];
                 const searchKeywords = parts.map(part => {
                     const isExact = part.startsWith('"') && part.endsWith('"');
-                    return {
+                    /*return {
                         keyword: isExact ? part.replace(/^"|"$/g, '') : part,
                         isExact: isExact
-                    };
+                    };*/
+                    let keyword = isExact ? part.replace(/^"|"$/g, '') : part;
+
+                    // 如果是 profile_name，且 nameMap 有定義，直接轉譯
+                    if (this.filterKey === 'profile_name') {
+                        if (!nameMap[keyword]) {
+                            let translated = '';
+                            // 遍歷關鍵字中的每個字
+                            for (let char of keyword) {
+                                translated += nameMap[char] || char; // 如果找不到對應就用原字
+                            }
+                            keyword = translated;
+                        } else {
+                            // 如果直接對應得到 (例如原本就有 "桂芬" 這個 key)，就用原本的
+                            keyword = nameMap[keyword].toLowerCase();
+                        }
+                    }
+
+                    return { keyword, isExact };
                 });
 
                 list = list.filter(item => {
@@ -99,20 +117,20 @@ document.addEventListener('alpine:init', () => {
                 const seed = getDailySeed();
                 return seededShuffle(list, seed);
             } else {
-            // --- 3. 最後進行排序 (穩定排序) ---
-            list = list.map((img, idx) => ({ ...img, __originalIndex: idx }))
-                .sort((a, b) => {
-                    const valA = (a[this.sortKey] || '').toString();
-                    const valB = (b[this.sortKey] || '').toString();
-                    const cmp = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
-                    
-                    if (cmp !== 0) {
-                        return this.sortAscending ? cmp : -cmp;
-                    }
-                    // 若值相同，保持原始順序 (穩定排序)
-                    return a.__originalIndex - b.__originalIndex;
-                })
-                .map(({ __originalIndex, ...img }) => img);
+                // --- 3. 最後進行排序 (穩定排序) ---
+                list = list.map((img, idx) => ({ ...img, __originalIndex: idx }))
+                    .sort((a, b) => {
+                        const valA = (a[this.sortKey] || '').toString();
+                        const valB = (b[this.sortKey] || '').toString();
+                        const cmp = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+                        
+                        if (cmp !== 0) {
+                            return this.sortAscending ? cmp : -cmp;
+                        }
+                        // 若值相同，保持原始順序 (穩定排序)
+                        return a.__originalIndex - b.__originalIndex;
+                    })
+                    .map(({ __originalIndex, ...img }) => img);
             }
 
             return list;

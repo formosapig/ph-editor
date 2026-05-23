@@ -78,6 +78,7 @@
                     <div class="main-content" 
                         contenteditable="true" 
                         x-ref="mainContent"
+                        @mouseup="translateSelection($event)"
                         @input="handleContentInput()"
                         @blur="saveContent()"></div>
                         <!-- 防止貼上格式，但是會導致資料錯亂，例如在 backstage 改了,瞬間移到 profile ，profile 資料會爛掉...

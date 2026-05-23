@@ -1,4 +1,5 @@
-import { request } from './request.js'
+import { request } from './request.js';
+import { nameMap } from './mapping.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('characterEditor', (params) => ({
@@ -67,6 +68,8 @@ document.addEventListener('alpine:init', () => {
                     if (!k.startsWith('!')) displayData[k] = data[k];
                 });
             }
+            //let jsonString = JSON.stringify(displayData, null, 2);
+            //this.$refs.mainContent.textContent = jsonString.replace(/^\{\s*/, '').replace(/\s*\}$/, '');
             this.$refs.mainContent.textContent = JSON.stringify(displayData, null, 2);
         },
 
@@ -76,11 +79,37 @@ document.addEventListener('alpine:init', () => {
             this.autoSaveTimer = setTimeout(() => this.saveContent(), 30000);
         },
 
+        translateSelection(event) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString().trim();
+            
+            if (!selectedText.trim()) return;
+
+            if (selectedText.length > 0) {
+                // 你的轉換邏輯...
+                const translated = selectedText.split('').map(char => nameMap[char] || char).join('');
+                
+                const newNode = document.createTextNode(translated);
+                range.deleteContents();
+                range.insertNode(newNode);
+                
+                // 執行完自動清除選取，避免二次觸發
+                selection.removeAllRanges();
+                
+                this.handleContentInput();
+            }
+        },
+
         async saveContent() {
             if (!this.hasChanged) return;
             
+            //let rawContent = this.$refs.mainContent.textContent.trim();
             let newData;
             try {
+                //newData = JSON.parse(`{ ${rawContent} }`);
                 newData = JSON.parse(this.$refs.mainContent.textContent);
             } catch (e) {
                 return this.showMessage('JSON 格式錯誤', 'error');
