@@ -1,4 +1,37 @@
 import { request } from './request.js';
+import { nameMap } from './mapping.js';
+
+// 產生基於當天日期的種子，保證「同一天內亂序結果固定」
+function getDailySeed() {
+    const today = new Date().toISOString().split('T')[0]; // 例如 "2026-05-22"
+    let hash = 0;
+    for (let i = 0; i < today.length; i++) {
+        hash = (hash << 5) - hash + today.charCodeAt(i);
+        hash |= 0; // 轉換為 32bit 整數
+    }
+    return Math.abs(hash);
+}
+
+// 確定性洗牌演算法 (Fisher-Yates 變體)
+function seededShuffle(array, seed) {
+    let list = [...array];
+    let m = list.length, t, i;
+    let s = seed;
+    while (m) {
+        i = Math.floor(random(s) * m--);
+        t = list[m];
+        list[m] = list[i];
+        list[i] = t;
+        s++; // 每次變動種子以產生下一個亂數
+    }
+    return list;
+}
+
+// 簡單的偽亂數產生器
+function random(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('phApp', () => ({
@@ -6,8 +39,8 @@ document.addEventListener('alpine:init', () => {
         currentScanPath: '',
         allImages: [],
         selectedSet: [],
-        sortAscending: true,
-        sortKey: 'score',
+        sortAscending: false,
+        sortKey: 'correct',
         showSortMenu: false,
         filterKey: 'id',
         filterKeyword: '',

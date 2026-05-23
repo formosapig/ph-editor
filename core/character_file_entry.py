@@ -302,11 +302,13 @@ class CharacterFileEntry:
             "remark": self.get_remark(),
             "tag_style": t_style,
             "tag_name": t_name,
-            "soul": soul,
-            "meat": meat,
-            "form": form,
-            "code": code,
-            "score": f"{(soul * 2 + 1) * (meat * 2 + 1) * (form * 2 + 1) * (code * 2 + 1):05d}"
+            "correct": self.get_correct()[0]
+            #"soul": soul,
+            #"meat": meat,
+            #"form": form,
+            #"code": code,
+            #"score": f"{(soul * 2 + 1) * (meat * 2 + 1) * (form * 2 + 1) * (code * 2 + 1):05d}"
+            #"score": self.get_correct()[0]
         }
         #if self.scenario_id in [SpecialScenario.REVERBERATION, SpecialScenario.SILHOUETTE]:
         #    res["ccm_managed"] = True;
@@ -434,7 +436,7 @@ class CharacterFileEntry:
         # 檔名正規化
         if self.file_id != (suggest := self.get_suggest_file_id())[1]:
             correct_count += 1
-            result_lines.append(f"❌ 檔名 : {'→ ' if suggest[0] else '' + suggest[1]}")
+            result_lines.append(f"❌ 檔名 : {'→ ' + suggest[1] if suggest[0] else suggest[1]}")
             
         # 在 metadata 修改好, 修改了 png
         metadata = self.data_source.get_metadata(self.sn)
