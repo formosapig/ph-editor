@@ -52,6 +52,7 @@ document.addEventListener('alpine:init', () => {
         newWishContent: '',
         messages: [],
         debounceTimer: null,
+        isShuffled: false,
 
         // Getters (Alpine 內部的 Getters 會自動追蹤響應式)
         get scanPathDisplay() {
@@ -93,6 +94,11 @@ document.addEventListener('alpine:init', () => {
                 });
             }
 
+            // 2.5 排序或隨機化
+            if (this.isShuffled) {
+                const seed = getDailySeed();
+                return seededShuffle(list, seed);
+            } else {
             // --- 3. 最後進行排序 (穩定排序) ---
             list = list.map((img, idx) => ({ ...img, __originalIndex: idx }))
                 .sort((a, b) => {
@@ -107,6 +113,7 @@ document.addEventListener('alpine:init', () => {
                     return a.__originalIndex - b.__originalIndex;
                 })
                 .map(({ __originalIndex, ...img }) => img);
+            }
 
             return list;
         },
