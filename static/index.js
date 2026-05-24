@@ -1,5 +1,5 @@
 import { request } from './request.js';
-import { nameMap } from './mapping.js';
+import { searchRegex, nameMap } from './mapping.js';
 
 // 產生基於當天日期的種子，保證「同一天內亂序結果固定」
 function getDailySeed() {
@@ -84,18 +84,9 @@ document.addEventListener('alpine:init', () => {
 
                     // 如果是 profile_name，且 nameMap 有定義，直接轉譯
                     if (this.filterKey === 'profile_name') {
-                        if (!nameMap[keyword]) {
-                            let translated = '';
-                            // 遍歷關鍵字中的每個字
-                            for (let char of keyword) {
-                                translated += nameMap[char] || char; // 如果找不到對應就用原字
+                        keyword = keyword.replace(searchRegex, (matched) => nameMap[matched]);
                             }
-                            keyword = translated;
-                        } else {
-                            // 如果直接對應得到 (例如原本就有 "桂芬" 這個 key)，就用原本的
-                            keyword = nameMap[keyword].toLowerCase();
-                        }
-                    }
+                    console.error("Keyword", keyword);
 
                     return { keyword, isExact };
                 });

@@ -1,5 +1,5 @@
 import { request } from './request.js';
-import { nameMap } from './mapping.js';
+import { nameMap, searchRegex } from './mapping.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('characterEditor', (params) => ({
@@ -84,22 +84,35 @@ document.addEventListener('alpine:init', () => {
             if (!selection.rangeCount) return;
 
             const range = selection.getRangeAt(0);
-            const selectedText = range.toString().trim();
-            
-            if (!selectedText.trim()) return;
+            const selectedText = range.toString();
 
-            if (selectedText.length > 0) {
-                // 你的轉換邏輯...
-                const translated = selectedText.split('').map(char => nameMap[char] || char).join('');
+            if (!selectedText || [...selectedText].length > 10) return;
+
+            // 進行轉換
+            const translated = selectedText.replace(searchRegex, (matched) => nameMap[matched]);
+
+            // 2. 判斷是否有變更 (只有在轉換後與原字串不同時才執行)
+            if (translated !== selectedText) {
+                // 1. 取得編輯區當前的完整字串
+                const editor = this.$refs.mainContent;
+                const fullContent = editor.textContent;
+
+                // 2. 在字串層面進行替換 (利用 index 來避免誤換)
+                // 為了極度安全，使用 Range 的 startOffset 定位
+                const start = range.startOffset;
+                const end = range.endOffset;
                 
-                const newNode = document.createTextNode(translated);
-                range.deleteContents();
-                range.insertNode(newNode);
-                
-                // 執行完自動清除選取，避免二次觸發
-                selection.removeAllRanges();
-                
+                const newContent = fullContent.slice(0, start) + translated + fullContent.slice(end);
+
+                // 3. 更新 DOM
+                editor.textContent = newContent;
+
+                // 4. 更新狀態並觸發儲存機制
+                this.hasChanged = true;
                 this.handleContentInput();
+                
+                // 5. 選擇性：重新聚焦以保持使用者體驗
+                selection.removeAllRanges();
             }
         },
 
