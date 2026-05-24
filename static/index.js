@@ -3,11 +3,18 @@ import { searchRegex, nameMap } from './mapping.js';
 
 // 產生基於當天日期的種子，保證「同一天內亂序結果固定」
 function getDailySeed() {
-    const today = new Date().toISOString().split('T')[0]; // 例如 "2026-05-22"
+    // 1. 取得當前 UTC 毫秒數
+    // 2. 加上 8 小時的毫秒數 (8 * 60 * 60 * 1000 = 28800000)
+    const now = new Date();
+    const utc8Time = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    
+    // 3. 直接取出日期字串
+    const today = utc8Time.toISOString().split('T')[0];
+
     let hash = 0;
     for (let i = 0; i < today.length; i++) {
         hash = (hash << 5) - hash + today.charCodeAt(i);
-        hash |= 0; // 轉換為 32bit 整數
+        hash |= 0;
     }
     return Math.abs(hash);
 }
@@ -85,7 +92,7 @@ document.addEventListener('alpine:init', () => {
                     // 如果是 profile_name，且 nameMap 有定義，直接轉譯
                     if (this.filterKey === 'profile_name') {
                         keyword = keyword.replace(searchRegex, (matched) => nameMap[matched]);
-                            }
+                    }
                     console.error("Keyword", keyword);
 
                     return { keyword, isExact };
@@ -263,6 +270,7 @@ document.addEventListener('alpine:init', () => {
 
         applySort(key) {
             this.sortKey = key;
+            this.isShuffled = false;
         },
 
         toggleSortOrder() {

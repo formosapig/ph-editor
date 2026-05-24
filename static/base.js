@@ -148,7 +148,7 @@
         injectStyles();
         createUI();
 
-        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'input'];
         let lastActivity = 0;
         const THROTTLE_DELAY = 1000;
 

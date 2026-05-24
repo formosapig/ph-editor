@@ -143,7 +143,7 @@ def process_profile_data(
                 logger.error(f"SN:{sn} 找不到對應的 CharacterFileEntry")
                 return False, None
             updated_profile_id = updated_profile.get("!id")
-            logger.debug(f"PROFILE_ID: ${updated_profile_id}")
+            #logger.debug(f"PROFILE_ID: ${updated_profile_id}")
             character_file_entry_obj.update_profile_id(updated_profile_id)
                 
         return success, new_profile_id
