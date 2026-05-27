@@ -3,13 +3,14 @@ import json
 import logging
 from flask import (
     Blueprint,
+    jsonify,
     render_template,
 )
 
 # get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
     #find_another_sn_by_scenario_id,
-    get_snapshot_by_tag_id,
+    get_descriptions_by_tag_id,
 )
 from utils.character_file_utils import (
     #reload_character_data,
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 #logger.disabled = True
 
 
-@edit_bp.route("/edit/<sn>")
+@edit_bp.get("/edit/<sn>")
 @inject_character_file_entry
 def edit(sn, entry):
     """
@@ -34,8 +35,8 @@ def edit(sn, entry):
     append_general_data(result_content)
 
     #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
-    snapshot = get_snapshot_by_tag_id(entry.tag_id)
     correct = entry.get_correct()[1]
+    desc = get_descriptions_by_tag_id(entry.tag_id)
 
     return render_template(
         "edit.html",
@@ -44,6 +45,32 @@ def edit(sn, entry):
         file_id=entry.file_id,
         remark=entry.get_remark(),
         correct=correct,
-        snapshot=snapshot,
+        appearance=desc["appearance"],
+        clothing=desc["clothing"],
+        snapshot=desc["snapshot"],
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
-    )    
+    )
+
+
+@edit_bp.patch("/edit/<sn>")
+@inject_character_file_entry
+def patch_data(sn, entry):
+    """
+    處理編輯角色的頁面請求。
+    """
+    # 特別重新讀取二進制資料
+    entry.reload_binary()
+    #result_content = entry.get_character_data()
+    #append_general_data(result_content)
+
+    #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
+    correct = entry.get_correct()[1]
+    desc = get_descriptions_by_tag_id(entry.tag_id)
+
+    return jsonify({
+        "file_id": entry.file_id,
+        "correct": correct,
+        "appearance": desc["appearance"],
+        "clothing": desc["clothing"],
+        "snapshot": desc["snapshot"],
+    })

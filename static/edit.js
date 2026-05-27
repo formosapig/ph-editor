@@ -4,6 +4,11 @@ import { nameMap, searchRegex } from './mapping.js';
 document.addEventListener('alpine:init', () => {
     Alpine.data('characterEditor', (params) => ({
         sn: params.sn,
+        file_id: params.file_id,
+        correct: params.correct,
+        appearance: params.appearance,
+        clothing: params.clothing,
+        snapshot: params.snapshot,
         globalParsedData: params.initialData || {},
 
         activeMainTab: 'story',
@@ -68,6 +73,7 @@ document.addEventListener('alpine:init', () => {
                     if (!k.startsWith('!')) displayData[k] = data[k];
                 });
             }
+            console.error("render", this.activeMainTab, this.activeSubTab, displayData);
             //let jsonString = JSON.stringify(displayData, null, 2);
             //this.$refs.mainContent.textContent = jsonString.replace(/^\{\s*/, '').replace(/\s*\}$/, '');
             this.$refs.mainContent.textContent = JSON.stringify(displayData, null, 2);
@@ -86,32 +92,15 @@ document.addEventListener('alpine:init', () => {
             const range = selection.getRangeAt(0);
             const selectedText = range.toString();
 
-            if (!selectedText || [...selectedText].length > 10) return;
-
             // 進行轉換
             const translated = selectedText.replace(searchRegex, (matched) => nameMap[matched]);
 
-            // 2. 判斷是否有變更 (只有在轉換後與原字串不同時才執行)
             if (translated !== selectedText) {
-                // 1. 取得編輯區當前的完整字串
-                const editor = this.$refs.mainContent;
-                const fullContent = editor.textContent;
-
-                // 2. 在字串層面進行替換 (利用 index 來避免誤換)
-                // 為了極度安全，使用 Range 的 startOffset 定位
-                const start = range.startOffset;
-                const end = range.endOffset;
+                // 核心邏輯：刪除當前選取的內容節點，並插入新節點
+                range.deleteContents(); 
+                range.insertNode(document.createTextNode(translated));
                 
-                const newContent = fullContent.slice(0, start) + translated + fullContent.slice(end);
-
-                // 3. 更新 DOM
-                editor.textContent = newContent;
-
-                // 4. 更新狀態並觸發儲存機制
-                this.hasChanged = true;
                 this.handleContentInput();
-                
-                // 5. 選擇性：重新聚焦以保持使用者體驗
                 selection.removeAllRanges();
             }
         },
@@ -119,6 +108,9 @@ document.addEventListener('alpine:init', () => {
         async saveContent() {
             if (!this.hasChanged) return;
             
+            const currentMainTab = this.activeMainTab;
+            const currentSubTab = this.activeSubTab;
+
             //let rawContent = this.$refs.mainContent.textContent.trim();
             let newData;
             try {
@@ -134,18 +126,18 @@ document.addEventListener('alpine:init', () => {
                 if (k.startsWith('!')) newData[k] = originalData[k];
             }
 
-            await this.uploadData(newData);
+            await this.uploadData(newData, currentMainTab, currentSubTab);
             this.hasChanged = false;
         },
 
-        async uploadData(newData) {
-            const url = `/api/characters/${encodeURIComponent(this.sn)}/data/${this.activeMainTab}/${this.activeSubTab}`;
+        async uploadData(newData, mainTab, subTab) {
+            const url = `/api/characters/${encodeURIComponent(this.sn)}/data/${mainTab}/${subTab}`;
             try {
                 const result = await request(url, {
                     method: 'PATCH',
                     body: JSON.stringify({ data: newData })
                 });
-                this.globalParsedData[this.activeMainTab][this.activeSubTab] = newData;
+                this.globalParsedData[mainTab][subTab] = newData;
                 this.showMessage(result.message || '更新成功');
                 this.notifyParent();
                 // 根據後端需求重新載入選單
@@ -243,47 +235,6 @@ document.addEventListener('alpine:init', () => {
             this.saveContent();
         },
 
-        /*async handleDropdownChange(config, event) {
-            const targetTab = this.activeMainTab;
-            const targetSub = this.activeSubTab;
-            const val = JSON.parse(event.target.value);
-            const selectedOption = event.target.options[event.target.selectedIndex];
-            const optObj = config.options.find(o => JSON.stringify(o.value) === event.target.value);
-            const label = optObj ? (optObj.pureLabel || optObj.label) 
-                                 : selectedOption.text;
-
-            // 如果是切換 Profile/Scenario ID，需要抓取詳細資料
-            if (config.dataKey === "!id" && val !== "") {
-                const type = this.activeSubTab === 'profile' ? 'profile' : 'scenario';
-                const res = await fetch(`/api/${type}/detail/${val}`);
-                const detailData = await res.json();
-                this.globalParsedData[targetTab][targetSub] = detailData;
-            } else if (config.dataKey === "year" && val !== "" && targetSub === 'scenario') {
-                // 無腦調用 flask ，由 flask 擋住    
-                const res = await fetch(`/api/scenario/reverberation/${val}?sn=${encodeURIComponent(this.sn)}`);
-                if (res.status === 200) {
-                    this.globalParsedData[targetTab][targetSub] = await res.json();
-                }
-            } else {
-                // 通用更新
-                const dataRef = this.globalParsedData[targetTab][targetSub];
-                if (val === "") {
-                    delete dataRef[config.dataKey];
-                    if (config.labelKey) delete dataRef[config.labelKey];
-                } else {
-                    dataRef[config.dataKey] = val;
-                    if (config.labelKey && config.labelKey !== config.dataKey) {
-                        dataRef[config.labelKey] = label;
-                    }
-                }
-            }
-            if (this.activeMainTab === targetTab && this.activeSubTab === targetSub) {
-                this.renderContent();
-            }
-            this.hasChanged = true;
-            this.saveContent();
-        },*/
-
         isOptionSelected(config, opt) {
             const current = this.globalParsedData[this.activeMainTab]?.[this.activeSubTab]?.[config.dataKey];
             return JSON.stringify(current) === JSON.stringify(opt.value);
@@ -318,10 +269,29 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        //showMessage(text, type = 'success') {
-        //    this.messageText = text;
-        //    this.messageType = type;
-        //},
+        async reload(imgElement) {
+            // 取得原本的網址（不含參數部分）
+            const baseUrl = imgElement.src.split('?')[0];
+            // 加上時間戳記，強制瀏覽器重新請求
+            imgElement.src = `${baseUrl}?t=${new Date().getTime()}`;
+
+            try {
+                const data = await request(`/edit/${encodeURIComponent(this.sn)}`, {
+                    method: 'PATCH'
+                });
+
+                // 成功更新狀態
+                this.file_id = data.file_id;
+                this.correct = data.correct;
+                this.appearance = data.appearance;
+                this.clothing = data.clothing;
+                this.snapshot = data.snapshot;
+                
+                this.showMessage('資料重載成功');
+            } catch (err) {
+                this.showMessage(error.displayMessage, 'error');
+            }
+        },
 
         notifyParent() {
             const bc = new BroadcastChannel('edit_file_sync_bus');

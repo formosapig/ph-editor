@@ -391,28 +391,27 @@ def find_another_sn_by_scenario_id(
     return None
     
 
-def get_snapshot_by_tag_id(tag_id: int) -> str:
-    """根據確定的 tag_id 直接獲取其標籤的快照 (snapshot) 資料"""
+def get_descriptions_by_tag_id(tag_id: int) -> dict:
+    """獲取標籤的快照、外觀與衣著資料"""
     if tag_id is None:
-        return "-"
+        return {"snapshot": "-", "appearance": "-", "clothing": "-"}
 
-    # 1. 從全域管理器拿到所有標籤清單
+    # 1. 取得資料
     general_data = _extra_data_manager.get_general_data()
     all_tags_list = general_data.get('tag_list', [])
     
-    # 2. 尋找對應的標籤
-    found_tag_data = None
-    for tag_item in all_tags_list:
-        if isinstance(tag_item, dict) and tag_item.get('id') == tag_id:
-            found_tag_data = tag_item
-            break
+    # 2. 優化搜尋 (使用 generator expression 簡化)
+    found_tag = next((t for t in all_tags_list if isinstance(t, dict) and t.get('id') == tag_id), None)
             
-    if not found_tag_data:
+    if not found_tag:
         raise ValueError(f"無法在全域標籤資料中找到 tag_id '{tag_id}' 的資訊。")
 
-    # 3. 只安全地抓取 snapshot.zh 的資料並回傳
-    tag_snapshot = found_tag_data.get('snapshot', {}).get('zh', "")
-    return tag_snapshot
+    # 3. 安全地提取所有需要的欄位
+    return {
+        "appearance": found_tag.get('appearance', {}).get('zh', ""),
+        "clothing": found_tag.get('clothing', {}).get('zh', ""),
+        "snapshot": found_tag.get('snapshot', {}).get('zh', "")
+    }
 
 
 def add_wish(data: Dict[str, Any]):

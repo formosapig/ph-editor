@@ -452,7 +452,6 @@ class CharacterFileEntry:
         # 用換行符連接，如果都不對則回傳空字串
         return correct_count, "\n".join(result_lines)
 
-
     def __repr__(self):
         lines = [
             f"{'SN':>14}: {self.sn}",
@@ -490,6 +489,35 @@ class CharacterFileEntry:
             raise IOError(f"寫入檔案失敗：{self.filename} -> {e}")
 
         logger.info(f"儲存 {self.filename} 成功")
+
+    def reload_binary(self):
+        """
+        僅重新讀取檔案中的 PlayHome 二進位資料並更新 character_data。
+        Metadata 保持不變。
+        """
+        # 1. 重新讀取檔案二進位資料
+        try:
+            with open(self.filename, "rb") as f:
+                full_png_data = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"找不到角色檔案，無法重新載入：{self.filename}")
+        except Exception as e:
+            raise RuntimeError(f"讀取檔案失敗：{self.filename} -> {e}")
+
+        # 2. 重新定位並擷取 PlayHome 資料區塊
+        marker_start_pos = full_png_data.find(PLAYHOME_MARKER)
+        if marker_start_pos == -1:
+            raise ValueError(f"檔案中未找到 PlayHome 標記：{self.filename}")
+
+        raw_data_with_marker = full_png_data[marker_start_pos:]
+
+        # 3. 更新 character_data 實例
+        try:
+            self.character_data = CharacterData(raw_data_with_marker)
+        except Exception as e:
+            raise ValueError(f"無法解析重新載入的角色資料：{self.filename} -> {e}")
+
+        logger.info(f"成功重新載入角色二進位資料：{self.file_id}")
 
     @classmethod
     def load(

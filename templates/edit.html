@@ -10,7 +10,11 @@
 </head>
 <body x-data='characterEditor({
     sn: [[ sn | tojson ]],
-    remark: [[ remark | tojson ]],
+    file_id: [[ file_id | tojson ]],
+    correct: [[ correct | tojson ]],
+    appearance: [[ appearance | tojson ]],
+    clothing: [[ clothing | tojson ]],
+    snapshot: [[ snapshot | tojson ]],
     initialData: [[ data | safe ]],
 })' x-cloak>
     <div class="app-layout-wrapper">
@@ -19,8 +23,9 @@
             <div class="thumbnail-assets">
                 <img :src="'/api/characters/' + sn + '/thumbnail'"
                     alt="縮圖"
-                    draggable="false">
-                <span class="file-id-label">[[ file_id ]]</span>
+                    draggable="false"
+                    @dblclick="reload($event.target)">
+                <span class="file-id-label" x-text="file_id"></span>
                 <span class="file-id-remark"
                     contenteditable="true"
                     x-ref="remark"
@@ -30,8 +35,7 @@
 
             <!-- 資訊區（文字全部集中在下層） -->
             <div class="thumbnail-info">
-                [% if correct %]<span class="correct">[[ correct ]]</span>[% endif %]
-                <span class="snapshot-content">[[ snapshot ]]</span>
+                <span class="correct" x-show="correct" x-text="correct"></span>
             </div>
         </aside>
         
@@ -87,6 +91,12 @@
                 </div>
             </section>
         </main>
+            <div class="info-panel">
+                
+                <span class="snapshot-content snapshot-meat" x-text="appearance"></span>
+                <span class="snapshot-content snapshot-form" x-text="clothing"></span>
+                <span class="snapshot-content snapshot-code" x-text="snapshot"></span>
+            </div>
 
     </div> <!-- app-layout-wrapper -->
 
