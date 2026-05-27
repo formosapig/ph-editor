@@ -52,3 +52,6 @@ tests/test_assets/*
 build/
 dist/
 *.egg-info/
+
+# --- vs code counter
+.VSCodeCounter/
