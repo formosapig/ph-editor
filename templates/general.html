@@ -105,11 +105,12 @@
       <thead>
         <tr>
           <th>類型</th>
+          <th>群組</th>
           <th>名稱</th>
           <th>描述</th>
-          <th>拍照</th>
           <th>特徵</th>
           <th>穿著</th>
+          <th>拍照</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -125,6 +126,19 @@
               </select>
             </td>
             <td>
+                <select x-model="item.sub_of">
+                    <option value="">無</option>
+                    <template x-for="other in tag_array" :key="other.id">
+                        <option 
+                            x-show="other.id !== item.id" 
+                            :value="other.id" 
+                            x-text="other.name.zh"
+                            :selected="parseInt(item.sub_of) === parseInt(other.id)">
+                        </option>
+                    </template>
+                </select>
+            </td>
+            <td>
               <input
                 type="text"
                 x-model="item.name.zh"
@@ -133,9 +147,9 @@
               />
             </td>
             <td><textarea x-model="item.desc.zh" placeholder="描述"></textarea></td>
-            <td><textarea x-model="item.snapshot.zh" placeholder="拍照"></textarea></td>
             <td><textarea x-model="item.appearance.zh" placeholder="特徵"></textarea></td>
             <td><textarea x-model="item.clothing.zh" placeholder="穿著"></textarea></td>
+            <td><textarea x-model="item.snapshot.zh" placeholder="拍照"></textarea></td>
             <td>
               <button @click="removeTag(index)" :disabled="tag_array.length === 1">刪除</button>
             </td>

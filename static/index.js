@@ -93,7 +93,7 @@ document.addEventListener('alpine:init', () => {
                     if (this.filterKey === 'profile_name') {
                         keyword = keyword.replace(searchRegex, (matched) => nameMap[matched]);
                     }
-                    console.error("Keyword", keyword);
+                    //console.error("Keyword", keyword);
 
                     return { keyword, isExact };
                 });
@@ -249,7 +249,7 @@ document.addEventListener('alpine:init', () => {
                     });
                     
                     if (!response.ok) throw new Error('存檔失敗');
-                    console.log('✅ UI 設定已同步');
+                    //console.log('✅ UI 設定已同步');
                 } catch (err) {
                     console.error('❌ 永固化出錯:', err);
                 }
@@ -284,6 +284,8 @@ document.addEventListener('alpine:init', () => {
 
         applyFilter(key) {
             this.filterKey = key;
+            if (key === '')
+                this.filterKeyword = '';
             this.selectedSet = [];
         },
 
