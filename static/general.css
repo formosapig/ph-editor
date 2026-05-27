@@ -67,9 +67,26 @@ input[type="text"], input[type="number"], textarea {
 
 textarea {
   resize: vertical; /* 允許垂直調整大小 */
-  min-height: 50px; /* 最小高度 */
+  /*resize: none;*/
+  min-height: 60px; /* 最小高度 */
   text-align: left; /* textarea 內容通常靠左對齊 */
+  /*field-sizing: content;*/
+  padding: 8px;
+  max-width: 240px;
 }
+/*
+textarea {
+  /* 關鍵屬性：自動隨內容調整尺寸 */
+  /*field-sizing: content;
+  
+  /* 設定最小高度，避免太短看起來奇怪 */
+  /*min-height: 40px; 
+  
+  /* 為了美觀，加上一點內距與寬度 */
+  /*width: 100%;
+  padding: 8px;
+  resize: none; /* 關閉手動拖拉，因為高度會自動適應 */
+/*}*/
 
 input[type="color"] {
   width: 60px; /* 設定固定寬度 */
