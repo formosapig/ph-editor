@@ -10,7 +10,7 @@ from flask import (
 # get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
     #find_another_sn_by_scenario_id,
-    get_descriptions_by_tag_id,
+    get_info_by_tag_id,
 )
 from utils.character_file_utils import (
     #reload_character_data,
@@ -36,7 +36,14 @@ def edit(sn, entry):
 
     #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
     correct = entry.get_correct()[1]
-    desc = get_descriptions_by_tag_id(entry.tag_id)
+    info = get_info_by_tag_id(entry.tag_id)
+    profile = entry.get_profile()
+    scenario = entry.get_scenario()
+    backstage = entry.get_backstage()
+    final_data = {
+        key: "\n".join(filter(None, [info.get(key), profile.get(key), scenario.get(key), backstage.get(key)]))
+        for key in ["soul", "meat", "form", "code"]
+    }
 
     return render_template(
         "edit.html",
@@ -45,9 +52,10 @@ def edit(sn, entry):
         file_id=entry.file_id,
         remark=entry.get_remark(),
         correct=correct,
-        appearance=desc["appearance"],
-        clothing=desc["clothing"],
-        snapshot=desc["snapshot"],
+        soul=final_data["soul"],
+        meat=final_data["meat"],
+        form=final_data["form"],
+        code=final_data["code"],
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )
 
@@ -65,12 +73,20 @@ def patch_data(sn, entry):
 
     #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
     correct = entry.get_correct()[1]
-    desc = get_descriptions_by_tag_id(entry.tag_id)
+    info = get_info_by_tag_id(entry.tag_id)
+    profile = entry.get_profile()
+    scenario = entry.get_scenario()
+    backstage = entry.get_backstage()
+    final_data = {
+        key: "\n".join(filter(None, [info.get(key), profile.get(key), scenario.get(key), backstage.get(key)]))
+        for key in ["soul", "meat", "form", "code"]
+    }
 
     return jsonify({
         "file_id": entry.file_id,
         "correct": correct,
-        "appearance": desc["appearance"],
-        "clothing": desc["clothing"],
-        "snapshot": desc["snapshot"],
+        "soul": final_data["soul"],
+        "meat": final_data["meat"],
+        "form": final_data["form"],
+        "code": final_data["code"],
     })

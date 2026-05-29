@@ -12,9 +12,10 @@
     sn: [[ sn | tojson ]],
     file_id: [[ file_id | tojson ]],
     correct: [[ correct | tojson ]],
-    appearance: [[ appearance | tojson ]],
-    clothing: [[ clothing | tojson ]],
-    snapshot: [[ snapshot | tojson ]],
+    soul: [[ soul | tojson ]],
+    meat: [[ meat | tojson ]],
+    form: [[ form | tojson ]],
+    code: [[ code | tojson ]],
     initialData: [[ data | safe ]],
 })' x-cloak>
     <div class="app-layout-wrapper">
@@ -92,10 +93,10 @@
             </section>
         </main>
             <div class="info-panel">
-                
-                <span class="snapshot-content snapshot-meat" x-text="appearance"></span>
-                <span class="snapshot-content snapshot-form" x-text="clothing"></span>
-                <span class="snapshot-content snapshot-code" x-text="snapshot"></span>
+                <span class="info-content info-soul" x-text="soul"></span>
+                <span class="info-content info-meat" x-text="meat"></span>
+                <span class="info-content info-form" x-text="form"></span>
+                <span class="info-content info-code" x-text="code"></span>
             </div>
 
     </div> <!-- app-layout-wrapper -->

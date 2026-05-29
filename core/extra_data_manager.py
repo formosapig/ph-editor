@@ -36,8 +36,10 @@ DEFAULT_PROFILE_TEMPLATE = {
     "about": "關於角色",
 }
 
+ORDER_DEFAULT = ["soul", "meat", "form", "code"]
+
 # On'yomi = 音讀,中文轉日文音... , name -> 音讀以脫敏
-ORDER_PROFILE = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"]
+ORDER_PROFILE = ["!id", "name", "!group_id", "group", "born", "job", "role", "height", "cup", "look", "sex", "about", "notes"] + ORDER_DEFAULT
 
 DEFAULT_SCENARIO_TEMPLATE = {
     "!id": SpecialScenario.NEW.value,
@@ -46,7 +48,7 @@ DEFAULT_SCENARIO_TEMPLATE = {
     "notes": "如果沒有任何變更，並且觸發儲存，會變成移除場景設定。"
 }
 
-ORDER_SCENARIO = ["!id", "!echo", "scene", "year", "season", "plot", "notes"]
+ORDER_SCENARIO = ["!id", "!echo", "scene", "year", "season", "plot", "notes"] + ORDER_DEFAULT
 
 DEFAULT_BACKSTAGE_TEMPLATE = {
     "!tag_id": 1,
@@ -58,7 +60,7 @@ DEFAULT_BACKSTAGE_TEMPLATE = {
 }
 
 # gen = generation
-ORDER_BACKSTAGE = ["tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "!resonance_id", "resonance", "title", "detail", "notes"]
+ORDER_BACKSTAGE = ["tag", "!tag_id", "persona", "!persona_code", "shadow", "!shadow_code", "!resonance_id", "resonance", "title", "detail", "notes"] + ORDER_DEFAULT
 
 ORDER_EPOCH = [] # 暫時先空著...
 

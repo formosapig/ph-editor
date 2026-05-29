@@ -391,10 +391,10 @@ def find_another_sn_by_scenario_id(
     return None
     
 
-def get_descriptions_by_tag_id(tag_id: int) -> dict:
+def get_info_by_tag_id(tag_id: int) -> dict:
     """獲取標籤的快照、外觀與衣著資料"""
     if tag_id is None:
-        return {"snapshot": "-", "appearance": "-", "clothing": "-"}
+        return {"desc": "-", "snapshot": "-", "appearance": "-", "clothing": "-"}
 
     # 1. 取得資料
     general_data = _extra_data_manager.get_general_data()
@@ -408,9 +408,10 @@ def get_descriptions_by_tag_id(tag_id: int) -> dict:
 
     # 3. 安全地提取所有需要的欄位
     return {
-        "appearance": found_tag.get('appearance', {}).get('zh', ""),
-        "clothing": found_tag.get('clothing', {}).get('zh', ""),
-        "snapshot": found_tag.get('snapshot', {}).get('zh', "")
+        "soul": found_tag.get('desc', {}).get('zh', ""),
+        "meat": found_tag.get('appearance', {}).get('zh', ""),
+        "form": found_tag.get('clothing', {}).get('zh', ""),
+        "code": found_tag.get('snapshot', {}).get('zh', "")
     }
 
 

@@ -24,7 +24,7 @@ body {
 
 .app-layout-wrapper {
   display: grid;
-  grid-template-columns: clamp(252px, 20%, 378px) 1fr 300px; /* 左、中、右 */
+  grid-template-columns: clamp(252px, 20%, 378px) 1fr minmax(300px, 20%); /* 左、中、右 */
   gap: 16px;
   height: 100%;
   width: 100%;
@@ -378,56 +378,47 @@ body {
   /*width: 140px;*/
 }
 
+:root {
+  /* 定義更清晰的色調 */
+  --bg-dark: #121212;
+  --bg-card: #1e1e1e;
+  --text-main: #e0e0e0;
+}
+
 .info-panel {
-  /*flex: 0 0 300px; /* 給予固定寬度，或改為 flex: 1 若希望它跟 tab-container 同樣彈性 */
-  /*height: 100%;*/
-  /*background-color: var(--color-body-background);*/
-  /*border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);*/
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  /*padding: 12px;*/
+  background-color: transparent; /*(--bg-dark); /* 明顯區分主體背景 */
   overflow-y: auto;
-  scrollbar-width: thin;
-  padding-right: 8px;
-  scrollbar-gutter: stable;
+  padding-right: 8px; /* scroll bar */
 }
 
-.snapshot-content {
-  width: 100%;          /* 寬度貼齊 25% 容器 */
-  
+.info-content {
+  width: 100%;
   box-sizing: border-box;
-  
-  /* 介面外觀：保留高質感設定，但沒有多餘的標題 */
-  border: 2px solid var(--color-body-color);
-  border-radius: 6px; 
-  padding: 10px;
-  
-  /* 文字設定 */
-  font-size: 14px;
-  color: var(--color-body-color);
-  line-height: 1.4;
+  padding: 8px 12px;
+    
+  /* 確保換行與長文字處理 */
   white-space: pre-wrap;
   word-break: break-all;
+
+  /* 背景與邊框處理 */
+  background-color: #333; /* 賦予區塊明確的背景底色 */
+  border-left: 4px solid;           /* 用左側色條取代全框，減輕厚重感 */
+  /*border-radius: 4px;*/
+  color: #ccc;
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 輕微陰影增加立體感 */
 }
 
-.snapshot-code {
-    /*background-color: #60a5fa; /* 藍色系 (Code) */
-    border-color: #3b82f6;     /* 加深邊框以提升層次感 */
-}
-
-.snapshot-meat {
-    /*background-color: #fb923c; /* 橘色系 (Meat) */
-    border-color: #f97316;
-}
-
-.snapshot-form {
-    /*background-color: #f472b6; /* 粉色系 (Form) */
-    border-color: #ec4899;
-}
-
+/* 針對不同類別的色彩系統 (確保對比度) */
+.info-soul { border-left-color: #4ade80; }
+.info-meat { border-left-color: #fb923c; }
+.info-form { border-left-color: #f472b6; }
+.info-code { border-left-color: #60a5fa; }
 
 [x-cloak] { display: none; }
 	

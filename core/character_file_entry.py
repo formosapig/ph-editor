@@ -199,6 +199,9 @@ class CharacterFileEntry:
 
     def get_scenario(self) -> dict:
         return self.data_source.get_scenario(self.scenario_id)
+    
+    def get_backstage(self) -> dict:
+        return self.data_source.get_metadata(self.sn).get('backstage', {})
         
     def update_profile_id(self, profile_id: int):
         self.profile_id = profile_id

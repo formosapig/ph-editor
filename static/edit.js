@@ -6,9 +6,10 @@ document.addEventListener('alpine:init', () => {
         sn: params.sn,
         file_id: params.file_id,
         correct: params.correct,
-        appearance: params.appearance,
-        clothing: params.clothing,
-        snapshot: params.snapshot,
+        soul: params.soul,
+        meat: params.meat,
+        form: params.form,
+        code: params.code,
         globalParsedData: params.initialData || {},
 
         activeMainTab: 'story',
@@ -92,6 +93,9 @@ document.addEventListener('alpine:init', () => {
             const range = selection.getRangeAt(0);
             const selectedText = range.toString();
 
+            if (selectedText.length > 10)
+                return;
+    
             // 進行轉換
             const translated = selectedText.replace(searchRegex, (matched) => nameMap[matched]);
 
@@ -283,9 +287,10 @@ document.addEventListener('alpine:init', () => {
                 // 成功更新狀態
                 this.file_id = data.file_id;
                 this.correct = data.correct;
-                this.appearance = data.appearance;
-                this.clothing = data.clothing;
-                this.snapshot = data.snapshot;
+                this.soul = data.soul;
+                this.meat = data.meat;
+                this.form = data.form;
+                this.code = data.code;
                 
                 this.showMessage('資料重載成功');
             } catch (err) {
