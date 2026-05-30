@@ -68,8 +68,8 @@ def patch_data(sn, entry):
     """
     # 特別重新讀取二進制資料
     entry.reload_binary()
-    #result_content = entry.get_character_data()
-    #append_general_data(result_content)
+    result_content = entry.get_character_data()
+    append_general_data(result_content)
 
     #sub_sn = find_another_sn_by_scenario_id(entry.scenario_id, sn)
     correct = entry.get_correct()[1]
@@ -89,4 +89,5 @@ def patch_data(sn, entry):
         "meat": final_data["meat"],
         "form": final_data["form"],
         "code": final_data["code"],
+        "data": result_content
     })

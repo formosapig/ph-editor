@@ -291,6 +291,7 @@ document.addEventListener('alpine:init', () => {
                 this.meat = data.meat;
                 this.form = data.form;
                 this.code = data.code;
+                this.globalParsedData = data.data;
                 
                 this.showMessage('資料重載成功');
             } catch (err) {

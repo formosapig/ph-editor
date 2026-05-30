@@ -83,6 +83,7 @@
                     <div class="main-content" 
                         contenteditable="true" 
                         x-ref="mainContent"
+                        x-effect="renderContent()"
                         @mouseup="translateSelection($event)"
                         @input="handleContentInput()"
                         @blur="saveContent()"></div>
