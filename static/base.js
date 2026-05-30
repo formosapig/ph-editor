@@ -20,11 +20,11 @@
                 left: 2px;
                 padding: 5px 10px;
                 background: rgba(10, 10, 10, 0.85);
-                color: #00ff41;
+                color: #4da6ff;
                 font-family: 'Consolas', 'Monaco', monospace;
                 font-size: 14px;
                 font-weight: bold;
-                border: 1px solid #00ff41;
+                border: 1px solid #4da6ff;
                 border-radius: 4px;
                 z-index: 2147483647;
                 cursor: pointer;
@@ -33,8 +33,8 @@
                 box-shadow: 0 0 8px rgba(0, 255, 65, 0.2);
             }
             #session-countdown.is-paused {
-                color: #4da6ff !important;
-                border-color: #4da6ff !important;
+                color: #00ff41 !important;
+                border-color: #00ff4a !important;
             }
             #session-countdown.warning {
                 color: #ff3e3e;
