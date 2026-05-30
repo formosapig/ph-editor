@@ -30,6 +30,7 @@
             /* 輸入文字改為淺灰色 */
             color: #e0e0e0; 
             color: transparent;
+            color: #706;
         }
         /* 當被禁用（錯誤顯示數字）時的樣式 */
         input:disabled {
@@ -56,6 +57,18 @@
             color: #444;
         }
     </style>
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            // persisted 為 true 代表頁面是從 bfcache 載入的
+            if (event.persisted) {
+                const inputField = document.querySelector('input[name="password"]');
+                if (inputField) {
+                    inputField.value = ''; // 清空密碼欄
+                    inputField.focus();    // 強制將游標放回輸入框
+                }
+            }
+        });
+    </script>
 </head>
 <body>
 
