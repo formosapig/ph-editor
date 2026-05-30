@@ -2,6 +2,7 @@
 import struct
 import logging
 from io import BytesIO
+import colorsys
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +111,7 @@ def _read_color(stream: BytesIO) -> dict:
         "a": _read_float(stream),
     }
 
-
+'''
 def _format_color_for_json(color_data: dict) -> str:
     if any(
         c is None or c != c
@@ -122,6 +123,30 @@ def _format_color_for_json(color_data: dict) -> str:
     b = max(0, min(255, round(color_data["b"] * 255)))
     a = max(0, min(255, round(color_data["a"] * 255)))
     return f"({r}, {g}, {b}, {a})"
+'''
+
+
+def _format_color_for_json(color_data: dict) -> str:
+    # 檢查 NaN 或 None
+    if any(c is None or c != c for c in color_data.values()):
+        return "NaN"
+
+    # 1. 計算 RGB (0-255)
+    r = max(0, min(255, round(color_data["r"] * 255)))
+    g = max(0, min(255, round(color_data["g"] * 255)))
+    b = max(0, min(255, round(color_data["b"] * 255)))
+    a = max(0, min(255, round(color_data["a"] * 255)))
+
+    # 2. 轉換為 HSV (需將 RGB 正規化為 0-1)
+    h, s, v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
+    
+    # 3. 格式化輸出
+    # H: 0-360度, S/V: 0-100%
+    h_deg = round(h * 360)
+    s_pct = round(s * 255)
+    v_pct = round(v * 255)
+    
+    return f"({h_deg}, {s_pct}, {v_pct}, {a}) #rgb({r}, {g}, {b})"
 
 
 def _pack_color(color_str: str) -> bytes:
