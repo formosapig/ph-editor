@@ -393,6 +393,7 @@ body {
   background-color: transparent; /*(--bg-dark); /* 明顯區分主體背景 */
   overflow-y: auto;
   padding-right: 8px; /* scroll bar */
+  
 }
 
 .info-content {
@@ -409,16 +410,38 @@ body {
   border-left: 4px solid;           /* 用左側色條取代全框，減輕厚重感 */
   /*border-radius: 4px;*/
   color: #ccc;
+  
+  /* --- 修改區塊 --- */
+  background-color: #2a2a2a;      /* 更深的灰色，與可輸入區域做出區隔 */
+  color: #C8C5BF;                    /* 文字顏色變灰，降低亮度，暗示非主動輸入 */
+  border-left: 4px solid;
+  cursor: default;                /* 游標維持預設，不變為文字選取狀態 */
+  user-select: none;              /* 防止文字被選取複製，強化唯讀感 */
+  opacity: 0.9;                   /* 稍微調低透明度，增加「靜態」視覺感受 */
+  /* ---------------- */
+
   font-size: 14px;
   line-height: 1.6;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3); /* 輕微陰影增加立體感 */
 }
 
 /* 針對不同類別的色彩系統 (確保對比度) */
-.info-soul { border-left-color: #4ade80; }
+/*.info-soul { border-left-color: #4ade80; }
 .info-meat { border-left-color: #fb923c; }
 .info-form { border-left-color: #f472b6; }
-.info-code { border-left-color: #60a5fa; }
+.info-code { border-left-color: #60a5fa; }*/
+
+/* 魂 (Soul) - 薄荷綠調 */
+.info-soul { border-left-color: #4ade80; color: #d4f2e0; }
+
+/* 肉 (Meat) - 柔和橘調 */
+.info-meat { border-left-color: #fb923c; color: #fcead9; }
+
+/* 形 (Form) - 柔和粉調 */
+.info-form { border-left-color: #f472b6; color: #fce4f1; }
+
+/* 代 (Code) - 柔和藍調 */
+.info-code { border-left-color: #60a5fa; color: #e1edff; }
 
 [x-cloak] { display: none; }
 	
