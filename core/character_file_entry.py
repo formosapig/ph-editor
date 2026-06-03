@@ -520,7 +520,7 @@ class CharacterFileEntry:
         except Exception as e:
             raise ValueError(f"無法解析重新載入的角色資料：{self.filename} -> {e}")
 
-        logger.info(f"成功重新載入角色二進位資料：{self.file_id}")
+        #logger.info(f"成功重新載入角色二進位資料：{self.file_id}")
 
     @classmethod
     def load(
