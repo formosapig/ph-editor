@@ -22,7 +22,8 @@ from flask import (
 from waitress import serve
 from werkzeug.routing import IntegerConverter
 
-from api.character_bp import api_characters_bp
+from api.character_bp import api_character_bp
+from api.characters_bp import api_characters_bp
 from api.profile import api_profile_bp
 from api.scenario_bp import api_scenario_bp
 from api.ui_config import api_ui_config_bp
@@ -80,6 +81,7 @@ app.register_blueprint(compare_bp)
 app.register_blueprint(edit_bp)
 app.register_blueprint(epoch_bp)
 app.register_blueprint(general_bp)
+app.register_blueprint(api_character_bp)
 app.register_blueprint(api_characters_bp)
 app.register_blueprint(api_profile_bp)
 app.register_blueprint(api_scenario_bp)

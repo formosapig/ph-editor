@@ -36,7 +36,7 @@
                         :class="{ 'has-parent': char.parent_sn }"
                     >
                         <div class="thumb-wrapper">
-                            <img :src="'/path/to/thumb/' + char.file_id" alt="thumb">
+                            <img :src="'/api/character/' + char.sn + '/thumbnail'" alt="thumb">
                         </div>
                         <span class="file-id" x-text="char.file_id"></span>
                     </div>

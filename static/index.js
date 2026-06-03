@@ -314,7 +314,7 @@ document.addEventListener('alpine:init', () => {
             if (this.selectedSet.length !== 1) return;
             const sn = this.selectedSet[0];
             try {
-                const suggestionRes = await fetch(`api/characters/${encodeURIComponent(sn)}/suggest`);
+                const suggestionRes = await fetch(`api/character/${encodeURIComponent(sn)}/suggest`);
                 const suggestionData = await suggestionRes.json();
                 
                 if (!suggestionData.success) {
@@ -334,7 +334,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const newFilename = newFilenameInput.trim();
-                const renameRes = await fetch(`/api/characters/${encodeURIComponent(sn)}/rename`, {
+                const renameRes = await fetch(`/api/character/${encodeURIComponent(sn)}/rename`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ new_file_id: newFilename })
@@ -363,7 +363,7 @@ document.addEventListener('alpine:init', () => {
             if (this.selectedSet.length !== 1) return;
             const originalSN = this.selectedSet[0];
             try {
-                const data = await request(`/api/characters/${encodeURIComponent(originalSN)}/clone`, {method: 'POST'});
+                const data = await request(`/api/character/${encodeURIComponent(originalSN)}/clone`, {method: 'POST'});
                 const newChar = data.new_data;
                 const updateList = (list) => {
                     const idx = list.findIndex(img => img.sn === originalSN);
@@ -473,7 +473,7 @@ document.addEventListener('alpine:init', () => {
         async refrechCharacter(sn) {
             if (!sn) return false;
             try {
-                const response = await fetch(`/api/characters/${encodeURIComponent(sn)}/refresh?view=gallery`);
+                const response = await fetch(`/api/character/${encodeURIComponent(sn)}/refresh?view=gallery`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const newData = await response.json();
                 const allIndex = this.allImages.findIndex(c => c.sn === sn);

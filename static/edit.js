@@ -135,7 +135,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async uploadData(newData, mainTab, subTab) {
-            const url = `/api/characters/${encodeURIComponent(this.sn)}/data/${mainTab}/${subTab}`;
+            const url = `/api/character/${encodeURIComponent(this.sn)}/data/${mainTab}/${subTab}`;
             try {
                 const result = await request(url, {
                     method: 'PATCH',
@@ -257,7 +257,7 @@ document.addEventListener('alpine:init', () => {
         async saveRemark() {
             if (!this.remarkHasChanged) return;
             const newRemark = this.$refs.remark.innerText.trim();
-            const url = `/api/characters/${encodeURIComponent(this.sn)}/remark`;
+            const url = `/api/character/${encodeURIComponent(this.sn)}/remark`;
 
             try {
                 const result = await request(url, {
