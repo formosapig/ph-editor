@@ -2,7 +2,9 @@
 (function() {
     let timeout;
     let countdownInterval;
-    let isPaused = false; 
+    let isPaused = false;
+    let lastTildeTime = 0;
+    const DOUBLE_CLICK_THRESHOLD = 300; // 300ms 內連按算雙擊
     
     // --- 定義兩種模式的時間 ---
     const NORMAL_TIME = 44687;    // 44秒
@@ -164,12 +166,27 @@
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Backquote') {
-                e.preventDefault();
-                if (e.ctrlKey || e.metaKey) {
-                    togglePause(true);
+                const now = Date.now();
+            
+                
+                // 判斷是否為雙擊
+                if (now - lastTildeTime < DOUBLE_CLICK_THRESHOLD) {
+                    e.preventDefault();
+                    // 帥爺策略：雙擊切換模式
+                    togglePause(true); 
+                    lastTildeTime = 0; // 重置，避免連續觸發三次變兩次
                 } else {
-                    terminateSession(true);
+                    lastTildeTime = now;
+                    // 這裡原本的單擊行為可以保持原樣，或者什麼都不做
+                    // 若你擔心誤觸，這裡可以保持靜默
                 }
+                //e.preventDefault();
+                if (e.ctrlKey || e.metaKey) {
+                    //togglePause(true);
+                    terminateSession(true);
+                } //else {
+                //    terminateSession(true);
+                //}
             }
         }, true);
 
