@@ -4,7 +4,7 @@ body {
   color: #e0e0e0;
   margin: 0;
   padding: 0; /* 確保 body 無邊距 */
-  font-family: "Microsoft JhengHei", verdana;
+  font-family: var(--font-family-base);
   overflow: hidden; /* 防止 body 出現雙重滾動條 */
 }
 
@@ -270,7 +270,7 @@ th:not(.corner-cell), .matrix-cell {
     .header-year {
       font-size: 13px;       /* 稍微縮小 */
       opacity: 0.8;          /* 稍微半透明，增加層次感 */
-      font-family: monospace; /* 年份用等寬字體更有紀錄感 */
+      font-family: var(--font-family-code);
       color: #eaddff;        /* 維持你的紫色調 */
     }
   }

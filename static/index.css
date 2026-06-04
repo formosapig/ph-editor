@@ -1,83 +1,71 @@
 html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden; /* 禁止 body 捲動 */
-  font-family: Verdana;
+    display: flex;
+    flex-direction: column;    
+    height: 100vh;
+    margin: 0;
+    overflow: hidden; /* 禁止 body 捲動 */
+    font-family: var(--font-family-base);
 }
 
 /* 固定 actionButtons 區塊在頁面上方 */
-#actionButtons {
-  background-color: #264653; /* 深藍灰，帶金屬感 */
-  color: #a8dadc; /* 淺藍綠，清新點綴 */
-  position: fixed;
-  top: 0px; /* 根據 h2 + input + button 的高度略作調整 */
-  left: 0;
-  right: 0;
-  /*background: white;*/
-  padding: 8px 18px;
-  border-bottom: 1px solid #ccc;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 100;
-}
-/* 最外層縱向排列 */
-.action-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.action-buttons {
+    background-color: var(--color-main-menu-bg);
+    color: #a8dadc; /* 淺藍綠，清新點綴 */
+    color: var(--color-main-menu-color);
+    padding: 16px;
+    border-bottom: 1px solid rgba(168, 218, 220, 0.4); /* 微微透光 */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
 
-/* 按鈕排成一行 */
-.buttons-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .buttons-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
 
-/* 左側按鈕群 */
-.left-buttons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+        .left-buttons {display: flex; gap: 6px;}
+        .right-buttons {display: flex; gap: 6px;}
+    }
 
-.action-bar button {
-  user-select: none;
-  cursor: default;
-  outline: none;
-}
+    button {
+        user-select: none;
+        outline: none;
+        padding: 4px 8px;
+        font-size: 16px;
+        cursor: pointer;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        background-color: #f0f0f0;
 
-/* 按鈕統一樣式 */
-.action-bar button {
-  padding: 4px 8px;
-  font-size: 16px;
-  cursor: pointer;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-  background-color: #f0f0f0;
-}
+        &:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
 
-.action-bar button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-/* 排序按鈕開啟時高亮（與 action bar 一致風格） */
-button.active {
-  background-color: #2a6b78;         /* 深一點的藍綠 */
-  border: 1px solid #a8dadc;         /* 淺藍綠描邊 */
-  color: #ffffff;                    /* 更亮的字色 */
-  box-shadow: 0 0 6px rgba(168, 218, 220, 0.4);
-  border-radius: 4px;
+        &:active {
+            background-color: #2a6b78;         /* 深一點的藍綠 */
+            border: 1px solid #a8dadc;         /* 淺藍綠描邊 */
+            color: #ffffff;                    /* 更亮的字色 */
+            box-shadow: 0 0 6px rgba(168, 218, 220, 0.4);
+            border-radius: 4px;
+        }
+
+        &:hover:not(:disabled) {
+            background-color: #e0e0e0;
+            transform: translateY(-1px);
+        }
+
+    }
+   
 }
 
 /* 浮動選單共用樣式，不含定位與尺寸 */
 .float-menu {
   position: fixed;
-  background-color: #264653;
-  color: #a8dadc;
-  border: 1px solid #3a5a6b;
+    background-color: var(--color-float-menu-bg);
+    color: var(--color-float-menu-color);
+    border: 1px solid var(--color-float-menu-border);
   border-radius: 6px;
   z-index: 9999;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -105,20 +93,20 @@ button.active {
 
 /* 排序選項 Hover */
 .float-menu .option:hover {
-  background-color: #2f5e6e;
+  background-color: var(--color-float-menu-hover);
 }
 
 /* 排序選項 Active */
 .float-menu .option.active {
-  border: 1px solid #a8dadc;
-  background-color: #355a66;
+  border: 1px solid var(--color-float-menu-active-border);
+  background-color: var(--color-float-menu-active);
 }
 
 /* 分隔線 */
 .float-menu .divider {
   width: 1px;
   height: 24px;
-  background-color: #3a5a6b;
+  background-color: var(--color-float-menu-divider);
 }
 
 /* 掃描路徑與選取計數的容器 */
@@ -149,11 +137,12 @@ button.active {
 }
 
 #gallery {
-  background-color: #4b041d;
-  color: #b0b0b0;  
-  position: absolute;
-  top: 70px;  /* 緊接 topBar 下方 */
-  left: 0; right: 0; bottom: 0;
+    flex: 1;
+
+  background-color: var(--color-main-bg);
+  /*position: absolute;*/
+  /*top: 70px;  /* 緊接 topBar 下方 */
+  /*left: 0; right: 0; bottom: 0;*/
   overflow-y: auto; /* 自己滾動 */
   padding: 20px 10px; /*30px 20px 10px 20px;*/
   padding: 20px 30px 20px 20px;
@@ -170,6 +159,9 @@ button.active {
     align-content: start;
 
   cursor: default;
+
+  scrollbar-width: thin;  /* thin = 較細，auto = 正常*/
+  scrollbar-color: #555 #2a2a2a;  /* 滑塊顏色 軌道顏色*/
 }
 
 .thumb-container {
@@ -403,7 +395,7 @@ button.active {
     background: white; border: 1px solid #ccc;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     display: flex; flex-direction: column; z-index: 999;
-    border-radius: 8px; overflow: hidden; font-family: sans-serif;
+    border-radius: 8px; overflow: hidden;
     opacity: 0.9;
     user-select: none;
 }

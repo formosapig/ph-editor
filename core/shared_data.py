@@ -271,6 +271,7 @@ def get_profile_count(id: int) -> int:
                 count += 1        
 
         return count
+    
 
 def get_tag_count(id: int) -> int:
     with data_lock:
@@ -432,5 +433,35 @@ def delete_wish(wish_id: int):
         _extra_data_manager.update_wish_list()
     
 
-
-    
+def get_processed_metadata_list(profile_id: int) -> list:
+    """
+    獲取並處理 metadata，只回傳前端需要的欄位與計算後的 age。
+    """
+    with data_lock:
+        metadata_map = _extra_data_manager.get_metadata_map()
+        # 假設你已經有取得 profile_data 和 scenario_data 的方法
+        # profile_data_map = ... 
+        # scenario_data_map = ...
+        
+        results = []
+        
+        for sn, metadata in metadata_map.items():
+            if metadata.get("!profile_id") == profile_id:
+                # 1. 取得必要欄位
+                file_id = metadata.get("!file_id")
+                tag_id = metadata.get("backstage", {}).get("!tag_id")
+                scenario_id = metadata.get("!scenario_id")
+                
+                # 2. 複雜計算邏輯 (封裝在內部或呼叫外部函數)
+                # age = calculate_age(profile_id, scenario_id)
+                age = 20 # 範例數值
+                
+                # 3. 組裝成前端需要的結構 (List of Objects)
+                results.append({
+                    "sn": sn,
+                    "file_id": file_id,
+                    "tag_id": tag_id,
+                    "age": age
+                })
+        
+        return results

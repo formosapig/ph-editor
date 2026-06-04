@@ -155,14 +155,6 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (e) { console.error('取得掃描路徑失敗', e); }
 
-            const adjustGalleryTop = () => {
-                const actionButtons = document.getElementById('actionButtons');
-                const gallery = document.getElementById('gallery');
-                if (actionButtons && gallery) gallery.style.top = actionButtons.offsetHeight + 'px';
-            };
-            window.addEventListener('resize', adjustGalleryTop);
-            adjustGalleryTop();
-
             // 接收 editor 資料 (BroadcastChannel)
             const bc = new BroadcastChannel('edit_file_sync_bus');
             bc.onmessage = (e) => {

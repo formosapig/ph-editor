@@ -4,7 +4,7 @@ body {
   margin: 0;
   padding: 20px;
   overflow: hidden; /* 禁止 body 產生捲動條 */
-  font-family: Verdana;
+  font-family: var(--font-family-base);
   display: flex;
   flex-direction: column; /* 讓子元素垂直堆疊 */
   box-sizing: border-box;
@@ -304,7 +304,7 @@ body {
   flex: 1 1 auto;           
   /* max-width: 75%;           /* 保留右側留白 */
   white-space: pre-wrap;
-  font-family: monospace, Consolas, 'Courier New', monospace;
+  font-family: var(--font-family-code);
   color: #333;
   color:var(--color-editor-text);
   padding: 12px 15px;
@@ -339,7 +339,6 @@ body {
   padding: 8px 12px;
   z-index: 10;
   font-size: 14px;
-  font-family: Arial, sans-serif;
   box-sizing: border-box;
   border-radius: 4px;
 }
@@ -431,17 +430,17 @@ body {
 .info-form { border-left-color: #f472b6; }
 .info-code { border-left-color: #60a5fa; }*/
 
-/* 魂 (Soul) - 薄荷綠調 */
-.info-soul { border-left-color: #4ade80; color: #d4f2e0; }
+/* 魂 - 暗薄荷 */
+.info-soul { border-left-color: #4ade80; color: #a6c8b0; }
 
-/* 肉 (Meat) - 柔和橘調 */
-.info-meat { border-left-color: #fb923c; color: #fcead9; }
+/* 肉 - 暗橘 */
+.info-meat { border-left-color: #fb923c; color: #d4bb96; }
 
-/* 形 (Form) - 柔和粉調 */
-.info-form { border-left-color: #f472b6; color: #fce4f1; }
+/* 形 - 暗粉 */
+.info-form { border-left-color: #f472b6; color: #d4acc4; }
 
-/* 代 (Code) - 柔和藍調 */
-.info-code { border-left-color: #60a5fa; color: #e1edff; }
+/* 代 - 暗藍 */
+.info-code { border-left-color: #60a5fa; color: #abc2e0; }
 
 [x-cloak] { display: none; }
 	

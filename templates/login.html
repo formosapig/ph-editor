@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>System Configuration</title>
+    <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
     <style>
         body {
             margin: 0;
             /* 改為深色背景，減少藍光刺激 */
-            background: #1a1a1a; 
+            background: var(--color-body-bg); 
             height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-family: 'Courier New', Courier, monospace;
-            color: #d1d1d1;
+            font-family: var(--font-family-base);
+            color: var(--color-body-color);
         }
         input {
             padding: 15px;
@@ -30,7 +31,7 @@
             /* 輸入文字改為淺灰色 */
             color: #e0e0e0; 
             color: transparent;
-            color: #706;
+            color: var(--color-bess);
         }
         /* 當被禁用（錯誤顯示數字）時的樣式 */
         input:disabled {
@@ -41,7 +42,7 @@
             font-weight: bold;
         }
         /* 焦點狀態改為暗藍色 */
-        input:focus { border-bottom-color: #0056b3; }
+        input:focus { border-bottom-color: var(--color-bess); }
         
         .hint {
             font-size: 12px;

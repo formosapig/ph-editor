@@ -2,11 +2,27 @@
 :root {
     --main-color: #fff;
 
-    /* 字體大小全局管理 */
-    --font-size-profile: 12px;
-
     --color-body-background: #1a1a1a;
+    --color-body-bg: #1a1a1a;
     --color-body-color: #e0e0e0;
+
+    --color-main-bg: #212121;
+    --color-main-color: #cccccc;
+
+    --color-main-menu-bg: #323;
+    --color-main-menu-color: #c6c6dd;
+
+    --color-float-menu-bg: #2a2a2a;            /* 灰銀 */
+    --color-float-menu-color: #c6c6dd;
+    --color-float-menu-border: #4a4a5a;        /* 鋼藍邊框 */
+    --color-float-menu-divider: #3a3a4a;       /* 分割線 */
+    --color-float-menu-hover: #1a1a2a;         /* 懸浮 - 暗夜 */
+    --color-float-menu-active: #3a3a5a;        /* 啟用 - 深鋼藍 */
+    --color-float-menu-active-border: #c0c0c0; /* 啟用邊框 - 銀白 */
+    
+
+
+    --color-bess: #706; /* useless? */
     
     /* editor */
     --color-editor-bg: #d2ddc5;
@@ -28,10 +44,14 @@
     
     /* 1. Tab 的大背景層（通常是裝載所有分頁按鈕的底條或容器） */
     --color-tab-background: #222222;       /* 比 body 暗黑背景稍微亮一點點的深夜灰 */
+    --color-tab-bg: #222222;       /* 比 body 暗黑背景稍微亮一點點的深夜灰 */
 
     /* 2. 主分頁（tab-main）：大分類，需要最醒目 */
     --color-tab-main-bg: #2a2a2a;          /* 未選中時：低調的深灰 */
     --color-tab-main: #a0a0a0;        /* 未選中時：沈穩的灰色文字 */
+    
+    --color-tab-main-hover-bg: #474747;
+    --color-tab-main-hover: #c0c0c0;
     
     --color-tab-main-active-bg: #ffcc00;   /* 被選中時：直接採用你的 age 金黃色（呼應全局） */
     --color-tab-main-active: #ffcc00;
@@ -48,6 +68,19 @@
     --color-dropdown-bg: #252a2e;
     --color-dropdown-border: #38424a;
     --color-dropdown-select-label: #bb8855;
+
+    /* 字體 */
+    /* 建議的字體順序：兼顧主流語言、幻想字型與最後的等寬保底 */
+    --font-family-base: Verdana, "Noto Sans", "Helvetica Neue", Helvetica, Arial, 
+                        "Hiragino Sans GB", "Microsoft JhengHei", 
+                        "Segoe UI", sans-serif;
+  
+    /* JSON 專用設定 */
+    --font-family-code: Consolas, "Courier New", monospace;
+    
+    /* 字體大小全局管理 */
+    --font-size-profile: 12px;
+
 }
 
 /* toast */

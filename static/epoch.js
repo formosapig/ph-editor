@@ -11,27 +11,40 @@ document.addEventListener('alpine:init', () => {
         init() {
             const firstValid = this.profile_options.find(opt => !opt.disabled && opt.id);
             if (firstValid) {
-                this.$nextTick(() => {
-                    this.selectedProfile = firstValid.id;
-                    console.log("SelectedProfile", this.selectedProfile);
-                });
+                this.selectedProfile = firstValid.id;
+                this.fetchCharacters(); // 初始化時呼叫
             }
-            //console.log("Epoch Manager 啟動");
-            // 模擬初始抓取資料
-            //this.fetchCharacters();
+
+            // 若你想在 UI 上做一個切換器，記得監聽變化：
+            this.$watch('selectedProfile', (value) => {
+                this.fetchCharacters(); // 當選中的 Profile 改變時，自動重新抓取
+            });
         },
 
-        fetchCharacters() {
+        async fetchCharacters() {
+            if (!this.selectedProfile) return;
+
             console.log("正在獲取 Profile 的角色:", this.selectedProfile);
-            // 這裡模擬從 Flask API 獲取資料
-            // 範例資料：
-            this.characters = [
-                { sn: 1, file_id: 'C001', parent_sn: null },
-                { sn: 2, file_id: 'C002', parent_sn: 1 },
-                { sn: 3, file_id: 'C003', parent_sn: null }
-            ];
+            
+            try {
+                // 使用你封裝好的 request 函式
+                const url = `/api/characters?profile_id=${encodeURIComponent(this.selectedProfile)}`;
+                const response = await request(url);
+                
+                // 成功處理
+                this.characters = response.results;
+                console.log("角色載入完成:", this.characters);
+                
+            } catch (err) {
+                // 錯誤處理：因為 request 函式在 !res.ok 時會 throw data
+                // 所以這裡的 err 已經是你處理過的物件，包含 displayMessage
+                console.error("獲取角色失敗:", err);
+                
+                // 這裡可以呼叫你前端統一的報錯介面，例如：
+                // alert(err.displayMessage || "發生未知的錯誤");
+            }
         },
-
+        
         handleDragStart(event, char) {
             this.draggedChar = char;
             // 設定傳輸資料（標準做法）

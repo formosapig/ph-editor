@@ -61,13 +61,13 @@
         if (isPaused) {
             currentInactiveTime = EXTENDED_TIME;
             countdownEl.classList.add('is-paused');
-            countdownEl.style.color = '#4da6ff'; 
-            countdownEl.style.borderColor = '#4da6ff';
+            countdownEl.style.color = '#00ff41';
+            countdownEl.style.borderColor = '#00ff41';
         } else {
             currentInactiveTime = NORMAL_TIME;
             countdownEl.classList.remove('is-paused');
-            countdownEl.style.color = '#00ff41';
-            countdownEl.style.borderColor = '#00ff41';
+            countdownEl.style.color = '#4da6ff'; 
+            countdownEl.style.borderColor = '#4da6ff';
         }
         // 切換模式後，必須立即重設計時器以套用新的 currentInactiveTime
         resetTimer(false); 

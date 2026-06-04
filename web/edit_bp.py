@@ -25,6 +25,20 @@ logger = logging.getLogger(__name__)
 #logger.disabled = True
 
 
+def _add_list_prefix(text):
+    """對不是以 # { [ 開頭的行，加上 '- ' 前綴"""
+    if not text:
+        return text
+    lines = text.split('\n')
+    processed = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped and stripped[0] not in '#{[':
+            processed.append(f'  {line}')
+        else:
+            processed.append(line)
+    return '\n'.join(processed)
+
 @edit_bp.get("/edit/<sn>")
 @inject_character_file_entry
 def edit(sn, entry):
@@ -40,10 +54,15 @@ def edit(sn, entry):
     profile = entry.get_profile()
     scenario = entry.get_scenario()
     backstage = entry.get_backstage()
-    final_data = {
-        key: "\n".join(filter(None, [info.get(key), profile.get(key), scenario.get(key), backstage.get(key)]))
-        for key in ["soul", "meat", "form", "code"]
-    }
+    final_data = {}
+    for key in ["soul", "meat", "form", "code"]:
+        parts = []
+        i, p, s, b = info.get(key), profile.get(key), scenario.get(key), backstage.get(key)
+        if i: parts.append(i)
+        if p: parts.append(f"# 簡介限定\n{p}")
+        if s: parts.append(f"# 場景限定\n{s}")
+        if b: parts.append(f"# 幕後限定\n{b}")
+        final_data[key] = "\n".join(parts)
 
     return render_template(
         "edit.html",
@@ -77,10 +96,21 @@ def patch_data(sn, entry):
     profile = entry.get_profile()
     scenario = entry.get_scenario()
     backstage = entry.get_backstage()
+    '''
     final_data = {
         key: "\n".join(filter(None, [info.get(key), profile.get(key), scenario.get(key), backstage.get(key)]))
         for key in ["soul", "meat", "form", "code"]
     }
+    '''
+    final_data = {}
+    for key in ["soul", "meat", "form", "code"]:
+        parts = []
+        i, p, s, b = info.get(key), profile.get(key), scenario.get(key), backstage.get(key)
+        if i: parts.append(i)
+        if p: parts.append(f"# 簡介限定\n{p}")
+        if s: parts.append(f"# 場景限定\n{s}")
+        if b: parts.append(f"# 幕後限定\n{b}")
+        final_data[key] = "\n".join(parts)
 
     return jsonify({
         "file_id": entry.file_id,

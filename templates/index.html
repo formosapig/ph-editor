@@ -10,7 +10,7 @@
     <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
 </head>
 <body x-data="phApp" x-cloak>
-    <div id="actionButtons" class="action-bar">
+    <div class="action-buttons">
         <div class="buttons-row">
             <div class="left-buttons">
                 <button @click="changeFolder" title="修改掃描資料夾" :disabled="isAnyMenuOpen">📁</button>
@@ -24,7 +24,7 @@
                 <button @click="deleteSelected" :disabled="selectedCount === 0 || isAnyMenuOpen" title="刪除">🗑️</button>
             </div>
 
-            <div class="right-button">
+            <div class="right-buttons">
                 <!-- 新增的隨機/洗牌按鈕 -->
                 <button 
                     @click="isShuffled = !isShuffled" 
