@@ -65,8 +65,8 @@ SISTER_SIZE_CHART = {
 CUP_VALUE_MAP = {"AA": 0, "A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "H": 8, "I": 9}
 
 CUP_GROUP_DEFINITIONS = [
-    {"group_name": "纖細少女", "items": ["30AA", "30A", "30B", "30C"]},
-    {"group_name": "身材嬌小", "items": ["32AA", "32A", "32B", "32C", "32D", "32E", "32F", "32G"]},
+    {"group_name": "纖細少女", "items": ["30AA", "30A", "30B", "30C", "30D"]},
+    {"group_name": "身材嬌小", "items": ["32AA", "32A", "32B", "32C", "32D", "32E", "32F", "32G", "32H"]},
     {"group_name": "台灣女生", "items": ["34A", "34B", "34C", "34D", "34E", "34F", "34G", "34H"]},
     {"group_name": "人高馬大", "items": ["36B", "36C", "36D", "36E", "36F", "36G", "36H"]},
     {"group_name": "體態豐滿", "items": ["38C", "38D", "38E", "38F", "38G", "38H", "38I"]},
