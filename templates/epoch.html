@@ -71,6 +71,118 @@
             </header>
 
             <article class="data-display">
+
+<div x-data="{
+    items: [
+        { sn: 'A', age: 100, parent: null },
+        { sn: 'A1', age: 90, parent: 'A' },
+        { sn: 'A2', age: 80, parent: 'A' },
+        { sn: 'A3', age: 75, parent: 'A' },
+        { sn: 'A1a', age: 70, parent: 'A1' },
+        { sn: 'A1b', age: 60, parent: 'A1' },
+        { sn: 'A1c', age: 55, parent: 'A1' },
+        { sn: 'A2a', age: 50, parent: 'A2' },
+        { sn: 'A2b', age: 45, parent: 'A2' },
+        { sn: 'A1a1', age: 30, parent: 'A1a' },
+        { sn: 'A1a2', age: 25, parent: 'A1a' },
+        { sn: 'B', age: 40, parent: null },
+        { sn: 'B1', age: 35, parent: 'B' },
+        { sn: 'B2', age: 30, parent: 'B' },
+        { sn: 'B1a', age: 20, parent: 'B1' },
+        { sn: 'C', age: 15, parent: null }
+    ],
+    
+    // 取得所有不重複的 age，排序後作為欄位標題
+    get ageColumns() {
+        const ages = [...new Set(this.items.map(item => item.age))];
+        ages.sort((a,b) => a - b);
+        return ages;
+    },
+    
+    get columnCount() {
+        return this.ageColumns.length;
+    },
+    
+    // 根據 age 找到對應的欄位索引
+    getAgeColIndex(age) {
+        return this.ageColumns.indexOf(age);
+    },
+    
+    get tableRows() {
+        const nodeMap = new Map();
+        this.items.forEach(item => {
+            nodeMap.set(item.sn, { sn: item.sn, age: item.age, parent: item.parent, children: [] });
+        });
+        
+        const roots = [];
+        this.items.forEach(item => {
+            const node = nodeMap.get(item.sn);
+            if (item.parent === null) roots.push(node);
+            else {
+                const parent = nodeMap.get(item.parent);
+                if (parent) parent.children.push(node);
+            }
+        });
+        
+        const orderMap = new Map();
+        this.items.forEach((item, idx) => orderMap.set(item.sn, idx));
+        const sortRec = (n) => {
+            n.children.sort((a,b) => (orderMap.get(a.sn)||0) - (orderMap.get(b.sn)||0));
+            n.children.forEach(sortRec);
+        };
+        roots.forEach(sortRec);
+        
+        const colsCount = this.columnCount;
+        const rows = [];
+        
+        const process = (node, level, sharedRow, shareMode) => {
+            const ageIdx = this.getAgeColIndex(node.age);
+            
+            if (shareMode && sharedRow) {
+                if (ageIdx !== -1) sharedRow.cols[ageIdx] = node.sn;
+                for (let i = 0; i < node.children.length; i++) {
+                    const child = node.children[i];
+                    if (i === 0) process(child, level+1, sharedRow, true);
+                    else process(child, level+1, null, false);
+                }
+            } else {
+                const newRow = { cols: new Array(colsCount).fill(null) };
+                if (ageIdx !== -1) newRow.cols[ageIdx] = node.sn;
+                rows.push(newRow);
+                for (let i = 0; i < node.children.length; i++) {
+                    const child = node.children[i];
+                    if (i === 0) process(child, level+1, newRow, true);
+                    else process(child, level+1, null, false);
+                }
+            }
+        };
+        
+        roots.forEach(root => process(root, 0, null, false));
+        return rows;
+    }
+}">
+    <table border="1" style="border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr>
+                <template x-for="age in ageColumns" :key="age">
+                    <th x-text="age"></th>
+                </template>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="row in tableRows" :key="row">
+                <tr>
+                    <template x-for="(cell, idx) in row.cols" :key="idx">
+                        <td x-text="cell || ''" style="text-align: center;">:</td>
+                    </template>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+</div>
+
+
+<!--
                 <template x-if="epochChain.length > 0">
                     <table>
                         <thead>
@@ -91,6 +203,7 @@
                 <div x-show="epochChain.length === 0" class="placeholder">
                     請拖曳角色至藍區以開始歲月管理
                 </div>
+                -->                
             </article>
         </section>
     </main>
