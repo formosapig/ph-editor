@@ -424,6 +424,30 @@ class CharacterFileEntry:
                 f"❌ 身高 : {val_game_height} → {val_setting_height} ({val_origin_height} cm)"
             )
         
+         # ==================== 罩杯設定（修改處） ====================
+        # 1️⃣ 先試著從 metadata.backstage 拿 cup
+        metadata = self.data_source.get_metadata(self.sn)
+        backstage_cup = None
+        if metadata and 'backstage' in metadata:
+            backstage_cup = metadata['backstage'].get('cup')
+        
+        # 2️⃣ 決定最終使用的 origin_cup
+        if backstage_cup is not None:
+            val_origin_cup = backstage_cup
+        else:
+            val_origin_cup = profile.get('cup', "")
+        
+        val_setting_cup = get_sister_cup_value(val_origin_cup)
+        val_game_cup = get_nested_value(data, "body.breast.size", -1)
+        
+        if val_setting_cup != val_game_cup:
+            correct_count += 1
+            result_lines.append(
+                f"❌ 罩杯 : {val_game_cup} → {val_setting_cup} ({val_origin_cup})"
+            )
+        # ==========================================================
+
+        '''
         # 罩杯設定
         val_origin_cup = profile.get('cup', "")
         val_setting_cup = get_sister_cup_value(val_origin_cup)
@@ -435,6 +459,7 @@ class CharacterFileEntry:
             result_lines.append(
                 f"❌ 罩杯 : {val_game_cup} → {val_setting_cup} ({val_origin_cup})"
             )
+         '''   
         
         # 檔名正規化
         if self.file_id != (suggest := self.get_suggest_file_id())[1]:
@@ -442,7 +467,7 @@ class CharacterFileEntry:
             result_lines.append(f"❌ 檔名 : {'→ ' + suggest[1] if suggest[0] else suggest[1]}")
             
         # 在 metadata 修改好, 修改了 png
-        metadata = self.data_source.get_metadata(self.sn)
+        #metadata = self.data_source.get_metadata(self.sn)
         meta_timestamp = metadata.get('modified') if metadata else None
         if meta_timestamp is not None and os.path.exists(self.filename):
             file_mtime = int(os.path.getmtime(self.filename))
