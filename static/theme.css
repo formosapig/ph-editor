@@ -71,9 +71,10 @@
 
     /* 字體 */
     /* 建議的字體順序：兼顧主流語言、幻想字型與最後的等寬保底 */
-    --font-family-base: Verdana, "Noto Sans", "Helvetica Neue", Helvetica, Arial, 
-                        "Hiragino Sans GB", "Microsoft JhengHei", 
+    --font-family-base: system-ui, Verdana, "Noto Sans", "Helvetica Neue", Helvetica, Arial, 
+                        "Hiragino Sans GB", "Microsoft JhengHei",
                         "Segoe UI", sans-serif;
+    --font-family-base: -apple-system, BlinkMacSystemFont, Verdana, "Helvetica Neue", Arial, sans-serif;
   
     /* JSON 專用設定 */
     --font-family-code: Consolas, "Courier New", monospace;
