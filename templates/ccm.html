@@ -3,155 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <title>SPATIO-TEMPORALIS CAVSALITAS</title>
-    <!--<link rel="stylesheet" href="[[ url_for('static', filename='style.css') ]]" />-->
     <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='ccm.css') ]]" />
-    <script src="[[ url_for('static', filename='petite-vue.iife.js') ]]" defer></script>
-    <script type="module" src="[[ url_for('static', filename='ccm.js') ]]"></script>
-    <script>
-        window.rawData = {
-            profiles: [[ profiles | tojson ]],
-            scenarios: [[ scenarios | tojson ]],
-            metadatas: [[ metadatas | tojson ]],
-            profile_group: [[ profile_group | tojson ]]
-        };
-    </script>
+    <script src="[[ url_for('static', filename='ccm.js') ]]" type="module"></script>
+    <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
 </head>
-<body>
-<div v-scope v-cloak class="page-wrapper">
-    <div class="table-container">
-      <table>
-      
-        <!-- table head -->
-        <thead>
-          <tr>
-            <th class="corner-cell">角色 \ 年份</th>
-            <th v-for="year in sortedYears" :key="year" class="year-header">
-              {{ year }}
-            </th>
-          </tr>
-        </thead>
+<body x-data='ccmApp({
+    profiles: [[ profiles | tojson ]],
+    scenarios: [[ scenarios | tojson ]],
+    metadatas: [[ metadatas | tojson ]],
+    profile_group: [[ profile_group | tojson ]]
+})' x-cloak>
+    <div class="page-wrapper">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="corner-cell">角色 \ 年份</th>
+                        <!-- 使用 template 包裝 th -->
+                        <template x-for="year in sortedYears" :key="year">
+                            <th class="year-header" x-text="year"></th>
+                        </template>
+                    </tr>
+                </thead>
+                
+                <template x-for="group in sortedGroups" :key="group.id">
+                    <tbody>
+                        <!-- 群組標題列 -->
+                        <tr class="group-header-row" @click="toggleGroup(group.id)">
+                            <td :colspan="sortedYears.length + 1" :style="{ borderLeft: '8px solid ' + group.color }">
+                                <div class="group-title-content">
+                                    <span class="collapse-icon" x-text="isCollapsed(group.id) ? '▶' : '▼'"></span>
+                                    <span class="group-name" :style="{ color: group.color }" x-text="group.name.zh"></span>
+                                    <span class="group-desc" x-show="!isCollapsed(group.id)" x-text="'— ' + group.desc.zh"></span>
+                                    <span class="group-count" x-show="isCollapsed(group.id)" x-text="'(' + getProfilesByGroup(group.id).length + ')'"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- 角色列 -->
+                        <template x-for="p in getProfilesByGroup(group.id)" :key="p['!id']">
+                            <tr x-show="!isCollapsed(group.id)" class="matrix-row">
+                                <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
+                                    <div class="profile-cell-wrapper">
+                                        <div class="p-name">
+                                            <span x-text="p.name"></span>
+                                            <span class="p-born" x-text="'(' + p.born + ')'"></span>
+                                        </div>
+                                        <div class="p-stats" x-text="p.height + 'cm / ' + p.cup"></div>
+                                    </div>
+                                </td>
+                                
+                                <!-- 年份欄位也要用 template 包裝 -->
+                                <template x-for="year in sortedYears" :key="year">
+                                    <td class="matrix-cell">
+                                        <template x-for="sc in getScenariosByYearAndProfile(p['!id'], year)" :key="sc.id">
+                                            <div class="event-box"
+                                                @click="toggleLock(sc.id, p['!id'])"
+                                                :class="{ 'active-link': hoveredScenarioId === sc.id, 'locked': isLocked && hoveredScenarioId === sc.id }"
+                                                :style="getScenarioStyle(sc.id, p['!id'])"
+                                                @mouseenter="handleMouseEnter(sc.id, p['!id'])"
+                                                @mouseleave="handleMouseLeave()">
+                                                
+                                                <div class="sc-name" x-text="sc.scene"></div>
+                                                
+                                                <div class="tags-container">
+                                                    <template x-for="bg in getBackstagesByScenario(sc.id, p['!id'])" :key="bg.sn">
+                                                        <div x-show="bg.title" class="sc-tag"
+                                                            :style="{ 
+                                                                color: bg.color, 
+                                                                background: bg.background, 
+                                                                border: '1px solid ' + bg.color,
+                                                                maxWidth: '100px',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }"
+                                                            :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }"
+                                                            x-text="bg.title">
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
+                    </tbody>
+                </template>
+            </table>
+        </div>
         
-        <!-- table body -->
-        <tbody v-for="group in sortedGroups" :key="group.id">
-          
-          <!-- 最左列, 人物, 含群組功能 -->
-          <tr class="group-header-row" @click="toggleGroup(group.id)">
-            <td :colspan="sortedYears.length + 1" :style="{ borderLeft: '8px solid ' + group.color}">
-              <div class="group-title-content">
-                <span class="collapse-icon">{{ isCollapsed(group.id) ? '▶' : '▼' }}</span>
-                <span class="group-name" :style="{ color: group.color }">{{ group.name.zh }}</span>
-                <span class="group-desc" v-if="!isCollapsed(group.id)">— {{ group.desc.zh }}</span>
-                <span class="group-count" v-else>({{ getProfilesByGroup(group.id).length }})</span>
-              </div>
-            </td>
-          </tr>
-          
-          <!-- scenario box -->
-          <tr v-for="p in getProfilesByGroup(group.id)" 
-              v-show="!isCollapsed(group.id)" 
-              :key="p['!id']"
-              class="matrix-row">
-              
-            <!-- 角色喔... -->  
-            <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
-              <div class="profile-cell-wrapper">
-                <div class="p-name">{{ p.name }} <span class="p-born">({{ p.born }})</span></div>
-                <div class="p-stats">{{ p.height }}cm / {{ p.cup }}</div>
-              </div>
-            </td>
-            
-            <!-- 場景唷 -->
-            <td v-for="year in sortedYears" :key="year" class="matrix-cell">
-              <div v-for="sc in getScenariosByYearAndProfile(p['!id'], year)" 
-                   :key="sc.id" class="event-box"
-                   @click="toggleLock(sc.id)"
-                   :class="{ 'active-link': hoveredScenarioId === sc.id, 'locked': isLocked && hoveredScenarioId === sc.id }"
-                   :style="getScenarioStyle(sc.id, p['!id'])"
-                   @mouseenter="handleMouseEnter(sc.id)"
-                   @mouseleave="handleMouseLeave()">
-                
-                <!-- 場景標題 -->   
-                <div class="sc-name">{{ sc.scene }}</div>
-                
-                <!-- 場景參與者的 tag -->
-                <div class="tags-container">
-                  <div v-for="bg in getBackstagesByScenario(sc.id)" :key="version + '_' + bg.sn" style="display: contents">
-                    <div v-if="bg.title" class="sc-tag"
-                         :style="{ 
-                           color: bg.color, 
-                           background: bg.background,
-                           border: '1px solid ' + bg.color
-                         }"
-                         :class="{ 'tag-active': bg.profile_id === p['!id'], 'tag-dimmed': bg.profile_id !== p['!id'] }">
-                      {{ bg.title }}
-                    </div>
-                  </div>
+        <!-- 浮動 Plot -->
+        <div x-show="hoveredScene || basePlot" class="plot-tooltip" :class="{ 'is-locked': isLocked }" @mouseleave="onTooltipMouseLeave">
+            <header class="clickable" @click.stop="toggleLockOnHeader()">
+                <div>
+                    <span x-show="isLocked" class="pin">📌</span> 
+                    <span x-text="hoveredScene"></span>
                 </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
-    <!-- 浮動 Plot -->	
-    <div v-if="hoveredScene || basePlot" class="plot-tooltip" :class="{ 'is-locked': isLocked }" @mouseleave="onTooltipMouseLeave">
-        <!-- Plot 頁面標題 -->
-        <header class="clickable" @click.stop="toggleLockOnHeader()">
-            <div><span v-if="isLocked" class="pin">📌</span> {{ hoveredScene }}</div>
-            <span v-if="hoveredYear" class="header-year">📅 {{ hoveredYear }}</span>
-        </header>
-        <!-- Plot 內容 -->
-        <main>
-            <!-- 劇情內容 -->
-            <article>{{ basePlot }}</article>
-            <!-- 劇情參與者 -->
-            <section v-for="char in hoveredCharacters">
-                <hr> <!-- 分隔線 -->
-                <!-- 角色內容 -->
-                <div class="char-row-container">
-                    <aside><!-- 左邊, 小圖示及標籤 -->
-                        <!-- 年齡 -->
-                        <span v-if="char.age" class="age-badge">{{ char.age }}</span> 
-                        <!-- 人物縮圖 -->
-                        <div class="char-avatar-box" @click="openFile(char.sn)">
-                            <img :src="char.avatar" @error="(e) => e.target.src='/cache/default.jpg'">
-                        </div>
-                        <!-- 標籤 -->
-                        <!--<span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>-->
-                        <!-- 姓名 -->
-                        <span class="profile-badge profile-badge-ccm">{{ char.name }}</span>
-                    </aside>
-                    <div class="info-summary"><!-- 右邊, 人物主要屬性, 說明 -->
-                        <!-- 人物主要屬性 -->
-                        <div class="info-top">
-                            <!--
-                            <span class="char-name-highlight">{{ char.name }}</span>
-                            <span v-if="char.age" class="char-age-dim"> · {{ char.age }}歲</span>-->
-                            <span v-if="char.tag" class="sc-tag" :style="char.tag?.style">{{ char.tag?.name }}</span>
-                            <div v-if="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
-                            <template v-if="char.persona">
-                                <span>🎭</span>
-                                <span :style="getBadgeStyle(char.pColor)" class="meta-badge">{{ char.persona }}</span>
-                            </template>
-                            <template v-if="char.shadow">
-                                <span>👤</span>
-                                <span :style="getBadgeStyle(char.sColor)" class="meta-badge">{{ char.shadow }}</span>
-                            </template>
+                <span x-show="hoveredYear" class="header-year" x-text="'📅 ' + hoveredYear"></span>
+            </header>
+            <main>
+                <article x-text="basePlot"></article>
+                <template x-for="char in hoveredCharacters">
+                    <section>
+                        <hr>
+                        <div class="char-row-container" :class="{ 'me': char.me }">
+                            <aside>
+                                <span x-show="char.age" class="age-badge" x-text="char.age"></span>
+                                <div class="char-avatar-box" @click="openFile(char.sn)">
+                                    <img :src="char.avatar" @error="(e) => e.target.src='/cache/default.jpg'">
+                                </div>
+                                <span class="profile-badge profile-badge-ccm" x-text="char.name"></span>
+                            </aside>
+                            <div class="info-summary">
+                                <div class="info-top">
+                                    <div x-show="char.tag" class="sc-tag" :style="char.tag?.style" x-text="char.tag?.name"></div>
+                                    <div x-show="char.persona || char.shadow" style="margin-left: auto; display: flex; gap: 8px;">
+                                        <template x-if="char.persona">
+                                            <span>🎭</span>
+                                            <span :style="getBadgeStyle(char.pColor)" class="meta-badge" x-text="char.persona"></span>
+                                        </template>
+                                        <template x-if="char.shadow">
+                                            <span>👤</span>
+                                            <span :style="getBadgeStyle(char.sColor)" class="meta-badge" x-text="char.shadow"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div x-show="char.title" class="char-title-row" x-text="char.title"></div>
+                                <div x-show="char.detail" class="info-bottom" x-text="char.detail"></div>
                             </div>
                         </div>
-                        <!-- 標題 -->
-                        <div v-if="char.title" class="char-title-row">{{ char.title }}</div>
-                        <!-- 說明 -->
-                        <div v-if="char.detail" class="info-bottom">{{ char.detail }}</div>
-                    </div> <!-- info-summary -->
-                </div>
-            </section>
-        </main>
-    </div> <!-- end of plot -->
-</div> <!-- v-scope -->
-    <script src="[[ url_for('static', filename='base.js') ]]"></script>
+                    </section>
+                </template>
+            </main>
+        </div>
+    </div>
+
+<script src="[[ url_for('static', filename='base.js') ]]"></script>
 </body>
 </html>

@@ -309,7 +309,14 @@ th:not(.corner-cell), .matrix-cell {
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    
+    padding: 6px;
+
+    &.me {
+        background-color: var(--color-main-bg);
+        border: 1px solid #e890b0;
+        border-radius: 4px;
+    }
+
     aside {
       display: flex;
       flex-direction: column;
@@ -360,7 +367,7 @@ th:not(.corner-cell), .matrix-cell {
       display: flex;
       flex-direction: column; /* 讓上下兩排垂直排列 */
       min-height: 72px;       /* 至少跟圖片一樣高，確保對齊美感 */ 
-      
+
       .info-top {
         display: flex;
         align-items: center;
@@ -525,4 +532,8 @@ tbody {
 */
 [v-cloak] {
   display: none;
+}
+
+[x-cloak] {
+    display: none !important;
 }
