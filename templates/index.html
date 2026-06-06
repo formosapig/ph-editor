@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='index.css') ]]" />
     <script src="[[ url_for('static', filename='index.js') ]]" type="module"></script>
-    <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='alpine3.15.12/intersect/cdn.min.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='alpine3.15.12/cdn.min.js') ]]" defer></script>
 </head>
 <body x-data="phApp" x-cloak>
     <div class="action-buttons">
@@ -50,30 +51,12 @@
                  @click="toggleSelect(item.sn, $event)">
                 <div class="checkmark">✅</div>
                 <div class="thumb-wrapper">
-                    <img :src="'/api/character/' + item.sn + '/thumbnail'"
-                         class="thumb"
-                         :alt="item.sn"
-                         width="252"
-                         height="352"
-                         loading="lazy"
-                         draggable="false">
-                    <!-- 魂肉形體測試 先不要這個功能了。
-                    <div class="stat-container-v">
-                        <svg width="40" height="20" viewBox="0 0 40 20">
-                            <rect x="0" :y="20 - (item.soul || 0) * 4" width="8" :height="(item.soul || 0) * 4" 
-                                rx="2" class="bar-fill soul" x-show="item.soul !== undefined" />
-                            
-                            <rect x="10" :y="20 - (item.meat || 0) * 4" width="8" :height="(item.meat || 0) * 4" 
-                                rx="2" class="bar-fill meat" x-show="item.meat !== undefined" />
-                            
-                            <rect x="20" :y="20 - (item.form || 0) * 4" width="8" :height="(item.form || 0) * 4" 
-                                rx="2" class="bar-fill form" x-show="item.form !== undefined" />
-                            
-                            <rect x="30" :y="20 - (item.code || 0) * 4" width="8" :height="(item.code || 0) * 4" 
-                                rx="2" class="bar-fill code" x-show="item.code !== undefined" />
-                        </svg>
-                    </div>
-                    魂肉形體測試結束 -->
+                    <img x-intersect="loadImage(item)"
+                        :src="getImageSrc(item)"
+                        class="thumb"
+                        width="252"
+                        height="352"
+                        loading="lazy">
                     <div x-show="item.profile_name" class="profile-badge profile-badge-index" x-text="item.profile_name"></div>
                     <div x-show="item.tag_name" 
                          class="tag-label"

@@ -222,6 +222,16 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        loadImage(item) {
+            if (item._loaded) return;
+            item._loaded = true;
+            item._src = `/api/character/${item.sn}/thumbnail`;
+        },
+        
+        getImageSrc(item) {
+            return item._src || 'data:image/svg+xml,...';
+        },
+
         debounceSave() {
             clearTimeout(this.debounceTimer);
             // 這裡要加 async 才能在裡面用 await
@@ -486,5 +496,6 @@ document.addEventListener('alpine:init', () => {
                 this.messages = this.messages.filter(m => m.id !== id);
             }, 3000);
         }
+        
     }));
 });
