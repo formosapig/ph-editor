@@ -522,18 +522,6 @@ tbody {
   line-height: 1.4;
 }
 
-
-
-
-
-/* 要放在這邊, 因為 page-wrapper 也有控 display,
-　　 當 html 準備好後, v-cloak 會被移除,
-　　　 display 會依 page-wrapper 的設定走
-*/
-[v-cloak] {
-  display: none;
-}
-
 [x-cloak] {
     display: none !important;
 }

@@ -14,8 +14,8 @@
     scenarios: [[ scenarios | tojson ]],
     metadatas: [[ metadatas | tojson ]],
     profile_group: [[ profile_group | tojson ]]
-})' x-cloak>
-    <div class="page-wrapper">
+})'>
+    <div class="page-wrapper" x-cloak>
         <div class="table-container">
             <table>
                 <thead>
@@ -44,7 +44,11 @@
                         
                         <!-- 角色列 -->
                         <template x-for="p in getProfilesByGroup(group.id)" :key="p['!id']">
-                            <tr x-show="!isCollapsed(group.id)" class="matrix-row">
+                            <template x-if="!isCollapsed(group.id)">
+                            <tr class="matrix-row">
+                            
+                            <!--<tr x-show="!isCollapsed(group.id)" class="matrix-row">-->
+                            
                                 <td class="fixed-col" :style="{ borderLeft: '8px solid ' + p.groupColor, backgroundColor: p.groupBg }">
                                     <div class="profile-cell-wrapper">
                                         <div class="p-name">
@@ -90,6 +94,7 @@
                                     </td>
                                 </template>
                             </tr>
+                            </template>
                         </template>
                     </tbody>
                 </template>
@@ -142,6 +147,6 @@
         </div>
     </div>
 
-<script src="[[ url_for('static', filename='base.js') ]]"></script>
+    <script src="[[ url_for('static', filename='base.js') ]]"></script>
 </body>
 </html>

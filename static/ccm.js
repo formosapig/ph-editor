@@ -2,9 +2,6 @@ import { request } from './request.js'
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('ccmApp', (params) => ({
-
-//function ccmApp() {
-//    return {
         // 資料屬性
         profiles: params.profiles,
         scenarios: params.scenarios,
@@ -24,14 +21,6 @@ document.addEventListener('alpine:init', () => {
         
         // 初始化
         init() {
-            // 從全域變數載入資料
-            //if (window.rawData) {
-            //    this.profiles = window.rawData.profiles || {};
-            //    this.scenarios = window.rawData.scenarios || {};
-            //    this.metadatas = window.rawData.metadatas || {};
-            //    this.profile_group = window.rawData.profile_group || [];
-            //    this.collapsedGroups = this.profile_group.map(g => g.id);
-            //}
             this.collapsedGroups = this.profile_group.map(g => g.id);
             
             // 設定 BroadcastChannel 監聽
@@ -301,8 +290,3 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 });
-//     };
-// }
-
-// // 註冊到全域
-// window.ccmApp = ccmApp;
