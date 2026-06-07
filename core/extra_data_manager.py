@@ -3,8 +3,10 @@ from functools import wraps
 import json
 import logging
 import copy
+import os
 import threading
 import time
+from flask import current_app
 import nanoid
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -153,7 +155,50 @@ class ExtraDataManager():
         self._wish_list = self._load_or_create(
             UserConfigManager.get_wish_file_path, [], key_type=None
         )
+
+        # 💡 新增：列印載入的資料數量
+        #logger.debug(f"[Data Init] Data loaded successfully:")
+        #logger.debug(f"  - Profiles count: {len(self._profile_map)}")
+        #logger.debug(f"  - Scenarios count: {len(self._scenario_map)}")
+        #logger.debug(f"  - Metadata count: {len(self._metadata_map)}")
+        #self._check_missing_metadata_files("D:\\illusion\\PlayHome\\UserData\\Chara\\female")
     
+    '''
+    def _check_missing_metadata_files(self, scan_path):
+        """遍歷 _metadata_map，檢查所有已解碼的 file_id 對應的實體檔案是否存在。
+        
+        並印出找不到檔案的資料。
+        """
+        logger.info("開始檢查 metadata 中的實體檔案是否存在...")
+        missing_count = 0
+        total_count = len(self._metadata_map)
+
+        for sn, info in self._metadata_map.items():
+            # 1. 拿到已經解碼好的 file_id
+            file_id = info.get("!file_id", "")
+            
+            if not file_id:
+                logger.warning(f" ⚠️ [資料異常] 序號 {sn} 沒有欄位 '!file_id'")
+                continue
+
+            # 2. 組合出原始檔案路徑（與原本邏輯一致，使用 .png）
+            file_path = os.path.join(scan_path, f"{file_id}.png")
+            
+            # 3. 檢查是否存在，不存在就印出詳細資訊
+            if not os.path.exists(file_path):
+                missing_count += 1
+                print(f"❌ 找不到原始檔案!!")
+                print(f"  - 系統序號 (sn): {sn}")
+                print(f"  - 檔案名稱 (file_id): {file_id}.png")
+                print(f"  - 預期路徑: {file_path}")
+                print(f"  - Profile ID: {info.get('!profile_id')}, Scenario ID: {info.get('!scenario_id')}")
+                print("-" * 50)
+
+        # 總結列印
+        print(f"【檢查完成】總共遍歷 {total_count} 筆資料，共有 {missing_count} 筆遺失實體檔案。")
+        return missing_count
+    '''
+
     @synchronized
     def reload(self):
         """清除並重新載入所有資料。"""
