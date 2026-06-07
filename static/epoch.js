@@ -9,11 +9,11 @@ document.addEventListener('alpine:init', () => {
         draggedChar: null,
 
         init() {
-            const firstValid = this.profile_options.find(opt => !opt.disabled && opt.id);
-            if (firstValid) {
-                this.selectedProfile = firstValid.id;
-                this.fetchCharacters(); 
-            }
+            //const firstValid = this.profile_options.find(opt => !opt.disabled && opt.id);
+            //if (firstValid) {
+            //    this.selectedProfile = firstValid.id;
+            //    this.fetchCharacters(); 
+           // }
 
             this.$watch('selectedProfile', (value) => {
                 this.fetchCharacters(); 
@@ -47,18 +47,42 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        get ageColumns() {
+        /*get ageColumns() {
             const ages = [...new Set(this.epochChain.map(item => item.age))];
             ages.sort((a, b) => Number(a) - Number(b));
             return ages;
-        },
+        },*/
         
+        get ageColumns() {
+            const ages = [...new Set(this.epochChain.map(item => item.age))];
+            ages.sort((a, b) => Number(a) - Number(b));
+            
+            const result = [];
+            for (let i = 0; i < ages.length; i++) {
+                // 第一個左邊放希臘字母（起源），其他放空字串
+                if (i === 0) {
+                    result.push('α');      // 希臘字母 Alpha，代表起源
+                } else {
+                    result.push('');       // 空字串佔位
+                }
+                result.push(ages[i]);      // 真正的 age 欄位
+            }
+            return result;
+        },
+
         get columnCount() {
             return this.ageColumns.length;
         },
         
-        getAgeColIndex(age) {
+        /*getAgeColIndex(age) {
             return this.ageColumns.indexOf(age);
+        },*/
+
+        getAgeColIndex(age) {
+            // 新的結構： ['', age1, '', age2, '', age3, ...]
+            // 所以 age1 的索引是 1，age2 是 3，age3 是 5 ...
+            const idx = this.ageColumns.indexOf(age);
+            return idx;
         },
         
         get tableRows() {
@@ -119,6 +143,148 @@ document.addEventListener('alpine:init', () => {
             return rows;
         },
         
+        get tableRowsWithLines() {
+            const rows = this.tableRows;
+            if (!rows.length) return [];
+            
+            const colsCount = this.columnCount;
+            
+            // 建立 grid，複製原本的節點
+            const grid = rows.map(row => ({
+                nodes: [...row.cols],
+                connectors: new Array(colsCount).fill(null)
+            }));
+            
+            // 建立節點位置 Map
+            const nodePos = new Map();
+            rows.forEach((row, rowIdx) => {
+                row.cols.forEach((sn, colIdx) => {
+                    if (sn) nodePos.set(sn, { row: rowIdx, col: colIdx });
+                });
+            });
+            
+            // 建立父子關係
+            const nodeMap = new Map();
+            this.epochChain.forEach(item => {
+                nodeMap.set(item.sn, { sn: item.sn, age: item.age, parent: item.parent, children: [] });
+            });
+            this.epochChain.forEach(item => {
+                const node = nodeMap.get(item.sn);
+                if (item.parent === 'ROOT') return;
+                const parent = nodeMap.get(item.parent);
+                if (parent) parent.children.push(node);
+            });
+            
+            // 畫線
+            
+            const drawLines = (node) => {
+                const to2Pos = nodePos.get(node.sn);
+                if (!to2Pos) return;
+                console.error("node", node);
+                console.error("nodePos", nodePos);
+
+                if (node.parent === "ROOT") {
+                    for (let col = to2Pos.col - 1; col > 0; col--) {
+                        grid[to2Pos.row].connectors[col] = "-";
+                    }
+                    grid[to2Pos.row].connectors[0] = "o-";
+                }
+
+                
+                for (const child of node.children) {
+                    const fromPos = nodePos.get(child.sn);
+                    if (!fromPos) continue;
+                    
+                    const end2Col = to2Pos.col + 1;
+                    const startCol = fromPos.col - 1;
+
+                    if (to2Pos.row !== fromPos.row) {
+                        for (let col = startCol; col >= end2Col; col--) {
+                            if (col === end2Col) {
+                                const existing = grid[fromPos.row].connectors[col];
+                                if (existing === '|') {
+                                    grid[fromPos.row].connectors[col] = '|-';
+                                    break;  // 結束，不繼續畫
+                                } else if (!existing || existing === '') {
+                                    grid[fromPos.row].connectors[col] = 'L';
+                                    //firstCellProcessed = true;
+                                    // 啟動父親追殺令
+                                    let killRow = fromPos.row - 1;
+                                    let killCol = col;
+                                    let killActive = true;
+                                    
+                                    while (killActive && killRow >= to2Pos.row) {
+                                        const cellContent = grid[killRow]?.connectors[killCol];
+                                        
+                                        if (cellContent === 'L') {
+                                            grid[killRow].connectors[killCol] = '|-';
+                                            killActive = false;
+                                        } else if (cellContent === '-') {
+                                            grid[killRow].connectors[killCol] = 'T';
+                                            killActive = false;
+                                        } else if (!cellContent || cellContent === '') {
+                                            grid[killRow].connectors[killCol] = '|';
+                                            killRow--;
+                                        } else {
+                                            killActive = false;  // 其他情況裝死
+                                        }
+                                    }
+                                } else {
+                                    break;
+                                }
+                            } 
+                            else {
+                                grid[fromPos.row].connectors[col] = '-';
+                            }
+                        }
+                    } 
+                    else {
+                        for (let col = startCol; col >= end2Col; col--) {
+                            grid[fromPos.row].connectors[col] = '-';
+                        }
+                    }
+                    
+                    drawLines(child);
+                }
+            };
+
+            /*const drawLines = (node) => {
+                
+                const fromPos = nodePos.get(node.sn);
+                console.error("fromPos = ", fromPos);
+                if (!fromPos) return;
+                
+                for (const child of node.children) {
+                    const toPos = nodePos.get(child.sn);
+                    console.error("toPos = ", toPos);
+                    if (!toPos) continue;
+                    
+                    // 只處理同一行的父子（不同行的先不管）
+                    //if (fromPos.row === toPos.row) {
+                        // 從父親的右邊一格，到小孩的左邊一格，全部填 '-'
+                        for (let col = fromPos.col + 1; col < toPos.col; col++) {
+                            grid[toPos.row].connectors[col] = '-';
+                            console.error("DrawLine", toPos.row, col);
+                            // 順便把 nodes 裡對應位置也清掉（如果有東西的話）
+                            //if (grid[toPos.row].nodes[col]) {
+                            //    grid[toPos.row].nodes[col] = null;
+                            //}
+                        }
+                    //}
+                    
+                    drawLines(child);
+                }
+            };*/
+            
+            const roots = this.epochChain.filter(item => item.parent === 'ROOT');
+            roots.forEach(root => {
+                const node = nodeMap.get(root.sn);
+                if (node) drawLines(node);
+            });
+            
+            return grid;
+        },
+
         handleDragStart(event, char) {
             this.draggedChar = char;
             event.dataTransfer.setData('text/plain', JSON.stringify(char));
@@ -228,6 +394,9 @@ document.addEventListener('alpine:init', () => {
             // 5. 一口氣把所有收集到的角色從 Table 鏈條 (epochChain) 中拔除
             const targetSns = targetsToRemove.map(c => c.sn);
             this.epochChain = this.epochChain.filter(c => !targetSns.includes(c.sn));
+
+            // 6. ✅ 按照 age 從小到大排序
+            this.characters.sort((a, b) => a.age - b.age);
 
             console.log(`成功將角色 ${this.draggedChar.sn} 及其後代（共 ${targetsToRemove.length} 個角色）一併回收`);
 

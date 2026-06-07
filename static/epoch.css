@@ -38,44 +38,38 @@ body {
     background-color: var(--color-main-bg);
 }
 
-.character-table th, 
-.character-table td {
-    min-width: 120px;          /* 給予固定最小寬度，水平滾動才明顯 */
-    height: 60px;
-    padding: 6px;
-}
-
-/* 3. 第一行 (thead) 垂直凍結 */
 .character-table thead th {
     position: sticky;
     top: 0;
     z-index: 3;                /* 層級最高，滾動時要壓在所有人上方 */
     background-color: #9575cd; /* 標頭稍微深色一點方便辨識 */
     border-bottom: 2px solid #555;
+    height: 40px;
+    padding: 4px 6px;
+    line-height: 1.2;
 }
 
 /* 4. 第一列 (Column) 水平凍結 */
-.character-table td.sticky-col {
+.character-table th.sticky-col {
     position: sticky;
     left: 0;
     z-index: 2;                /* 層級次高，滾動時壓在後續 td 上方 */
     background-color: #b388ff; /* 必須有背景色，才不會透明看到後面的字 */
     border-right: 2px solid #555;
+    width: 60px;
+    min-width: 60px;
 }
 
-/* 5. 交叉點魔王防禦：第一行且又是第一列的那個角落（交界格） */
-.character-table thead th:first-child {
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 4;                /* 最高層級，絕對不能動 */
-    background-color: #9575cd;
+.character-table th.dummy-col {
+    width: 32px;
+    min-width: 32px;
 }
 
 /* 點擊穿透優化，防止拖曳判定歪掉 */
 .has-character * {
     pointer-events: none;
 }
+
 .profile-selector {
     position: absolute;
     left: 2px;
