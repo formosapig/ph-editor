@@ -1,58 +1,158 @@
-:root {
-    --card-w: 126px;
-    --card-h: 176px;
-}
-
 body {
-    margin: 0;
+    background-color: var(--color-body-bg);
     font-family: var(--font-family-base);
+    overflow: hidden;
 }
 
 .dashboard {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     overflow: hidden;
 }
 
-/* 側欄樣式 */
-.sidebar {
-    width: 300px;
-    border-right: 1px solid #ccc;
+/* 右側區域 */
+.main-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    background: #f4f4f4;
+    background-color: var(--color-body-bg);
+    position: relative;
+    min-height: 0;
 }
 
+.table-container {
+    flex: 1;               /* 自動填滿高度 */
+    overflow: auto;        /* 允許水平與垂直滾動 */
+    width: 100%;
+    position: relative;
+}
+
+/* 2. 表格基本設定，確保單元格不隨意縮小，才能撐出滾動條 */
+.character-table {
+    border-collapse: separate; /* 這裡要改成 separate，否則 sticky 的外框線會黏在一起變型 */
+    border-spacing: 0;
+    width: max-content;        /* 寬度隨內容撐開，才會觸發水平滾動 */
+    min-width: 100%;
+    min-height: 100%;
+    background-color: var(--color-main-bg);
+}
+
+.character-table th, 
+.character-table td {
+    min-width: 120px;          /* 給予固定最小寬度，水平滾動才明顯 */
+    height: 60px;
+    padding: 6px;
+}
+
+/* 3. 第一行 (thead) 垂直凍結 */
+.character-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;                /* 層級最高，滾動時要壓在所有人上方 */
+    background-color: #9575cd; /* 標頭稍微深色一點方便辨識 */
+    border-bottom: 2px solid #555;
+}
+
+/* 4. 第一列 (Column) 水平凍結 */
+.character-table td.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;                /* 層級次高，滾動時壓在後續 td 上方 */
+    background-color: #b388ff; /* 必須有背景色，才不會透明看到後面的字 */
+    border-right: 2px solid #555;
+}
+
+/* 5. 交叉點魔王防禦：第一行且又是第一列的那個角落（交界格） */
+.character-table thead th:first-child {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 4;                /* 最高層級，絕對不能動 */
+    background-color: #9575cd;
+}
+
+/* 點擊穿透優化，防止拖曳判定歪掉 */
+.has-character * {
+    pointer-events: none;
+}
 .profile-selector {
-    padding: 15px;
-    border-bottom: 1px solid #ddd;
+    position: absolute;
+    left: 2px;
+    bottom: 2px;
+    z-index: 1000;
+    display: inline-block;
+    width: auto;
+    padding: 6pxx;
+    font-size: 12px;
+    background-color: var(--color-main-bg);
+    border: 1px solid #4d79ff;
 }
 
 .profile-selector select {
+    width: auto;
+    min-width: 100px;
+    padding: 4px 6px;     /* select 內縮小一點 */
+    font-size: 12px;      /* 選單內字體也變小 */
+}
+
+.character-dock {
+    flex-shrink: 0;
     width: 100%;
-    padding: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    
+    scroll-behavior: smooth;
+    
+    /* 滾動條空間在這裡 */
+    min-height: 120px;
+    max-height: 380px; /* 請根據你角色卡的高度調整 */
+    margin-bottom: 8px;
+}
+
+/* 滾動條掛在外層 */
+.character-dock::-webkit-scrollbar {
+    height: 8px;
+}
+.character-dock::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+.character-dock::-webkit-scrollbar-thumb {
+    background: #b388ff;
+    border-radius: 4px;
 }
 
 .character-list {
-    flex: 1;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
     padding: 10px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, var(--card-w));
-    gap: 15px;
-    justify-content: center;
 }
 
 .character-card {
-    width: var(--card-w);
-    height: var(--card-h);
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #fff;
+    display: inline-block;  /* 橫向排列 */
+    vertical-align: top;    /* 頂部對齊 */
+    width: auto;            /* 不要固定寬度 */
+
+    width: fit-content;
+
+    border: 1px solid #383838;
+    border-radius: 2px;
+    background: var(--color-main-bg);
     text-align: center;
     cursor: grab;
     transition: transform 0.2s;
+    position: relative;
+    padding: 8px;
+    white-space: normal;
 }
+
+.character-card:last-child {
+    margin-right: 0;
+}
+
 
 .character-card:active {
     cursor: grabbing;
@@ -62,100 +162,36 @@ body {
     border: 2px dashed #ffa500;
 }
 
-.thumb-wrapper {
-    height: 140px;
-    background: #eee;
-    overflow: hidden;
-}
+.age-badge {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    z-index: 10;
 
-.thumb-wrapper img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    display: flex;
+    align-items: center;     /* 垂直置中 */
+    justify-content: center;  /* 水平置中 */
+
+    /*background-color: var(--color-profile-background);*/
+    color: var(--color-age);
+    border: 2px solid #aa8;
+    border-radius: 6px;
+    /*padding: 0px 4px;*/
+    font-size: 14px;
+    /*margin-top: -10px;*/
+
+    background-color: rgba(32, 32, 32, 0.8); 
+    line-height: 1;    /* 減少我們剛才討論過的天然間距 */
+    padding: 2px 4px;  /* 稍微給一點內距會比較美觀 */
 }
 
 .file-id {
+    color: var(--color-main-color);
     font-size: 12px;
-    line-height: 36px;
-    display: block;
-}
-
-/* 右側區域 */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.drop-zones {
-    height: 200px;
-    display: flex;
-}
-
-.zone {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    transition: background 0.3s;
-    border: 2px transparent dashed;
-}
-
-.zone.drag-over {
-    border-color: white;
-    opacity: 0.8;
-}
-
-.red-zone { background-color: #ff4d4d; }
-.blue-zone { background-color: #4d79ff; }
-
-.epoch-chain {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.chain-node {
-    width: 60px;
-    text-align: center;
-    background: white;
-    color: black;
-    font-size: 10px;
-    padding: 5px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.chain-node img {
-    width: 100%;
-    height: 40px;
-    object-fit: cover;
-}
-
-.data-display {
-    flex: 1;
-    padding: 20px;
-    background: #fff;
-    overflow-y: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
+    padding: 2px;
+    /*padding: 6px 4px 8px 4px;*/
+    word-break: break-word;
+    max-width: 126px;
     text-align: left;
-}
-
-.placeholder {
-    color: #888;
-    text-align: center;
-    margin-top: 50px;
+    margin-top: 6px;
 }

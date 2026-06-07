@@ -1,6 +1,7 @@
 # ph-editor/core/shared_data.py
 import json
 import logging
+import random
 import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -454,14 +455,15 @@ def get_processed_metadata_list(profile_id: int) -> list:
                 
                 # 2. 複雜計算邏輯 (封裝在內部或呼叫外部函數)
                 # age = calculate_age(profile_id, scenario_id)
-                age = 20 # 範例數值
+                age = random.randint(15, 60) # 範例數值
                 
                 # 3. 組裝成前端需要的結構 (List of Objects)
                 results.append({
                     "sn": sn,
                     "file_id": file_id,
                     "tag_id": tag_id,
-                    "age": age
+                    "age": age,
+                    "parent": ""
                 })
         
         return results
