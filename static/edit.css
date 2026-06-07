@@ -60,7 +60,7 @@ body {
         min-height: 100px;
         object-fit: contain;
         border-radius: 4px;
-        image-rendering: crisp-edges;
+        /*image-rendering: crisp-edges;*/
         display: block;
         flex-shrink: 0;
         pointer-events: auto; /* 禁止所有點擊事件 */
