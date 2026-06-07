@@ -78,7 +78,7 @@ DEFAULT_METADATA_TEMPLATE = {
     "backstage": DEFAULT_BACKSTAGE_TEMPLATE
 }
 
-ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!remark", "backstage", "modified"]
+ORDER_METADATA = ["!file_id", "!profile_id", "!scenario_id", "!upstream_sn", "!remark", "backstage", "modified"]
 
 def synchronized(f):
     @wraps(f)
@@ -505,7 +505,7 @@ class ExtraDataManager():
 
     @synchronized
     def update_scenario_id(self, sn: str, scenario_id: int):
-        logger.debug(f"update SCENARIO_ID: {scenario_id} to {sn}")
+        logger.debug(f"update {sn}.SCENARIO_ID: {scenario_id}")
         # 要修改內容,直接內部讀取
         metadata = self._metadata_map.get(sn, {})
         metadata['!scenario_id'] = scenario_id;
@@ -518,6 +518,14 @@ class ExtraDataManager():
         metadata = self._metadata_map.get(sn, {})
         metadata.pop("!scenario_id", None)
         self._commit_metadata(sn, metadata)                
+
+    @synchronized
+    def update_upstream_sn(self, sn: str, upstream_sn: str):
+        logger.debug(f"Update {sn}.UPSTREAM_SN: {upstream_sn}")
+        # 要修改內容,直接內部讀取
+        metadata = self._metadata_map.get(sn, {})
+        metadata['!upstream_sn'] = upstream_sn;
+        self._commit_metadata(sn, metadata)
 
     @synchronized
     def update_backstage(self, sn: str, backstage_data: dict):

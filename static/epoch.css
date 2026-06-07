@@ -34,7 +34,7 @@ body {
     border-spacing: 0;
     width: max-content;        /* 寬度隨內容撐開，才會觸發水平滾動 */
     min-width: 100%;
-    min-height: 100%;
+    min-height: 100px;
     background-color: var(--color-main-bg);
 }
 
@@ -152,7 +152,7 @@ body {
     cursor: grabbing;
 }
 
-.character-card.has-parent {
+.character-card.has-upstream {
     border: 2px dashed #ffa500;
 }
 

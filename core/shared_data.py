@@ -452,6 +452,7 @@ def get_processed_metadata_list(profile_id: int) -> list:
                 file_id = metadata.get("!file_id")
                 tag_id = metadata.get("backstage", {}).get("!tag_id")
                 scenario_id = metadata.get("!scenario_id")
+                upstream_sn = metadata.get("!upstream_sn", "")
                 
                 # 2. 複雜計算邏輯 (封裝在內部或呼叫外部函數)
                 # age = calculate_age(profile_id, scenario_id)
@@ -463,7 +464,7 @@ def get_processed_metadata_list(profile_id: int) -> list:
                     "file_id": file_id,
                     "tag_id": tag_id,
                     "age": age,
-                    "parent": ""
+                    "upstream": upstream_sn
                 })
         
         return results

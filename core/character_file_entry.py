@@ -53,6 +53,7 @@ class CharacterFileEntry:
             # metadata 為 None 時的處理方式
             self.profile_id = None
             self.scenario_id = None
+            self.upstream_sn = None
             self.remark = "" # 空字串...
             self.tag_id = None
             self.backstage_data = {}
@@ -60,6 +61,7 @@ class CharacterFileEntry:
             # 使用 .get() 方法安全地存取字典鍵值，避免 KeyError
             self.profile_id = metadata.get('!profile_id')
             self.scenario_id = metadata.get('!scenario_id')
+            self.upstream_sn = metadata.get('!upstream_sn')
             self.remark = metadata.get('!remark', "")
             # 存取巢狀字典時，也使用 .get() 來確保安全
             self.backstage_data = metadata.get('backstage', {})
@@ -214,6 +216,10 @@ class CharacterFileEntry:
     def remove_scenario(self):
         self.scenario_id = None
         self.data_source.remove_scenario(self.sn)
+
+    def update_upstream_sn(self, upstream_sn: str):
+        self.upstream_sn = upstream_sn
+        self.data_source.update_upstream_sn(self.sn, upstream_sn)
 
     def update_character_data(self, main_key: str, sub_key: str, data: any):
         self.character_data.update_data(main_key, sub_key, data)

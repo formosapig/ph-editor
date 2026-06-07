@@ -275,3 +275,25 @@ def copy_clone(scan_path, entry):
     new_entry = add_or_update_character_with_path(scan_path, new_id)
     new_entry.to_dict()
     return jsonify({"new_data": new_entry.to_dict()})
+
+@api_character_bp.patch("/<sn>/upstream/<upstream_sn>")
+@inject_character_file_entry
+def patch_character_upstream(entry, upstream_sn):
+
+    # ROOT = most upstream
+    # "" = no upstream
+    # 目前似乎不會失敗？
+    success = entry.update_upstream_sn(upstream_sn);
+
+    if not success:
+        return jsonify(
+            {
+                "success": False,
+                "message": f"更新角色 {entry.sn} 溯源備註 {upstream_sn} 失敗。",
+            }
+        )
+    
+    return jsonify({
+        "success": True,
+        "message": f"更新角色溯源 (UPSTREAM_SN) 成功。",
+    })

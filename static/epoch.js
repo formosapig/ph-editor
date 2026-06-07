@@ -4,8 +4,8 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('epochManager', () => ({
         selectedProfile: '',
         profile_options: window.INITIAL_PROFILES || [],
-        characters: [],  // 只留 parent === "" 的根角色
-        epochChain: [],  // parent 有值的通通進來 (包含 "ROOT" 與 8 碼 "SNNUMBER")
+        characters: [],  // 只留 upstream === "" 的根角色
+        epochChain: [],  // upstream 有值的通通進來 (包含 "ROOT" 與 8 碼 "SNNUMBER")
         draggedChar: null,
 
         init() {
@@ -31,13 +31,13 @@ document.addEventListener('alpine:init', () => {
                 const rawResults = response.results || [];
                 
                 // 【重新修正的分流邏輯】
-                // 1. parent 為空字串 "" 或不存在的，留在 characters
+                // 1. upstream 為空字串 "" 或不存在的，留在 characters
                 this.characters = rawResults
-                    .filter(char => char.parent === '' || !char.parent)
+                    .filter(char => char.upstream === '' || !char.upstream)
                     .sort((a, b) => Number(a.age) - Number(b.age));;
                 
-                // 2. parent 有值的 ("ROOT" 或 "SNNUMBER")，全部串進 epochChain
-                this.epochChain = rawResults.filter(char => char.parent && char.parent !== '');
+                // 2. upstream 有值的 ("ROOT" 或 "SNNUMBER")，全部串進 epochChain
+                this.epochChain = rawResults.filter(char => char.upstream && char.upstream !== '');
                 
                 console.log("留在外部的角色 (characters):", this.characters);
                 console.log("進入鏈條的角色 (epochChain):", this.epochChain);
@@ -47,40 +47,33 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        /*get ageColumns() {
-            const ages = [...new Set(this.epochChain.map(item => item.age))];
-            ages.sort((a, b) => Number(a) - Number(b));
-            return ages;
-        },*/
-        
         get ageColumns() {
             const ages = [...new Set(this.epochChain.map(item => item.age))];
             ages.sort((a, b) => Number(a) - Number(b));
             
             const result = [];
+
+            result.push('α');
+
+            if (ages.length === 0) {
+                return result;
+            }
+
             for (let i = 0; i < ages.length; i++) {
-                // 第一個左邊放希臘字母（起源），其他放空字串
-                if (i === 0) {
-                    result.push('α');      // 希臘字母 Alpha，代表起源
-                } else {
-                    result.push('');       // 空字串佔位
-                }
                 result.push(ages[i]);      // 真正的 age 欄位
+                if (i < ages.length - 1) {
+                    result.push('');
+
+                }
             }
             return result;
         },
 
         get columnCount() {
-            return this.ageColumns.length;
+            return Math.max(1, this.ageColumns.length);
         },
         
-        /*getAgeColIndex(age) {
-            return this.ageColumns.indexOf(age);
-        },*/
-
         getAgeColIndex(age) {
-            // 新的結構： ['', age1, '', age2, '', age3, ...]
-            // 所以 age1 的索引是 1，age2 是 3，age3 是 5 ...
             const idx = this.ageColumns.indexOf(age);
             return idx;
         },
@@ -89,7 +82,7 @@ document.addEventListener('alpine:init', () => {
             const nodeMap = new Map();
             // 先把 epochChain 所有節點對應表建立起來
             this.epochChain.forEach(item => {
-                nodeMap.set(item.sn, { sn: item.sn, age: item.age, parent: item.parent, children: [] });
+                nodeMap.set(item.sn, { sn: item.sn, age: item.age, upstream: item.upstream, children: [] });
             });
             
             const roots = [];
@@ -97,12 +90,12 @@ document.addEventListener('alpine:init', () => {
             this.epochChain.forEach(item => {
                 const node = nodeMap.get(item.sn);
                 
-                // 【核心修改】明確指定 parent === "ROOT" 的才是這張表格最頂層的樹狀起點
-                if (item.parent === 'ROOT') {
+                // 【核心修改】明確指定 upstream === "ROOT" 的才是這張表格最頂層的樹狀起點
+                if (item.upstream === 'ROOT') {
                     roots.push(node);
                 } else {
-                    const parent = nodeMap.get(item.parent);
-                    if (parent) parent.children.push(node);
+                    const upstream = nodeMap.get(item.upstream);
+                    if (upstream) upstream.children.push(node);
                 }
             });
             
@@ -145,10 +138,15 @@ document.addEventListener('alpine:init', () => {
         
         get tableRowsWithLines() {
             const rows = this.tableRows;
-            if (!rows.length) return [];
-            
+            if (!rows.length) {
+                const colsCount = this.columnCount;
+                return [{
+                    nodes: new Array(colsCount).fill(null),
+                    connectors: new Array(colsCount).fill(null)
+                }];
+            }
+
             const colsCount = this.columnCount;
-            
             // 建立 grid，複製原本的節點
             const grid = rows.map(row => ({
                 nodes: [...row.cols],
@@ -166,13 +164,13 @@ document.addEventListener('alpine:init', () => {
             // 建立父子關係
             const nodeMap = new Map();
             this.epochChain.forEach(item => {
-                nodeMap.set(item.sn, { sn: item.sn, age: item.age, parent: item.parent, children: [] });
+                nodeMap.set(item.sn, { sn: item.sn, age: item.age, upstream: item.upstream, children: [] });
             });
             this.epochChain.forEach(item => {
                 const node = nodeMap.get(item.sn);
-                if (item.parent === 'ROOT') return;
-                const parent = nodeMap.get(item.parent);
-                if (parent) parent.children.push(node);
+                if (item.upstream === 'ROOT') return;
+                const upstream = nodeMap.get(item.upstream);
+                if (upstream) upstream.children.push(node);
             });
             
             // 畫線
@@ -183,7 +181,7 @@ document.addEventListener('alpine:init', () => {
                 console.error("node", node);
                 console.error("nodePos", nodePos);
 
-                if (node.parent === "ROOT") {
+                if (node.upstream === "ROOT") {
                     for (let col = to2Pos.col - 1; col > 0; col--) {
                         grid[to2Pos.row].connectors[col] = "-";
                     }
@@ -247,36 +245,8 @@ document.addEventListener('alpine:init', () => {
                     drawLines(child);
                 }
             };
-
-            /*const drawLines = (node) => {
-                
-                const fromPos = nodePos.get(node.sn);
-                console.error("fromPos = ", fromPos);
-                if (!fromPos) return;
-                
-                for (const child of node.children) {
-                    const toPos = nodePos.get(child.sn);
-                    console.error("toPos = ", toPos);
-                    if (!toPos) continue;
-                    
-                    // 只處理同一行的父子（不同行的先不管）
-                    //if (fromPos.row === toPos.row) {
-                        // 從父親的右邊一格，到小孩的左邊一格，全部填 '-'
-                        for (let col = fromPos.col + 1; col < toPos.col; col++) {
-                            grid[toPos.row].connectors[col] = '-';
-                            console.error("DrawLine", toPos.row, col);
-                            // 順便把 nodes 裡對應位置也清掉（如果有東西的話）
-                            //if (grid[toPos.row].nodes[col]) {
-                            //    grid[toPos.row].nodes[col] = null;
-                            //}
-                        }
-                    //}
-                    
-                    drawLines(child);
-                }
-            };*/
-            
-            const roots = this.epochChain.filter(item => item.parent === 'ROOT');
+           
+            const roots = this.epochChain.filter(item => item.upstream === 'ROOT');
             roots.forEach(root => {
                 const node = nodeMap.get(root.sn);
                 if (node) drawLines(node);
@@ -293,6 +263,8 @@ document.addEventListener('alpine:init', () => {
         // 在 Alpine.data('epochManager', () => ({ ... })) 裡面修改：
 
         handleDrop(event, targetSn = null) {
+            event.preventDefault();  // ✅ 加上這行
+
             if (!this.draggedChar) return;
 
             event.stopPropagation();
@@ -312,29 +284,31 @@ document.addEventListener('alpine:init', () => {
 
                 // 【新增防呆 2】檢查年齡（Age）關係
                 // 從鏈條中找到目標父親的角色資料
-                const parentChar = this.epochChain.find(c => c.sn === targetSn);
+                const upstreamChar = this.epochChain.find(c => c.sn === targetSn);
                 
-                if (parentChar) {
+                if (upstreamChar) {
                     // 確保兩者轉為數字進行比對
-                    const parentAge = Number(parentChar.age);
+                    const upstreamAge = Number(upstreamChar.age);
                     const childAge = Number(this.draggedChar.age);
 
                     // 如果孩子的年齡大於或等於父親，則攔截
-                    if (childAge <= parentAge) {
-                        alert(`時空悖論！孩子的年齡 (${childAge}) 不能大於或等於父母的年齡 (${parentAge})！`);
+                    if (childAge <= upstreamAge) {
+                        alert(`時空悖論！孩子的年齡 (${childAge}) 不能大於或等於父母的年齡 (${upstreamAge})！`);
                         this.draggedChar = null;
                         return; // 中斷操作，不進行轉移
                     }
                 }
 
                 // 檢查通過，設定父子關係
-                this.draggedChar.parent = targetSn;
+                this.draggedChar.upstream = targetSn;
+
+                this.updateCharacterUpstream(this.draggedChar.sn, targetSn, "透過拖曳設定");
                 
                 if (!exists) {
                     this.epochChain.push(this.draggedChar);
                     this.characters = this.characters.filter(c => c.sn !== this.draggedChar.sn);
                 }
-                console.log(`角色 ${this.draggedChar.sn} (Age: ${this.draggedChar.age}) 成功變成 ${targetSn} (Age: ${parentChar.age}) 的子代`);
+                console.log(`角色 ${this.draggedChar.sn} (Age: ${this.draggedChar.age}) 成功變成 ${targetSn} (Age: ${upstreamChar.age}) 的子代`);
 
             } else {
                 // 【核心邏輯 B】丟在空白處 -> 變成 ROOT（新的一列）
@@ -343,7 +317,9 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
-                this.draggedChar.parent = 'ROOT';
+                this.draggedChar.upstream = 'ROOT';
+
+                this.updateCharacterUpstream(this.draggedChar.sn, 'ROOT', "透過拖曳設定");
                 
                 if (!exists) {
                     this.epochChain.push(this.draggedChar);
@@ -356,6 +332,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleDropBack(event) {
+            event.preventDefault();  // ✅ 加上這行
+
             if (!this.draggedChar) return;
 
             event.stopPropagation();
@@ -364,9 +342,9 @@ document.addEventListener('alpine:init', () => {
             const targetsToRemove = [];
 
             // 2. 寫一個遞迴函式，找出當前角色所有的子子孫孫
-            const collectDescendants = (parentSn) => {
-                // 找出所有 parent 是當前這個 parentSn 的小孩
-                const children = this.epochChain.filter(c => c.parent === parentSn);
+            const collectDescendants = (upstreamSn) => {
+                // 找出所有 upstream 是當前這個 upstreamSn 的小孩
+                const children = this.epochChain.filter(c => c.upstream === upstreamSn);
                 
                 children.forEach(child => {
                     targetsToRemove.push(child);
@@ -386,7 +364,8 @@ document.addEventListener('alpine:init', () => {
                 
                 if (!exists) {
                     // 所有滾回來的角色，父節點全部洗白變回空字串 ""
-                    char.parent = '';
+                    char.upstream = '';
+                    this.updateCharacterUpstream(char.sn, '');
                     this.characters.push(char);
                 }
             });
@@ -402,6 +381,17 @@ document.addEventListener('alpine:init', () => {
 
             // 重置拖曳狀態
             this.draggedChar = null;
+        },
+
+        async updateCharacterUpstream(sn, upstreamSn) {
+            try {
+                const data = await request(`/api/character/${sn}/upstream/${upstreamSn}`, { method: "PATCH" });
+                console.log(`✅ upstream 已更新: ${sn} -> ${upstreamSn}`);
+                return true;
+            } catch (err) {
+                console.warn(`設定 upstream 失敗: ${sn} -> ${upstreamSn}`, err.displayMessage || err);
+                return false;
+            }
         }
      }));
 });

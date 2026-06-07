@@ -115,13 +115,13 @@
             <div class="character-list">
                 <template x-for="char in characters" :key="char.sn">
                     <div 
-                        class="character-card small"
+                        class="character-card"
                         draggable="true"
                         @dragstart="handleDragStart($event, char)"
-                        :class="{ 'has-parent': char.parent_sn }"
+                        :class="{ 'has-upstream': char.upstream }"
                     >
                         <span x-show="char.age" class="age-badge" x-text="char.age"></span>
-                        <div class="avatar-box">
+                        <div class="avatar-box small">
                             <img :src="'/api/character/' + char.sn + '/thumbnail'" alt="thumb" draggable="false">
                         </div>
                         <div class="file-id" x-text="char.file_id"></div>
