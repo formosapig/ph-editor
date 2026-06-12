@@ -198,6 +198,7 @@ html, body {
     /* padding-bottom: 0; /* 移除之前為「盒子」加的底部內邊距 */
   order: 0 !important; /* 強制覆蓋可能的動態 order */
   float: none !important;
+  box-sizing: border-box;
 }
 
 .thumb-container:hover {
@@ -209,18 +210,22 @@ html, body {
   position: relative;
   width: 252px;
   height: 352px;
+  box-sizing: border-box;
 }
 
 .thumb {
   display: block;
-  margin-bottom: 5px;
+  /*margin-bottom: 5px;*/
   border: 1px solid #ccc;
   border-radius: 4px;
   width: 252px;
   height: 352px;
   object-fit: contain;
   user-select: none;
+  box-sizing: border-box;
+  object-fit: cover;
 }
+
 
 .thumb-wrapper, .thumb {
     width: 100% !important;
@@ -228,6 +233,7 @@ html, body {
     aspect-ratio: 252 / 352;
     object-fit: cover;
 }
+
 
 /* 勾選框 */
 .checkmark {
@@ -286,16 +292,16 @@ html, body {
 
 .profile-badge-index {
     position: absolute;
-    bottom: 5px;
-    left: 2px;
+    bottom: -2px;
+    left: -2px;
     z-index: 10;
-    max-width: 90%;
+    /*max-width: 90%;*/
 }
 
 .tag-label {
     position: absolute;
-    bottom: 5px; /* 保持距離頂部 */
-    right: 2px; /* 調整為 4px，稍微與左邊界對齊 */
+    bottom: -2px; /* 保持距離頂部 */
+    right: -2px; /* 調整為 4px，稍微與左邊界對齊 */
     padding: 2px 5px; /* 稍微縮小 padding */
     border-radius: 4px;
     font-size: 12px; /* 稍微縮小字體，使其為輔 */
@@ -348,7 +354,7 @@ html, body {
   /* 這個值需要大於 profile-badge 突出圖片的高度，再加上您想要的文字與徽章間距 */
   /* 假設 profile-badge 底部是 -15px，且其高度約 25px (即 15px 在圖片外，10px 在圖片內)，
     那麼從圖片底部算起，filename-label 的頂部至少要距離圖片底部 15px + 5px (額外間距) = 20px */
-  margin-top: 20px; /* **從這個值開始微調，直到視覺效果滿意為止** */
+  margin-top: 4px; /* **從這個值開始微調，直到視覺效果滿意為止** */
 
   /* 確保檔名文字水平置中 */
   text-align: center;

@@ -51,12 +51,19 @@
                  @click="toggleSelect(item.sn, $event)">
                 <div class="checkmark">✅</div>
                 <div class="thumb-wrapper">
-                    <img x-intersect="loadImage(item)"
+                    <!--<img x-intersect="loadImage(item)"
                         :src="getImageSrc(item)"
                         class="thumb"
                         width="252"
                         height="352"
-                        loading="lazy">
+                        loading="lazy">-->
+                    <img :src="'/api/character/' + item.sn + '/thumbnail'"
+                         class="thumb"
+                         :alt="item.sn"
+                         width="252"
+                         height="352"
+                         loading="lazy"
+                         draggable="false">
                     <div x-show="item.profile_name" class="profile-badge profile-badge-index" x-text="item.profile_name"></div>
                     <div x-show="item.tag_name" 
                          class="tag-label"

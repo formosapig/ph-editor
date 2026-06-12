@@ -20,7 +20,7 @@
         
         <section class="main-content">
             <div class="table-container">
-                <table border="1" style="border-collapse: collapse; width: 100%;"
+                <table 
                     @dragover.prevent
                     @drop="handleDrop($event)"
                     class="character-table">
@@ -37,36 +37,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!--
-                        <template x-for="(row, index) in tableRows" :key="index">
-                            <tr>
-                                <template x-for="(cell, idx) in row.cols" :key="idx">
-                                    <td 
-                                        @dragover.prevent
-                                        :class="{ 'sticky-col': idx === 0 }"
-                                        style="text-align: center; border: 1px solid #ccc; position: relative;"
-                                    >
-                                        <template x-if="cell">
-                                            <div 
-                                                class="character-card has-character"
-                                                :data-sn="cell" 
-                                                draggable="true"
-                                                @dragstart="handleDragStart($event, epochChain.find(c => c.sn === cell))"
-                                                @drop.stop="handleDrop($event, cell)">
-                                                <div class="avatar-box mini">
-                                                    <img :src="'/api/character/' + cell + '/thumbnail'" alt="thumb" draggable="false">
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                        <template x-if="!cell">
-                                            <div style="width: 100%; height: 100%; min-height: 40px;"></div>
-                                        </template>
-                                    </td>
-                                </template>
-                            </tr>
-                        </template>
-                        -->
                         <template x-for="(row, rowIdx) in tableRowsWithLines" :key="rowIdx">
                             <tr>
                                 <template x-for="(sn, colIdx) in row.nodes" :key="colIdx">
