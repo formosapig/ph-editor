@@ -296,6 +296,26 @@ class CharacterFileEntry:
         
         return True, sanitize_filename(result)
 
+    def get_age(self) -> int:
+        # 抽取角色檔案資料 
+        if self.profile_id is None or not (profile_data := self.get_profile()):
+            return 99
+        # 抽取場景資料
+        if self.scenario_id is None or not (scenario_data := self.get_scenario()):
+            return 99
+        
+        born_year = profile_data.get("born")
+        scenario_year = scenario_data.get("year")
+
+        age = 99            
+        if born_year and scenario_year:
+            try:
+                age = int(scenario_year) - int(born_year)
+            except (ValueError, TypeError):
+                pass
+
+        return age
+
     def to_dict(self, tag_resolver=None):
         soul = self.calculate_soul()
         meat = self.calculate_meat()

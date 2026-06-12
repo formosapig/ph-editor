@@ -447,16 +447,18 @@ def get_processed_metadata_list(profile_id: int) -> list:
         results = []
         
         for sn, metadata in metadata_map.items():
-            if metadata.get("!profile_id") == profile_id:
+            if metadata.get("!profile_id") == profile_id and (entry := get_character_file_entry(sn)):
                 # 1. 取得必要欄位
                 file_id = metadata.get("!file_id")
                 tag_id = metadata.get("backstage", {}).get("!tag_id")
                 scenario_id = metadata.get("!scenario_id")
                 upstream_sn = metadata.get("!upstream_sn", "")
                 
+
                 # 2. 複雜計算邏輯 (封裝在內部或呼叫外部函數)
                 # age = calculate_age(profile_id, scenario_id)
-                age = random.randint(15, 60) # 範例數值
+                # age = random.randint(15, 60) # 範例數值
+                age = entry.get_age()
                 
                 # 3. 組裝成前端需要的結構 (List of Objects)
                 results.append({
