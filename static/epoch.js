@@ -357,6 +357,10 @@ document.addEventListener('alpine:init', () => {
             targetsToRemove.push(this.draggedChar);
             collectDescendants(this.draggedChar.sn);
 
+            // 4. ✅ 批量清除所有角色的 upstream
+            const snList = targetsToRemove.map(c => c.sn);
+            this.batchClearUpstream(snList);
+
             // 4. 開始批次處理轉移
             targetsToRemove.forEach(char => {
                 // 防呆：如果原本的 characters 列表裡面已經有了（理論上不會），就不重複加
@@ -365,7 +369,6 @@ document.addEventListener('alpine:init', () => {
                 if (!exists) {
                     // 所有滾回來的角色，父節點全部洗白變回空字串 ""
                     char.upstream = '';
-                    this.updateCharacterUpstream(char.sn, '');
                     this.characters.push(char);
                 }
             });
@@ -390,6 +393,27 @@ document.addEventListener('alpine:init', () => {
                 return true;
             } catch (err) {
                 console.warn(`設定 upstream 失敗: ${sn} -> ${upstreamSn}`, err.displayMessage || err);
+                return false;
+            }
+        },
+
+        // 新增批量刪除 upstream 的方法
+        async batchClearUpstream(snList) {
+            try {
+                const data = await request(`/api/characters/upstream`, {
+                    method: "DELETE",
+                    body: JSON.stringify({ sn_list: snList })
+                });
+                
+                if (data.success) {
+                    console.log(`✅ 成功清除 ${data.success_count} 個角色的 upstream`);
+                    return true;
+                } else {
+                    console.warn(`⚠️ 批量清除失敗: ${data.message}`);
+                    return false;
+                }
+            } catch (err) {
+                console.warn(`批量清除 upstream 失敗`, err.displayMessage || err);
                 return false;
             }
         }
