@@ -32,10 +32,13 @@ body {
 .character-table {
     border-collapse: separate; /* 這裡要改成 separate，否則 sticky 的外框線會黏在一起變型 */
     border-spacing: 0;
-    width: max-content;        /* 寬度隨內容撐開，才會觸發水平滾動 */
-    min-width: 100%;
+    /*width: max-content;        /* 寬度隨內容撐開，才會觸發水平滾動 */
+    /*min-width: 100%;*/
     min-height: 100px;
     background-color: var(--color-main-bg);
+    /*width: fit-content;
+    table-layout: auto;*/
+    /*table-layout: fixed;*/
 }
 
 .character-table thead th {
@@ -56,13 +59,18 @@ body {
     z-index: 2;                /* 層級次高，滾動時壓在後續 td 上方 */
     background-color: #b388ff; /* 必須有背景色，才不會透明看到後面的字 */
     border-right: 2px solid #555;
-    width: 60px;
-    min-width: 60px;
+    width: 32px;
+    min-width: 32px;
 }
 
 .character-table th.dummy-col {
     width: 32px;
     min-width: 32px;
+}
+
+.character-table th.age-col {
+    width: 64px; /*fit-content;*/
+    min-width: 64px;
 }
 
 /* 點擊穿透優化，防止拖曳判定歪掉 */
