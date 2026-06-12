@@ -10,7 +10,7 @@ from core.shared_data import (
     remove_character_file_entry,
 )
 from utils.character_file_utils import reload_character_data
-from utils.decorators import require_scan_path
+from utils.decorators import require_json_data, require_scan_path
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,43 @@ def bulk_delete_characters(scan_path):
             )
 
     return jsonify({"results": results})
+
+
+@api_characters_bp.delete("/upstream")
+@require_json_data
+def patch_character_upstream(data):
+    # 預期 data 格式: {"sn_list": ["sn1", "sn2", ...]}
+    sn_list = data.get("sn_list", [])
+    
+    if not sn_list:
+        return jsonify({
+            "success": False,
+            "message": "未提供任何角色 SN。",
+        })
+    
+    success_count = 0
+    failed_sn_list = []
+    
+    for sn in sn_list:
+        # 根據 sn 取得 entry 物件
+        entry = get_character_file_entry(sn)
+        
+        if not entry:
+            failed_sn_list.append(sn)
+            continue
+        
+        entry.update_upstream_sn("")
+    
+    if failed_sn_list:
+        return jsonify({
+            "success": False,
+            "message": f"部分角色更新失敗，失敗 SN: {failed_sn_list}"
+        })
+    
+    return jsonify({
+        "success": True,
+        "message": f"成功刪除 {success_count} 個角色的 upstream_sn。",
+    })
 
 
 @api_characters_bp.route("/reload", methods=["GET"])
