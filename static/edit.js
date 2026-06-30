@@ -1,5 +1,4 @@
 import { request } from './request.js';
-import { nameMap, searchRegex } from './mapping.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('characterEditor', (params) => ({
@@ -10,7 +9,10 @@ document.addEventListener('alpine:init', () => {
         meat: params.meat,
         form: params.form,
         code: params.code,
+        nameMap: params.name_map,
+        searchRegex: new RegExp(params.search_regex, 'g'),
         globalParsedData: params.initialData || {},
+
 
         activeMainTab: 'story',
         activeSubTab: 'profile',
@@ -48,6 +50,28 @@ document.addEventListener('alpine:init', () => {
             story: [ { key: 'profile', label: '簡介' }, { key: 'scenario', label: '場景' }, { key: 'backstage', label: '幕後' } ]
         },
 
+        /*
+        // 字典資料
+        dictionary: {
+            '帥氣': '帥到不行很生氣候!!',
+            '漂亮': '美麗動人，令人驚艷',
+            '聰明': '智慧過人，機智靈敏',
+            '勇敢': '膽識過人，無所畏懼',
+            '溫柔': '體貼入微，溫和柔順'
+        },
+
+        // Tooltip 狀態
+        tooltip: {
+            show: false,
+            text: '',
+            x: 0,
+            y: 0,
+            keyword: ''
+        },
+
+        // 防抖計時器
+        hideTimer: null,*/
+
         init() {
             window.app = this; // 除錯使用
             this.switchMainTab('story');
@@ -77,7 +101,7 @@ document.addEventListener('alpine:init', () => {
                     if (!k.startsWith('!')) displayData[k] = data[k];
                 });
             }
-            console.error("render", this.activeMainTab, this.activeSubTab, displayData);
+            //console.error("render", this.activeMainTab, this.activeSubTab, displayData);
             //let jsonString = JSON.stringify(displayData, null, 2);
             //this.$refs.mainContent.textContent = jsonString.replace(/^\{\s*/, '').replace(/\s*\}$/, '');
             this.$refs.mainContent.textContent = JSON.stringify(displayData, null, 2);
@@ -100,7 +124,7 @@ document.addEventListener('alpine:init', () => {
                 return;
     
             // 進行轉換
-            const translated = selectedText.replace(searchRegex, (matched) => nameMap[matched]);
+            const translated = selectedText.replace(this.searchRegex, (matched) => this.nameMap[matched]);
 
             if (translated !== selectedText) {
                 // 核心邏輯：刪除當前選取的內容節點，並插入新節點
@@ -112,6 +136,95 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        /*
+        findEnclosedText(event) {
+            const x = event.clientX;
+            const y = event.clientY;
+            
+            const range = document.caretRangeFromPoint(x, y);
+            if (!range) return;
+            
+            const textNode = range.startContainer;
+            if (textNode.nodeType !== Node.TEXT_NODE) return;
+            
+            const fullText = textNode.textContent;
+            const caretOffset = range.startOffset;
+            
+            let startIndex = -1;
+            let endIndex = -1;
+            
+            const pairs = [
+                { open: '《', close: '》' },
+                { open: '『', close: '』' }
+            ];
+            
+            for (const pair of pairs) {
+                let foundOpen = -1;
+                for (let i = caretOffset - 1; i >= 0; i--) {
+                    if (fullText[i] === pair.open) {
+                        foundOpen = i;
+                        break;
+                    }
+                    if (fullText[i] === '》' || fullText[i] === '』') break;
+                }
+                if (foundOpen === -1) continue;
+                
+                let foundClose = -1;
+                for (let i = caretOffset; i < fullText.length; i++) {
+                    if (fullText[i] === pair.close) {
+                        foundClose = i;
+                        break;
+                    }
+                    if (fullText[i] === '《' || fullText[i] === '『') break;
+                }
+                if (foundClose === -1) continue;
+                
+                if (caretOffset > foundOpen && caretOffset <= foundClose) {
+                    startIndex = foundOpen;
+                    endIndex = foundClose;
+                    break;
+                }
+            }
+            
+            if (startIndex !== -1 && endIndex !== -1) {
+                const keyword = fullText.substring(startIndex + 1, endIndex);
+                if (this.dictionary[keyword]) {
+                    this.showTooltip(x, y, keyword, this.dictionary[keyword]);
+                    return;
+                }
+            }
+            
+            this.hideTooltip();
+        },
+        
+        showTooltip(x, y, keyword, text) {
+            this.tooltip.show = true;
+            this.tooltip.keyword = keyword;
+            this.tooltip.text = text;
+            this.tooltip.x = x + 10;
+            this.tooltip.y = y - 10;
+        },
+        
+        hideTooltip() {
+            clearTimeout(this.hideTimer);
+            this.hideTimer = setTimeout(() => {
+                this.tooltip.show = false;
+            }, 200);
+        },
+        
+        handleMouseMove(event) {
+            const el = document.getElementById('tooltip');
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                if (event.clientX >= rect.left && event.clientX <= rect.right &&
+                    event.clientY >= rect.top && event.clientY <= rect.bottom) {
+                    clearTimeout(this.hideTimer);
+                    return;
+                }
+            }
+            this.hideTooltip();
+        },*/
+        
         async saveContent() {
             if (!this.hasChanged) return;
             

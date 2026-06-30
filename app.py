@@ -2,6 +2,7 @@
 import logging
 import platform
 import random
+import re
 import string
 import os,time
 import traceback
@@ -11,6 +12,7 @@ from wsgiref.simple_server import WSGIRequestHandler
 from flask import (
     Flask,
     flash,
+    json,
     jsonify,
     redirect,
     render_template,
@@ -222,7 +224,18 @@ def logout():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    global_data = get_general_data()
+    name_map = {item["keyword"]: item["masked"] for item in global_data.get("keyword_masking", [])}
+    sorted_keys = sorted(name_map.keys(), key=len, reverse=True)
+    escaped_keys = [re.escape(k) for k in sorted_keys]
+    regex_pattern = '|'.join(escaped_keys)
+    return render_template(
+        'index.html', 
+        name_map_json=json.dumps(name_map, ensure_ascii=False), # 確保中文不變 \uXXXX
+        regex_pattern=regex_pattern
+    )
+
+    #return render_template("index.html")
 
 
 @app.route("/cache/<path:filename>")

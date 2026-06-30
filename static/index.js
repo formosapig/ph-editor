@@ -1,5 +1,4 @@
 import { request } from './request.js';
-import { searchRegex, nameMap } from './mapping.js';
 
 // 產生基於當天日期的種子，保證「同一天內亂序結果固定」
 function getDailySeed() {
@@ -61,6 +60,9 @@ document.addEventListener('alpine:init', () => {
         debounceTimer: null,
         isShuffled: false,
 
+        nameMap: window.NAME_MAP,
+        searchRegex: new RegExp(window.SEARCH_REGEX_PATTERN, 'g'),
+
         // Getters (Alpine 內部的 Getters 會自動追蹤響應式)
         get scanPathDisplay() {
             return this.currentScanPath ? this.shortenPath(this.currentScanPath) : '尚未選擇';
@@ -91,7 +93,7 @@ document.addEventListener('alpine:init', () => {
 
                     // 如果是 profile_name，且 nameMap 有定義，直接轉譯
                     if (this.filterKey === 'profile_name') {
-                        keyword = keyword.replace(searchRegex, (matched) => nameMap[matched]);
+                        keyword = keyword.replace(this.searchRegex, (matched) => this.nameMap[matched]);
                     }
                     //console.error("Keyword", keyword);
 

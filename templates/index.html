@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="[[ url_for('static', filename='animations.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='index.css') ]]" />
     <script src="[[ url_for('static', filename='index.js') ]]" type="module"></script>
-    <script src="[[ url_for('static', filename='alpine3.15.12/intersect/cdn.min.js') ]]" defer></script>
+    <!--<script src="[[ url_for('static', filename='alpine3.15.12/intersect/cdn.min.js') ]]" defer></script>-->
     <script src="[[ url_for('static', filename='alpine3.15.12/cdn.min.js') ]]" defer></script>
 </head>
 <body x-data="phApp" x-cloak>
@@ -15,6 +15,12 @@
         <div class="buttons-row">
             <div class="left-buttons">
                 <button @click="changeFolder" title="修改掃描資料夾" :disabled="isAnyMenuOpen">📁</button>
+                <!-- 新增的隨機/洗牌按鈕 -->
+                <button 
+                    @click="isShuffled = !isShuffled" 
+                    :title="isShuffled ? '恢復排序' : '隨機洗牌'"
+                    x-text="isShuffled ? '🔁' : '🔀'">
+                </button>
                 <button @click="toggleSort" :class="{ active: showSortMenu }" title="排序">🔃</button>
                 <button @click="toggleFilter" :class="{ active: showFilterMenu }" title="篩選">🔍</button>
                 <button @click="compareSelected" :disabled="selectedCount < 2 || isAnyMenuOpen" title="比較">📊️</button>
@@ -26,16 +32,10 @@
             </div>
 
             <div class="right-buttons">
-                <!-- 新增的隨機/洗牌按鈕 -->
-                <button 
-                    @click="isShuffled = !isShuffled" 
-                    :title="isShuffled ? '恢復排序' : '隨機洗牌'"
-                    x-text="isShuffled ? '🔁' : '🔀'">
-                </button>
                 <button @click="openGeneral" :disabled="!currentScanPath" title="全域">📚</button>
                 <button @click="openCCM" :disabled="!currentScanPath" title="時空因果">🌌️</button>
                 <button @click="openEpoch" :disabled="!currentScanPath" title="歲月">⏳</button>
-                <button @click="openWishing" :disabled="!currentScanPath" title="許願噴泉">⛲</button>
+                <button @click="openWishing" :disabled="!currentScanPath" title="噴泉">⛲</button>
             </div>
         </div>
         <div class="status-bar">
@@ -144,6 +144,10 @@
     </div>
     <script>
         window.IS_MAIN_PAGE = true;
+
+        // 塞在這裡！轉成 JSON 物件與正規表達式字串
+        window.NAME_MAP = [[ name_map_json | safe ]];
+        window.SEARCH_REGEX_PATTERN = "[[ regex_pattern | safe ]]";
     </script>
     <script src="[[ url_for('static', filename='base.js') ]]"></script>
 </body>

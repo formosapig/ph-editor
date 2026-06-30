@@ -28,6 +28,8 @@ def general():
     tag_styles_data = general_data["tag_styles"]
     tag_list_data = general_data["tag_list"]
     profile_group_data = general_data["profile_group"]
+    keyword_masking = general_data.get("keyword_masking", [])
+    dictionary_terms = general_data.get("dictionary_terms", [])
 
     return render_template(
         "general.html",
@@ -35,6 +37,8 @@ def general():
         tag_styles=tag_styles_data,
         tag_list=tag_list_data,
         profile_group=profile_group_data,
+        keyword_masking=keyword_masking,
+        dictionary_terms=dictionary_terms
     )
 
 

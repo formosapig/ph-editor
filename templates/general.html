@@ -21,18 +21,20 @@
   <input type="radio" id="tab2" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
   <input type="radio" id="tab3" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
   <input type="radio" id="tab4" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
+  <input type="radio" id="tab5" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
+  <input type="radio" id="tab6" name="tabs" @change="$refs.scrollBox.scrollTop = 0">
 
   <nav class="tab-menu">
     <label for="tab1">特質顏色</label>
     <label for="tab2">標籤類型</label>
     <label for="tab3">標籤詳細</label>
     <label for="tab4">簡介分組</label>
+    <label for="tab5">關鍵字脫敏</label>
+    <label for="tab6">大辭典</label>
   </nav>
 
 <div class="tab-scroll-box" x-ref="scrollBox">
   <div class="tab-content">
-
-
 
   <section id="content1">
     <h3>特質-顏色 設定</h3>
@@ -201,6 +203,65 @@
     <button @click="addProfileGroup">新增分組</button>
   </section>
 
+ <section id="content5">
+    <h3>關鍵字脫敏 設定</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>關鍵字</th>
+          <th>脫敏化</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(item, index) in keyword_masking" :key="index">
+          <tr>
+            <td><input type="text" x-model="item.keyword" @blur="checkMaskingDuplicate(index)" placeholder="請輸入關鍵字" /></td>
+            <td><input type="text" x-model="item.masked" placeholder="請輸入脫敏後文字" /></td>
+            <td>
+              <button @click="removeKeywordMasking(index)" :disabled="keyword_masking.length === 1">刪除</button>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <button @click="addKeywordMasking">新增一行</button>
+  </section>
+
+  <section id="content6">
+    <h3>大辭典 設定</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>類型</th>
+          <th>關鍵字</th>
+          <th>說明</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="(item, index) in dictionary_terms" :key="index">
+          <tr>
+            <td>
+              <select x-model="item.category">
+                <option disabled value="">請選擇類型</option>
+                <option value="person">人名</option>
+                <option value="object">物名</option>
+                <option value="special">專名</option>
+              </select>
+            </td>
+            <td><input type="text" x-model="item.keyword" @blur="checkDictionaryDuplicate(index)" placeholder="關鍵字" /></td>
+            <td><textarea x-model="item.description" placeholder="說明"></textarea></td>
+            <td>
+              <button @click="removeDictionaryTerm(index)" :disabled="dictionary_terms.length === 1">刪除</button>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <button @click="addDictionaryTerm">新增一行</button>
+  </section>
+
   </div>
 </div>
 </div>
@@ -212,7 +273,9 @@
     colorTraits: [[ color_traits | tojson ]],
     tagStyles: [[ tag_styles | tojson ]],
     tagList: [[ tag_list | tojson ]],
-    profileGroup: [[ profile_group | tojson ]]
+    profileGroup: [[ profile_group | tojson ]],
+    keywordMasking: [[keyword_masking | tojson ]],
+    dictionaryTerms: [[dictionary_terms | tojson ]]
   };
 </script>
     <script src="[[ url_for('static', filename='base.js') ]]"></script>

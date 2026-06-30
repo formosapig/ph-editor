@@ -2,6 +2,7 @@
 from collections import Counter, OrderedDict
 import json
 import logging
+import re
 from flask import (
     Blueprint,
     jsonify,
@@ -11,6 +12,7 @@ from flask import (
 # get_character_data 會處理延遲解析邏輯
 from core.shared_data import (
     #find_another_sn_by_scenario_id,
+    get_general_data,
     get_info_by_tag_id,
 )
 from utils.character_file_utils import (
@@ -221,6 +223,13 @@ def edit(sn, entry):
     
     final_data = _build_final_data(info, persona_name, persona_code, shadow_name, shadow_code, profile, scenario, backstage)
 
+    # 混淆
+    global_data = get_general_data()
+    name_map = {item["keyword"]: item["masked"] for item in global_data.get("keyword_masking", [])}
+    sorted_keys = sorted(name_map.keys(), key=len, reverse=True)
+    escaped_keys = [re.escape(k) for k in sorted_keys]
+    regex_pattern = '|'.join(escaped_keys)
+
     return render_template(
         "edit.html",
         sn=sn,
@@ -232,6 +241,8 @@ def edit(sn, entry):
         meat=final_data["meat"],
         form=final_data["form"],
         code=final_data["code"],
+        name_map_json=json.dumps(name_map), # 確保中文不變 \uXXXX
+        regex_pattern=regex_pattern,
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )
 
@@ -259,6 +270,8 @@ def patch_data(sn, entry):
     backstage = entry.get_backstage()
 
     final_data = _build_final_data(info, persona_name, persona_code, shadow_name, shadow_code, profile, scenario, backstage)
+
+    # 混淆資料不重讀...
 
     return jsonify({
         "file_id": entry.file_id,

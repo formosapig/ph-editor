@@ -229,7 +229,9 @@ input[name="tabs"] {
 #tab1:checked ~ .tab-menu label[for="tab1"],
 #tab2:checked ~ .tab-menu label[for="tab2"],
 #tab3:checked ~ .tab-menu label[for="tab3"],
-#tab4:checked ~ .tab-menu label[for="tab4"] {
+#tab4:checked ~ .tab-menu label[for="tab4"],
+#tab5:checked ~ .tab-menu label[for="tab5"],
+#tab6:checked ~ .tab-menu label[for="tab6"] {
   background: var(--color-tab-main-bg);
   /*border: 1px solid #ccc;*/
   border-bottom: 2px solid var(--color-tab-main-active); /* 蓋住底線 */
@@ -241,7 +243,9 @@ input[name="tabs"] {
 #tab1:checked ~ .tab-scroll-box .tab-content #content1,
 #tab2:checked ~ .tab-scroll-box .tab-content #content2,
 #tab3:checked ~ .tab-scroll-box .tab-content #content3,
-#tab4:checked ~ .tab-scroll-box .tab-content #content4 {
+#tab4:checked ~ .tab-scroll-box .tab-content #content4,
+#tab5:checked ~ .tab-scroll-box .tab-content #content5,
+#tab6:checked ~ .tab-scroll-box .tab-content #content6 {
   display: block;
 }
 
