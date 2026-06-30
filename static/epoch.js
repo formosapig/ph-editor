@@ -183,9 +183,9 @@ document.addEventListener('alpine:init', () => {
 
                 if (node.upstream === "ROOT") {
                     for (let col = to2Pos.col - 1; col > 0; col--) {
-                        grid[to2Pos.row].connectors[col] = "-";
+                        grid[to2Pos.row].connectors[col] = "─";
                     }
-                    grid[to2Pos.row].connectors[0] = "o-";
+                    grid[to2Pos.row].connectors[0] = "◯";
                 }
 
                 
@@ -200,11 +200,11 @@ document.addEventListener('alpine:init', () => {
                         for (let col = startCol; col >= end2Col; col--) {
                             if (col === end2Col) {
                                 const existing = grid[fromPos.row].connectors[col];
-                                if (existing === '|') {
-                                    grid[fromPos.row].connectors[col] = '|-';
+                                if (existing === '│') {
+                                    grid[fromPos.row].connectors[col] = '├';
                                     break;  // 結束，不繼續畫
                                 } else if (!existing || existing === '') {
-                                    grid[fromPos.row].connectors[col] = 'L';
+                                    grid[fromPos.row].connectors[col] = '└';
                                     //firstCellProcessed = true;
                                     // 啟動父親追殺令
                                     let killRow = fromPos.row - 1;
@@ -214,14 +214,14 @@ document.addEventListener('alpine:init', () => {
                                     while (killActive && killRow >= to2Pos.row) {
                                         const cellContent = grid[killRow]?.connectors[killCol];
                                         
-                                        if (cellContent === 'L') {
-                                            grid[killRow].connectors[killCol] = '|-';
+                                        if (cellContent === '└') {
+                                            grid[killRow].connectors[killCol] = '├';
                                             killActive = false;
-                                        } else if (cellContent === '-') {
-                                            grid[killRow].connectors[killCol] = 'T';
+                                        } else if (cellContent === '─') {
+                                            grid[killRow].connectors[killCol] = '┬';
                                             killActive = false;
                                         } else if (!cellContent || cellContent === '') {
-                                            grid[killRow].connectors[killCol] = '|';
+                                            grid[killRow].connectors[killCol] = '│';
                                             killRow--;
                                         } else {
                                             killActive = false;  // 其他情況裝死
@@ -232,13 +232,13 @@ document.addEventListener('alpine:init', () => {
                                 }
                             } 
                             else {
-                                grid[fromPos.row].connectors[col] = '-';
+                                grid[fromPos.row].connectors[col] = '─';
                             }
                         }
                     } 
                     else {
                         for (let col = startCol; col >= end2Col; col--) {
-                            grid[fromPos.row].connectors[col] = '-';
+                            grid[fromPos.row].connectors[col] = '─';
                         }
                     }
                     

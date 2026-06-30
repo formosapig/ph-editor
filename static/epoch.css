@@ -6,114 +6,67 @@ body {
 
 .dashboard {
     display: flex;
-    flex-direction: column;
+    /*flex-direction: column;*/
     height: 100vh;
     overflow: hidden;
+    gap: 8px;
 }
 
-/* 右側區域 */
-.main-content {
-    flex: 1;
+.left-pannel {
+    width: fit-content;            /* 固定宽度，可按需调整 */
     display: flex;
-    flex-direction: column;
-    background-color: var(--color-body-bg);
-    position: relative;
-    min-height: 0;
-}
-
-.table-container {
-    flex: 1;               /* 自動填滿高度 */
-    overflow: auto;        /* 允許水平與垂直滾動 */
-    width: 100%;
-    position: relative;
-}
-
-/* 2. 表格基本設定，確保單元格不隨意縮小，才能撐出滾動條 */
-.character-table {
-    border-collapse: separate; /* 這裡要改成 separate，否則 sticky 的外框線會黏在一起變型 */
-    border-spacing: 0;
-    /*width: max-content;        /* 寬度隨內容撐開，才會觸發水平滾動 */
-    /*min-width: 100%;*/
-    min-height: 100px;
-    background-color: var(--color-main-bg);
-    /*width: fit-content;
-    table-layout: auto;*/
-    /*table-layout: fixed;*/
-}
-
-.character-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 3;                /* 層級最高，滾動時要壓在所有人上方 */
-    background-color: #9575cd; /* 標頭稍微深色一點方便辨識 */
-    border-bottom: 2px solid #555;
-    height: 40px;
-    padding: 4px 6px;
-    line-height: 1.2;
-}
-
-/* 4. 第一列 (Column) 水平凍結 */
-.character-table th.sticky-col {
-    position: sticky;
-    left: 0;
-    z-index: 2;                /* 層級次高，滾動時壓在後續 td 上方 */
-    background-color: #b388ff; /* 必須有背景色，才不會透明看到後面的字 */
-    border-right: 2px solid #555;
-    width: 32px;
-    min-width: 32px;
-}
-
-.character-table th.dummy-col {
-    width: 32px;
-    min-width: 32px;
-}
-
-.character-table th.age-col {
-    width: 64px; /*fit-content;*/
-    min-width: 64px;
-}
-
-/* 點擊穿透優化，防止拖曳判定歪掉 */
-.has-character * {
-    pointer-events: none;
+    flex-direction: column;  /* profile 在上，dock 在下垂直排列 */
+    flex-shrink: 0;          /* 防止被压缩 */
+    overflow: hidden;        /* 防止溢出 */  
+    height: 100vh;
 }
 
 .profile-selector {
-    position: absolute;
-    left: 2px;
-    bottom: 2px;
     z-index: 1000;
-    display: inline-block;
+    display: block;
     width: auto;
-    padding: 6pxx;
+    padding: 6px;
     font-size: 12px;
     background-color: var(--color-main-bg);
     border: 1px solid #4d79ff;
+    box-sizing: border-box;
 }
 
 .profile-selector select {
-    width: auto;
+    width: 100%;
     min-width: 100px;
     padding: 4px 6px;     /* select 內縮小一點 */
     font-size: 12px;      /* 選單內字體也變小 */
+    box-sizing: border-box;
 }
 
 .character-dock {
-    flex-shrink: 0;
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    flex: 1;
+    overflow-y: auto;
+    /*flex-shrink: 0;
+    width: 100%;*/
     
-    scroll-behavior: smooth;
+    /*scroll-behavior: smooth;*/
     
     /* 滾動條空間在這裡 */
-    min-height: 120px;
+    
+    /*min-height: 120px;
     max-height: 380px; /* 請根據你角色卡的高度調整 */
-    margin-bottom: 8px;
+    /*margin-bottom: 8px;*/
+    
+    box-sizing: border-box;
+    /*min-height: 120px;*/
+    height: 100%;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    
 }
 
 /* 滾動條掛在外層 */
-.character-dock::-webkit-scrollbar {
+/*.character-dock::-webkit-scrollbar {
     height: 8px;
 }
 .character-dock::-webkit-scrollbar-track {
@@ -123,23 +76,25 @@ body {
 .character-dock::-webkit-scrollbar-thumb {
     background: #b388ff;
     border-radius: 4px;
-}
+}*/
 
 .character-list {
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
+    flex-direction: column;
+    /*flex-wrap: nowrap;*/
     gap: 12px;
     padding: 10px;
+    box-sizing: border-box;
 }
 
 .character-card {
-    display: inline-block;  /* 橫向排列 */
-    vertical-align: top;    /* 頂部對齊 */
-    width: auto;            /* 不要固定寬度 */
+    display: block;
+    width: auto;
+    flex-shrink: 0;
 
-    width: fit-content;
-
+    min-width: 60px;
+    max-width: 160px;
+    
     border: 1px solid #383838;
     border-radius: 2px;
     background: var(--color-main-bg);
@@ -152,7 +107,7 @@ body {
 }
 
 .character-card:last-child {
-    margin-right: 0;
+    margin-bottom: 60px;
 }
 
 
@@ -196,4 +151,77 @@ body {
     max-width: 126px;
     text-align: left;
     margin-top: 6px;
+}
+
+/* 右側區域 */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-body-bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.table-container {
+    flex: 1;               /* 自動填滿高度 */
+    overflow: auto;        /* 允許水平與垂直滾動 */
+    /*width: 100%;*/
+    /*min-height: 0;
+    height: 100%;
+    width: 100%;
+    max-width: 100%;*/
+    
+}
+
+/* 2. 表格基本設定，確保單元格不隨意縮小，才能撐出滾動條 */
+.character-table {
+    border-collapse: separate; /* 這裡要改成 separate，否則 sticky 的外框線會黏在一起變型 */
+    border-spacing: 0;
+    /*width: max-content;        /* 寬度隨內容撐開，才會觸發水平滾動 */
+    /*min-width: 100%;*/
+    min-height: 100px;
+    background-color: var(--color-body-bg);
+    /*width: fit-content;
+    table-layout: auto;*/
+    /*table-layout: fixed;*/
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.character-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;                /* 層級最高，滾動時要壓在所有人上方 */
+    background-color: #9575cd; /* 標頭稍微深色一點方便辨識 */
+    border-bottom: 2px solid #555;
+    height: 40px;
+    padding: 4px 6px;
+    line-height: 1.2;
+}
+
+/* 4. 第一列 (Column) 水平凍結 */
+.character-table th.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;                /* 層級次高，滾動時壓在後續 td 上方 */
+    background-color: #b388ff; /* 必須有背景色，才不會透明看到後面的字 */
+    border-right: 2px solid #555;
+    width: 32px;
+    min-width: 32px;
+}
+
+.character-table th.dummy-col {
+    width: 32px;
+    min-width: 32px;
+}
+
+.character-table th.age-col {
+    width: 64px; /*fit-content;*/
+    min-width: 64px;
+}
+
+/* 點擊穿透優化，防止拖曳判定歪掉 */
+.has-character * {
+    pointer-events: none;
 }

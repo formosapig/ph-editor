@@ -16,6 +16,7 @@
      x-data="epochManager()" 
      x-init="init()">
     
+    <!--
     <main class="dashboard">
         
         <section class="main-content">
@@ -40,18 +41,20 @@
                         <template x-for="(row, rowIdx) in tableRowsWithLines" :key="rowIdx">
                             <tr>
                                 <template x-for="(sn, colIdx) in row.nodes" :key="colIdx">
-                                    <td style="border: 1px solid #ccc; text-align: center;">
+                                    <td>-->
                                         <!-- 有節點 -->
+                                        <!--
                                         <template x-if="sn">
                                             <div class="character-card has-character"
                                                 :data-sn="sn" 
                                                 draggable="true"
                                                 @dragstart="handleDragStart($event, epochChain.find(c => c.sn === sn))"
                                                 @drop.stop="handleDrop($event, sn)">
-                                                <div class="avatar-box mini">
+                                                <div class="avatar-box small">
                                                     <img :src="'/api/character/' + sn + '/thumbnail'" alt="thumb" draggable="false">
-                                                </div>
+                                                </div>-->
                                                 <!--<span x-text="sn"></span>-->
+                                                <!--
                                             </div>
                                         </template>
                                         <template x-if="!sn">
@@ -91,7 +94,7 @@
                         :class="{ 'has-upstream': char.upstream }"
                     >
                         <span x-show="char.age" class="age-badge" x-text="char.age"></span>
-                        <div class="avatar-box small">
+                        <div class="avatar-box">
                             <img :src="'/api/character/' + char.sn + '/thumbnail'" alt="thumb" draggable="false">
                         </div>
                         <div class="file-id" x-text="char.file_id"></div>
@@ -100,6 +103,89 @@
             </div>
         </footer>
 
+    </main>-->
+    <main class="dashboard">
+        <!-- 新增：左侧面板容器 -->
+        <div class="left-panel">
+            <section class="profile-selector">
+                <select x-model="selectedProfile" @change="fetchCharacters()">
+                    <template x-for="(opt, index) in profile_options" :key="index">
+                        <option :value="opt.id" x-text="opt.name" :disabled="opt.disabled"></option>
+                    </template>
+                </select>
+            </section>
+
+            <footer class="character-dock"
+                @dragover.prevent
+                @drop="handleDropBack($event)">
+                <div class="character-list">
+                    <template x-for="char in characters" :key="char.sn">
+                        <div 
+                            class="character-card"
+                            draggable="true"
+                            @dragstart="handleDragStart($event, char)"
+                            :class="{ 'has-upstream': char.upstream }"
+                        >
+                            <span x-show="char.age" class="age-badge" x-text="char.age"></span>
+                            <div class="avatar-box">
+                                <img :src="'/api/character/' + char.sn + '/thumbnail'" alt="thumb" draggable="false">
+                            </div>
+                            <div class="file-id" x-text="char.file_id"></div>
+                        </div>
+                    </template>
+                </div>
+            </footer>
+        </div>
+
+        <section class="main-content">
+            <div class="table-container">
+                <table 
+                    @dragover.prevent
+                    @drop="handleDrop($event)"
+                    class="character-table">
+                    <thead>
+                        <tr>
+                            <template x-for="(age, idx) in ageColumns" :key="idx">
+                                <th x-text="age"
+                                    :class="{
+                                    'sticky-col': idx === 0,
+                                    'dummy-col': idx > 0 && idx % 2 === 0,
+                                    'age-col': idx % 2 === 1
+                                }"></th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="(row, rowIdx) in tableRowsWithLines" :key="rowIdx">
+                            <tr>
+                                <template x-for="(sn, colIdx) in row.nodes" :key="colIdx">
+                                    <td>
+                                        <!-- 有節點 -->
+                                        <template x-if="sn">
+                                            <div class="character-card has-character"
+                                                :data-sn="sn" 
+                                                draggable="true"
+                                                @dragstart="handleDragStart($event, epochChain.find(c => c.sn === sn))"
+                                                @drop.stop="handleDrop($event, sn)">
+                                                <div class="avatar-box small">
+                                                    <img :src="'/api/character/' + sn + '/thumbnail'" alt="thumb" draggable="false">
+                                                </div>
+                                                <!--<span x-text="sn"></span>-->
+                                            </div>
+                                        </template>
+                                        <template x-if="!sn">
+                                            <div style="font-size: 20px; font-weight: bold; color: #ff44cc;">
+                                                <span x-text="row.connectors[colIdx] || ''"></span>
+                                            </div>
+                                        </template>    
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 </div>
     <script>
