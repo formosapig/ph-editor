@@ -98,6 +98,20 @@
                 <span class="info-content info-meat" x-text="meat"></span>
                 <span class="info-content info-form" x-text="form"></span>
                 <span class="info-content info-code" x-text="code"></span>
+                <!-- 控制區 -->
+                <div>
+
+                    <button @click="run()" x-text="busy ? '...' : '按下後，請切換視窗'"></button>
+                    <!--<div x-for="line in logs" x-text="line"></div>-->
+                    <input 
+                        id="key-input"
+                        type="text" 
+                        x-model="simulate" 
+                        :disabled="busy"
+                        placeholder="預設會先按 r ，不用寫""
+                    />
+                    <pre class="log-dump" x-text="[...logs].join('\n')"></pre>
+                </div>
             </div>
 
     </div> <!-- app-layout-wrapper -->

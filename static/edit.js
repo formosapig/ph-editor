@@ -30,6 +30,9 @@ document.addEventListener('alpine:init', () => {
         currentRequestId: 0,
         
         messages: [],
+        busy: false,
+        logs: [],
+        simulate: '',
 
         mainTabs: {
             story: '故事', hair: '頭髮', face: '臉部',
@@ -297,6 +300,52 @@ document.addEventListener('alpine:init', () => {
             } catch (err) {
                 this.showMessage(error.displayMessage, 'error');
             }
+        },
+
+        // run input key...
+        async run() {
+            if (this.busy) return;
+
+            this.logs = [];
+            
+            var cmd = '';
+            if (this.simulate && this.simulate.trim() !== '') {
+               // 如果輸入框有填寫指令，就優先使用它
+                cmd = this.simulate.trim();
+            } else {
+                // 從 this.code 裡面找 "拍照 : xxxxxx"
+                const match = this.code.match(/拍照\s*:\s*(.+)/);
+                if (!match) {
+                    this.logs.push('⚠️ 沒找到「拍照 : xxx」指令');
+                    return;
+                }
+                
+                cmd = match[1].trim();
+                if (!cmd) {
+                    this.logs.push('⚠️ 「拍照 :」後面沒有指令');
+                    return;
+                }
+            }
+            
+            this.busy = true;
+            this.logs.push('📥 ' + cmd);
+            
+            try {
+                const data = await request('/edit/snapshot', {
+                    method: 'POST',
+                    body: JSON.stringify({ input: cmd })
+                });
+                
+                if (data.log) {
+                    data.log.split('\n').forEach(line => {
+                        if (line.trim()) this.logs.push(line.trim());
+                    });
+                }
+            } catch (e) {
+                this.logs.push('❌ ' + e.message);
+            }
+            
+            this.busy = false;
         },
 
         notifyParent() {

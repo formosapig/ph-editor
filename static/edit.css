@@ -442,5 +442,89 @@ body {
 /* 代 - 暗藍 */
 .info-code { border-left-color: #60a5fa; color: #abc2e0; }
 
+/* 按鈕原生狀態與容器間距 */
+.info-panel button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  
+  /* 新配色：金屬紫羅蘭 */
+  background-color: #2a2a2a;
+  color: #a78bfa;     /* 紫羅蘭金屬色 */
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  
+  border: none;
+  border-left: 4px solid #a78bfa; /* 紫羅蘭左色條 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 按鈕 Hover 滑入效果：霓虹紫光 */
+.info-panel button:hover:not(:disabled) {
+  background-color: #333333;
+  color: #c4b5fd;      /* 提高亮度 */
+  border-left-color: #c4b5fd;
+  box-shadow: 0 4px 8px rgba(167, 139, 250, 0.2); /* 霓虹紫環境發光 */
+}
+
+/* 按鈕 Active 點擊瞬間效果 */
+.info-panel button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 按鈕 Disabled 忙碌中狀態 (...) */
+.info-panel button:disabled {
+  background-color: #1e1e1e;
+  color: #555555;
+  border-left-color: #444444;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+#key-input {
+  width: 100%;
+  padding: 6px;
+  background-color: #2a2a2a;
+  color: #a78bfa;
+  border: 1px solid #a78bfa;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+/* 終端機日誌面板 (Log Dump) */
+.log-dump {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;          /* 清除 pre 預設的外距 */
+  padding: 12px;
+  height: auto;
+  overflow-y: auto;
+  
+  /* 字型與文字行為 */
+  font-family: 'Consolas', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre-wrap; /* 確保長文字會自動換行，不咬出橫向滾動條 */
+  word-break: break-all;
+  
+  /* 新配色：暗琥珀色 (暖光) */
+  background-color: #1a1a1a; /* 最深底層 */
+  color: #a78bfa;            /* 暗琥珀色，模擬老螢幕 */
+  border-left: 4px solid #a78bfa; /* 紫羅蘭左色條 */
+  
+  /* 內陰影，營造螢幕凹陷下去的終端機感 */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); 
+}
+
 [x-cloak] { display: none; }
 	
