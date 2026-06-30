@@ -166,6 +166,36 @@ class CharacterFileEntry:
         else:
             return metadata.get('backstage', {}).get('detail', "").strip()
 
+    def get_persona_name(self) -> str:
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('persona', "").strip()
+
+    def get_persona_code(self) -> str:
+        """ character 的 detail 存放在 metadta.backstage """
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('!persona_code', "").strip()
+
+    def get_shadow_name(self) -> str:
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('shadow', "").strip()
+
+    def get_shadow_code(self) -> str:
+        """ character 的 detail 存放在 metadta.backstage """
+        metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
+        if metadata is None:
+            return ""
+        else:
+            return metadata.get('backstage', {}).get('!shadow_code', "").strip()
+
     def get_resonance(self) -> str:
         metadata:Dict[str, any] = self.data_source.get_metadata(self.sn)
         if metadata is None:
