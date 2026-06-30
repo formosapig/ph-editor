@@ -1,4 +1,6 @@
 # ph-editor/utils/utils.py
+import colorsys
+import math
 import re
 from typing import Dict, Any, Optional
 
@@ -140,3 +142,44 @@ def sanitize_filename(filename: str, use_full_width: bool = True) -> str:
     filename = filename.rstrip('. ')
     
     return filename
+
+def hex_to_hsv(hex_color: str) -> str:
+    """
+    Convert hex color to HSV format (H: 0-360, S: 0-255, V: 0-255)
+    
+    Args:
+        hex_color: Hex color string like '#FF30AA' or '#ff30aa'
+    
+    Returns:
+        String in format '(h, s, v)' or empty string if invalid
+    """
+    # Check for empty string or None
+    if not hex_color or not isinstance(hex_color, str):
+        return ""
+    
+    # Remove '#' if present and strip whitespace
+    hex_color = hex_color.strip().lstrip('#')
+    
+    # Check if it's a valid 6-digit hex color (case insensitive)
+    if not re.match(r'^[0-9a-fA-F]{6}$', hex_color):
+        return ""
+    
+    try:
+        # Parse hex to RGB (0-255)
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        
+        # Convert to HSV (normalized 0-1)
+        h, s, v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
+        
+        # Scale to desired ranges
+        h_deg = math.floor(h * 360)
+        s_scaled = math.floor(s * 255)
+        v_scaled = math.floor(v * 255)
+        
+        return f"({h_deg}, {s_scaled}, {v_scaled})"
+    
+    except (ValueError, TypeError):
+        # Catch any parsing errors
+        return ""
