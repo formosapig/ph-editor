@@ -9,6 +9,8 @@ import traceback
 import unicodedata
 from wsgiref.simple_server import WSGIRequestHandler
 
+from flask_caching import Cache
+
 from flask import (
     Flask,
     flash,
@@ -37,6 +39,7 @@ from werkzeug.exceptions import HTTPException
 from core.shared_data import (
     add_or_update_character_with_path,
     clear_characters_db,
+    prepare_mistor_data,
     process_tag_info,
     
     initialize_extra_data,
@@ -46,6 +49,7 @@ from core.shared_data import (
     delete_wish as delete_wish_service,
 )
 from core.user_config_manager import UserConfigManager
+from web.extensions import cache
 from web.arrange_bp import arrange_bp
 from web.ccm_bp import ccm_bp
 from web.compare_bp import compare_bp
@@ -68,6 +72,10 @@ app.json.sort_keys = False
 # json setting.
 #app.config['JSON_AS_ASCII'] = False  # 讓中文正常顯示，不噴 \uXXXX
 #app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True  # 讓瀏覽器直接看就有縮排
+
+# 配置並初始化 cache
+app.config['CACHE_TYPE'] = 'SimpleCache'
+cache.init_app(app)
 
 WSGIRequestHandler.protocol_version = "HTTP/1.1"
 
@@ -224,18 +232,23 @@ def logout():
 
 @app.route("/")
 def index():
-    global_data = get_general_data()
-    name_map = {item["keyword"]: item["masked"] for item in global_data.get("keyword_masking", [])}
-    sorted_keys = sorted(name_map.keys(), key=len, reverse=True)
-    escaped_keys = [re.escape(k) for k in sorted_keys]
-    regex_pattern = '|'.join(escaped_keys)
+    
+    cached_data = cache.get('mistor')
+    
+    if cached_data is None:
+        mistor_map, mistor_regex = prepare_mistor_data()
+        cached_data = {
+            'mistor_map': json.dumps(mistor_map, ensure_ascii=False),
+            'mistor_regex': mistor_regex
+        }
+        # 存入快取，設定過期時間（例如 300 秒 / 5 分鐘）
+        cache.set('mistor', cached_data, timeout=699)
+    
     return render_template(
         'index.html', 
-        name_map_json=json.dumps(name_map, ensure_ascii=False), # 確保中文不變 \uXXXX
-        regex_pattern=regex_pattern
+        mistor_map=cached_data["mistor_map"],
+        mistor_regex=cached_data["mistor_regex"]
     )
-
-    #return render_template("index.html")
 
 
 @app.route("/cache/<path:filename>")

@@ -16,8 +16,8 @@
     meat: [[ meat | tojson ]],
     form: [[ form | tojson ]],
     code: [[ code | tojson ]],
-    name_map: [[ name_map_json | safe ]],
-    search_regex: [[ regex_pattern | tojson ]],
+    mistor_map: [[ mistor_map | safe ]],
+    mistor_regex: [[ mistor_regex | tojson ]],
     initialData: [[ data | safe ]],
 })' x-cloak>
     <div class="app-layout-wrapper">
@@ -87,49 +87,49 @@
                         x-ref="mainContent"
                         x-effect="renderContent()"
                         @mouseup="translateSelection($event)"
+                        @mousemove="handleMouseMove($event)"
+                        @click="findEnclosedText($event)"
                         @input="handleContentInput()"
                         @blur="saveContent()"></div>
                         <!-- 防止貼上格式，但是會導致資料錯亂，例如在 backstage 改了,瞬間移到 profile ，profile 資料會爛掉...
                         @paste.prevent="document.execCommand('insertText', false, $event.clipboardData.getData('text/plain'))"></div>
-                        @mousemove="handleMouseMove($event)"
-                        @click="findEnclosedText($event)"
-
                         -->
                 </div>
 
             </section>
         </main>
-            <div class="info-panel">
-                <span class="info-content info-soul" x-text="soul"></span>
-                <span class="info-content info-meat" x-text="meat"></span>
-                <span class="info-content info-form" x-text="form"></span>
-                <span class="info-content info-code" x-text="code"></span>
-                <!-- 控制區 -->
-                <div>
+        <!-- 右邊訊息欄 -->
+        <div class="info-panel">
+            <span class="info-content info-soul" x-text="soul"></span>
+            <span class="info-content info-meat" x-text="meat"></span>
+            <span class="info-content info-form" x-text="form"></span>
+            <span class="info-content info-code" x-text="code"></span>
+            <!-- 控制區 -->
+            <div>
 
-                    <button @click="run()" x-text="busy ? '...' : '按下後，請切換視窗'"></button>
-                    <!--<div x-for="line in logs" x-text="line"></div>-->
-                    <input 
-                        id="key-input"
-                        type="text" 
-                        x-model="simulate" 
-                        :disabled="busy"
-                        placeholder="預設會先按 r ，不用寫""
-                    />
-                    <pre class="log-dump" x-text="[...logs].join('\n')"></pre>
-                </div>
+                <button @click="run()" x-text="busy ? '...' : '按下後，請切換視窗'"></button>
+                <!--<div x-for="line in logs" x-text="line"></div>-->
+                <input 
+                    id="key-input"
+                    type="text" 
+                    x-model="simulate" 
+                    :disabled="busy"
+                    placeholder="預設會先按 r ，不用寫""
+                />
+                <pre class="log-dump" x-text="[...logs].join('\n')"></pre>
             </div>
+        </div>
 
     </div> <!-- app-layout-wrapper -->
 
     <!-- Tooltip -->
-    <!--<div id="tooltip"
+    <div id="tooltip"
          x-show="tooltip.show"
          x-text="tooltip.text"
          :style="`left:${tooltip.x}px;top:${tooltip.y}px;`"
          @mouseenter="clearTimeout(hideTimer)"
          @mouseleave="hideTooltip()">
-    </div>-->
+    </div>
 
     <div class="toast-container">
         <template x-for="msg in messages" :key="msg.id">

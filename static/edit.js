@@ -9,8 +9,8 @@ document.addEventListener('alpine:init', () => {
         meat: params.meat,
         form: params.form,
         code: params.code,
-        nameMap: params.name_map,
-        searchRegex: new RegExp(params.search_regex, 'g'),
+        mistorMap: params.mistor_map,
+        mistorRegex: new RegExp(params.mistor_regex, 'g'),
         globalParsedData: params.initialData || {},
 
 
@@ -50,7 +50,7 @@ document.addEventListener('alpine:init', () => {
             story: [ { key: 'profile', label: '簡介' }, { key: 'scenario', label: '場景' }, { key: 'backstage', label: '幕後' } ]
         },
 
-        /*
+        
         // 字典資料
         dictionary: {
             '帥氣': '帥到不行很生氣候!!',
@@ -70,7 +70,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         // 防抖計時器
-        hideTimer: null,*/
+        hideTimer: null,
 
         init() {
             window.app = this; // 除錯使用
@@ -124,7 +124,7 @@ document.addEventListener('alpine:init', () => {
                 return;
     
             // 進行轉換
-            const translated = selectedText.replace(this.searchRegex, (matched) => this.nameMap[matched]);
+            const translated = selectedText.replace(this.mistorRegex, (matched) => this.mistorMap[matched]);
 
             if (translated !== selectedText) {
                 // 核心邏輯：刪除當前選取的內容節點，並插入新節點
@@ -136,7 +136,6 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        /*
         findEnclosedText(event) {
             const x = event.clientX;
             const y = event.clientY;
@@ -223,7 +222,7 @@ document.addEventListener('alpine:init', () => {
                 }
             }
             this.hideTooltip();
-        },*/
+        },
         
         async saveContent() {
             if (!this.hasChanged) return;

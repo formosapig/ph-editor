@@ -14,6 +14,7 @@ from core.shared_data import (
     #find_another_sn_by_scenario_id,
     get_general_data,
     get_info_by_tag_id,
+    prepare_mistor_data,
 )
 from utils.character_file_utils import (
     #reload_character_data,
@@ -22,6 +23,7 @@ from utils.character_file_utils import (
 from utils.decorators import inject_character_file_entry, require_json_data
 from utils.input_key import execute_snapshot
 from utils.utils import hex_to_hsv
+from web.extensions import cache
 
 edit_bp = Blueprint("edit_bp", __name__)
 
@@ -224,12 +226,17 @@ def edit(sn, entry):
     final_data = _build_final_data(info, persona_name, persona_code, shadow_name, shadow_code, profile, scenario, backstage)
 
     # 混淆
-    global_data = get_general_data()
-    name_map = {item["keyword"]: item["masked"] for item in global_data.get("keyword_masking", [])}
-    sorted_keys = sorted(name_map.keys(), key=len, reverse=True)
-    escaped_keys = [re.escape(k) for k in sorted_keys]
-    regex_pattern = '|'.join(escaped_keys)
-
+    cached_data = cache.get('mistor')
+    
+    if cached_data is None:
+        mistor_map, mistor_regex = prepare_mistor_data()
+        cached_data = {
+            'mistor_map': json.dumps(mistor_map, ensure_ascii=False),
+            'mistor_regex': mistor_regex
+        }
+        # 存入快取，設定過期時間（例如 300 秒 / 5 分鐘）
+        cache.set('mistor', cached_data, timeout=699)
+    
     return render_template(
         "edit.html",
         sn=sn,
@@ -241,8 +248,8 @@ def edit(sn, entry):
         meat=final_data["meat"],
         form=final_data["form"],
         code=final_data["code"],
-        name_map_json=json.dumps(name_map), # 確保中文不變 \uXXXX
-        regex_pattern=regex_pattern,
+        mistor_map=cached_data["mistor_map"],
+        mistor_regex=cached_data["mistor_regex"],
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )
 

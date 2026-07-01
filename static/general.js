@@ -6,7 +6,7 @@ function setupApp() {
     tag_type_settings_array: [],
     tag_array: [],
     profile_group_array: [],
-    keyword_masking: [],
+    mistor_array: [],
     dictionary_terms: [],
 
     init() {
@@ -34,7 +34,7 @@ function setupApp() {
         : [{ id: 1, name: { zh: '' }, desc: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
 
       // --- 2. 初始化 keyword_masking ---
-      this.keyword_masking = initData.keywordMasking?.length > 0
+      this.mistor_array = initData.keywordMasking?.length > 0
         ? initData.keywordMasking
         : [{ keyword: '', masked: '' }];
 
@@ -90,22 +90,22 @@ function setupApp() {
 
     // --- 關鍵字脫敏操作 ---
     addKeywordMasking() {
-      this.keyword_masking.push({ keyword: '', masked: '' });
+      this.mistor_array.push({ keyword: '', masked: '' });
     },
     removeKeywordMasking(index) {
-      this.keyword_masking.splice(index, 1);
+      this.mistor_array.splice(index, 1);
     },
     // 檢查脫敏關鍵字是否重複
     checkMaskingDuplicate(index) {
-      const currentKeyword = this.keyword_masking[index].keyword.trim();
+      const currentKeyword = this.mistor_array[index].keyword.trim();
       if (!currentKeyword) return;
 
       // 尋找是否有其他行使用了相同的 keyword
-      const isDuplicate = this.keyword_masking.some((item, idx) => idx !== index && item.keyword.trim() === currentKeyword);
+      const isDuplicate = this.mistor_array.some((item, idx) => idx !== index && item.keyword.trim() === currentKeyword);
       
       if (isDuplicate) {
         this.showMessage(`關鍵字「${currentKeyword}」已存在，請勿重複輸入！`, 'error');
-        this.keyword_masking[index].keyword = ''; // 清空輸入
+        this.mistor_array[index].keyword = ''; // 清空輸入
       }
     },
 
@@ -147,7 +147,7 @@ function setupApp() {
       const profileGroupInvalid = this.profile_group_array.some(item => !item.name.zh.trim() || !item.order);
       
       // 新增：Tab 5 & Tab 6 的驗證
-      const keywordMaskingInvalid = this.keyword_masking.some(item => !item.keyword.trim() || !item.masked.trim());
+      const keywordMaskingInvalid = this.mistor_array.some(item => !item.keyword.trim() || !item.masked.trim());
       const dictionaryTermsInvalid = this.dictionary_terms.some(item => !item.category.trim() || !item.keyword.trim());
       
       return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid || keywordMaskingInvalid || dictionaryTermsInvalid;
@@ -187,7 +187,7 @@ function setupApp() {
       this.sortDictionaryTerms();
 
       // 最終送出前的防重把關
-      const maskingKeywords = this.keyword_masking.map(i => i.keyword.trim()).filter(Boolean);
+      const maskingKeywords = this.mistor_array.map(i => i.keyword.trim()).filter(Boolean);
       const hasMaskingDup = new Set(maskingKeywords).size !== maskingKeywords.length;
 
       const dictKeywords = this.dictionary_terms.map(i => i.keyword.trim()).filter(Boolean);
@@ -205,7 +205,7 @@ function setupApp() {
         tag_list: this.tag_array, 
         profile_group: this.profile_group_array.filter(i => i.name.zh.trim()),
         // 新增打包欄位
-        keyword_masking: this.keyword_masking.filter(i => i.keyword.trim()),
+        keyword_masking: this.mistor_array.filter(i => i.keyword.trim()),
         dictionary_terms: this.dictionary_terms.filter(i => i.keyword.trim())
       };
 

@@ -2,6 +2,7 @@
 import json
 import logging
 import random
+import re
 import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -470,3 +471,18 @@ def get_processed_metadata_list(profile_id: int) -> list:
                 })
         
         return results
+    
+
+def prepare_mistor_data() -> Tuple[Dict[str, str], str]:
+    """準備遮罩資料，同時回傳 name_map 和 regex_pattern"""
+    general_data = _extra_data_manager.get_general_data()
+    
+    name_map = {
+        item["key"]: item["mist"] 
+        for item in general_data.get("mistor", [])
+    }
+    
+    sorted_keys = sorted(name_map.keys(), key=len, reverse=True)
+    regex_pattern = '|'.join(re.escape(k) for k in sorted_keys)
+    
+    return name_map, regex_pattern

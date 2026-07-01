@@ -60,8 +60,8 @@ document.addEventListener('alpine:init', () => {
         debounceTimer: null,
         isShuffled: false,
 
-        nameMap: window.NAME_MAP,
-        searchRegex: new RegExp(window.SEARCH_REGEX_PATTERN, 'g'),
+        mistorMap: window.MISTOR_MAP,
+        mistorRegex: new RegExp(window.MISTOR_REGEX, 'g'),
 
         // Getters (Alpine 內部的 Getters 會自動追蹤響應式)
         get scanPathDisplay() {
@@ -93,7 +93,7 @@ document.addEventListener('alpine:init', () => {
 
                     // 如果是 profile_name，且 nameMap 有定義，直接轉譯
                     if (this.filterKey === 'profile_name') {
-                        keyword = keyword.replace(this.searchRegex, (matched) => this.nameMap[matched]);
+                        keyword = keyword.replace(this.mistorRegex, (matched) => this.mistorMap[matched]);
                     }
                     //console.error("Keyword", keyword);
 

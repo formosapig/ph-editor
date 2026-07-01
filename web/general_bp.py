@@ -13,7 +13,7 @@ from core.shared_data import (
     get_general_data,
     update_general_data,
 )
-
+from web.extensions import cache
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,10 @@ def update_general_settings():
         # 假設 update_global_general_data 負責將資料寫入檔案或資料庫
         # 視為新增版本
         #update_general_data(current_general_data)
+
+        # 注意,有設定快取的緣故,要刪除 mistor 
+        cache.delete('mistor')
+
         update_general_data(data)
 
         return jsonify({"message": "全域設定更新成功！"}), 200
