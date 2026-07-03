@@ -486,3 +486,16 @@ def prepare_mistor_data() -> Tuple[Dict[str, str], str]:
     regex_pattern = '|'.join(re.escape(k) for k in sorted_keys)
     
     return name_map, regex_pattern
+
+def prepare_omnion_data() -> Tuple[Dict[str, Any], str]:
+    general_data = _extra_data_manager.get_general_data()
+
+    omnion_data = {
+        item["key"]: {k: v for k, v in item.items() if k != "key"}
+        for item in general_data.get("omnion", [])
+    }
+
+    sorted_keys = sorted(omnion_data.keys(), key=len, reverse=True)
+    omnion_key_regex = '|'.join(re.escape(k) for k in sorted_keys)
+
+    return omnion_data, omnion_key_regex

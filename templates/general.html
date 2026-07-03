@@ -29,8 +29,8 @@
     <label for="tab2">標籤類型</label>
     <label for="tab3">標籤詳細</label>
     <label for="tab4">簡介分組</label>
-    <label for="tab5">關鍵字脫敏</label> <!-- Mistor 迷霧之幻 -->
-    <label for="tab6">大辭典</label> <!-- Omnion 萬有之書-->
+    <label for="tab5">迷幻之霧</label>
+    <label for="tab6">萬有之書</label>
   </nav>
 
 <div class="tab-scroll-box" x-ref="scrollBox">
@@ -204,32 +204,32 @@
   </section>
 
  <section id="content5">
-    <h3>關鍵字脫敏 設定</h3>
+    <h3>迷幻之霧 設定</h3>
     <table>
       <thead>
         <tr>
           <th>關鍵字</th>
-          <th>脫敏化</th>
+          <th>迷幻之霧</th>
           <th>操作</th>
         </tr>
       </thead>
       <tbody>
-        <template x-for="(item, index) in keyword_masking" :key="index">
+        <template x-for="(item, index) in mistor_array" :key="index">
           <tr>
-            <td><input type="text" x-model="item.keyword" @blur="checkMaskingDuplicate(index)" placeholder="請輸入關鍵字" /></td>
-            <td><input type="text" x-model="item.masked" placeholder="請輸入脫敏後文字" /></td>
+            <td><input type="text" x-model="item.key" @blur="checkMistorDuplicate(index)" placeholder="請輸入關鍵字" /></td>
+            <td><input type="text" x-model="item.mist" placeholder="請輸入迷幻之霧" /></td>
             <td>
-              <button @click="removeKeywordMasking(index)" :disabled="keyword_masking.length === 1">刪除</button>
+              <button @click="removeMistor(index)" :disabled="mistor_array.length === 1">刪除</button>
             </td>
           </tr>
         </template>
       </tbody>
     </table>
-    <button @click="addKeywordMasking">新增一行</button>
+    <button @click="addMistor">新增一行</button>
   </section>
 
   <section id="content6">
-    <h3>大辭典 設定</h3>
+    <h3>萬有之書 設定</h3>
     <table>
       <thead>
         <tr>
@@ -240,26 +240,26 @@
         </tr>
       </thead>
       <tbody>
-        <template x-for="(item, index) in dictionary_terms" :key="index">
+        <template x-for="(item, index) in omnion_array" :key="index">
           <tr>
             <td>
-              <select x-model="item.category">
+              <select x-model="item.type">
                 <option disabled value="">請選擇類型</option>
                 <option value="person">人名</option>
                 <option value="object">物名</option>
                 <option value="special">專名</option>
               </select>
             </td>
-            <td><input type="text" x-model="item.keyword" @blur="checkDictionaryDuplicate(index)" placeholder="關鍵字" /></td>
-            <td><textarea x-model="item.description" placeholder="說明"></textarea></td>
+            <td><input type="text" x-model="item.key" @blur="checkOmnionDuplicate(index)" placeholder="關鍵字" /></td>
+            <td><textarea x-model="item.desc" placeholder="說明"></textarea></td>
             <td>
-              <button @click="removeDictionaryTerm(index)" :disabled="dictionary_terms.length === 1">刪除</button>
+              <button @click="removeOmnion(index)" :disabled="omnion_array.length === 1">刪除</button>
             </td>
           </tr>
         </template>
       </tbody>
     </table>
-    <button @click="addDictionaryTerm">新增一行</button>
+    <button @click="addOmnion">新增一行</button>
   </section>
 
   </div>
@@ -274,8 +274,8 @@
     tagStyles: [[ tag_styles | tojson ]],
     tagList: [[ tag_list | tojson ]],
     profileGroup: [[ profile_group | tojson ]],
-    keywordMasking: [[keyword_masking | tojson ]],
-    dictionaryTerms: [[dictionary_terms | tojson ]]
+    mistor: [[mistor | tojson ]],
+    omnion: [[omnion | tojson ]]
   };
 </script>
     <script src="[[ url_for('static', filename='base.js') ]]"></script>

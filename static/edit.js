@@ -11,8 +11,9 @@ document.addEventListener('alpine:init', () => {
         code: params.code,
         mistorMap: params.mistor_map,
         mistorRegex: new RegExp(params.mistor_regex, 'g'),
+        omnionMap: params.omnion_map,
+        omnionRegex: new RegExp(params.omnion_regex, 'g'),
         globalParsedData: params.initialData || {},
-
 
         activeMainTab: 'story',
         activeSubTab: 'profile',
@@ -71,6 +72,12 @@ document.addEventListener('alpine:init', () => {
 
         // 防抖計時器
         hideTimer: null,
+
+        /*omnionList: [
+            { tag: '命運', content: '一切都是最好的安排。' },
+            { tag: '時間', content: '在程式碼的世界裡，微秒即是永恆。' },
+            { tag: '核心', content: 'asdfsdafk' }
+        ],*/
 
         init() {
             window.app = this; // 除錯使用
@@ -224,6 +231,84 @@ document.addEventListener('alpine:init', () => {
             this.hideTooltip();
         },
         
+        // todo fix this!
+        get omnionList() {
+        //generateOmnionList(globalParsedData, omnionMap, omnionRegex) {
+            console.error('get omnion list');
+            const omnionList = [];
+            
+            // 安全檢查：確保有對照表、正規表達式字串，且 story 節點存在
+            if (!this.omnionMap || !this.omnionRegex || !this.globalParsedData?.story) {
+                return omnionList;
+            }
+
+            console.error('try find keyword.');
+
+            // 1. 直接使用後端給的 regex 字串建立正規表達式物件
+            //const regex = new RegExp(omnionRegex, 'g');
+            
+            // 2. 用來記錄已抓取的關鍵字，避免後續欄位重複塞入
+            const visitedKeywords = new Set();
+
+            // 3. 嚴格定義要依序掃描的欄位順序
+            const targetFields = ['profile', 'scenario', 'backstage'];
+
+            // 4. 開始依序掃描各個欄位
+            targetFields.forEach(field => {
+                const text = this.globalParsedData.story[field];
+                console.error('find in text:', text);
+                
+                console.error('data is ', (typeof text));
+                // 確保該欄位有文字內容才處理
+                if (text && typeof text === 'object') {
+                    console.error('start regex find');
+                    
+                    const combinedText = Object.values(text).join(' ');
+                    const matches = combinedText.match(this.omnionRegex);
+                    //const matches = text.match(this.omnionRegex);
+                    
+                    if (matches) {
+                        matches.forEach(key => {
+                            // 如果這個關鍵字「之前沒被抓過」，且確實存在於後端 map 中
+                            if (!visitedKeywords.has(key) && this.omnionMap[key]) {
+                                visitedKeywords.add(key); // 標記為已處理
+                                
+                                // 1. 先取得當前關鍵字的 type
+                                const type = this.omnionMap[key].type;
+                                
+                                // 2. 根據 type 決定前後要包什麼符號（預設為原本的 << >>）
+                                let openBracket = '<<';
+                                let closeBracket = '>>';
+
+                                if (type === 'person') {
+                                    openBracket = '『';
+                                    closeBracket = '』';
+                                } else if (type === 'object') { // 修正拼字 boject -> object
+                                    openBracket = '《';
+                                    closeBracket = '》';
+                                } else if (type === 'special') {
+                                    openBracket = '【';
+                                    closeBracket = '】';
+                                }
+
+                                // 3. 把前後符號加上 key 組合起來
+                                const formattedKey = openBracket + key + closeBracket;
+                                
+                                // 5. 組合資料並塞入結果清單
+                                omnionList.push({
+                                    key: formattedKey, // 這裡直接存入包好符號的字串
+                                    type: type,
+                                    desc: this.omnionMap[key].desc
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+
+            return omnionList;
+        },
+
         async saveContent() {
             if (!this.hasChanged) return;
             

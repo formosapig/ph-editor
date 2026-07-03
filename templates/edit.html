@@ -18,6 +18,8 @@
     code: [[ code | tojson ]],
     mistor_map: [[ mistor_map | safe ]],
     mistor_regex: [[ mistor_regex | tojson ]],
+    omnion_map: [[omnion_map | safe ]],
+    omnion_regex: [[omnion_regex | tojson ]],
     initialData: [[ data | safe ]],
 })' x-cloak>
     <div class="app-layout-wrapper">
@@ -106,7 +108,6 @@
             <span class="info-content info-code" x-text="code"></span>
             <!-- 控制區 -->
             <div>
-
                 <button @click="run()" x-text="busy ? '...' : '按下後，請切換視窗'"></button>
                 <!--<div x-for="line in logs" x-text="line"></div>-->
                 <input 
@@ -118,8 +119,18 @@
                 />
                 <pre class="log-dump" x-text="[...logs].join('\n')"></pre>
             </div>
+            <!-- 萬有之書 -->
+            <div class="info-omnion-container">
+                <template x-for="item in omnionList">
+                    <div class="info-omnion-row">
+                        <span class="omnion-tag"
+                            :class="item.type"
+                            x-text="item.key"></span>
+                        <span class="omnion-text" x-text="item.desc"></span>
+                    </div>
+                </template>
+            </div>
         </div>
-
     </div> <!-- app-layout-wrapper -->
 
     <!-- Tooltip -->

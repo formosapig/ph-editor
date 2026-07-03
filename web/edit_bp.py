@@ -15,6 +15,7 @@ from core.shared_data import (
     get_general_data,
     get_info_by_tag_id,
     prepare_mistor_data,
+    prepare_omnion_data,
 )
 from utils.character_file_utils import (
     #reload_character_data,
@@ -237,6 +238,16 @@ def edit(sn, entry):
         # 存入快取，設定過期時間（例如 300 秒 / 5 分鐘）
         cache.set('mistor', cached_data, timeout=699)
     
+    omnion_data = cache.get('omnion')
+
+    if omnion_data is None:
+        omnion_map, omnion_regex = prepare_omnion_data()
+        omnion_data = {
+            'omnion_map': json.dumps(omnion_map, ensure_ascii=False),
+            'omnion_regex': omnion_regex
+        }
+        cache.set('omnion', omnion_data, timeout=699)
+
     return render_template(
         "edit.html",
         sn=sn,
@@ -250,6 +261,8 @@ def edit(sn, entry):
         code=final_data["code"],
         mistor_map=cached_data["mistor_map"],
         mistor_regex=cached_data["mistor_regex"],
+        omnion_map=omnion_data["omnion_map"],
+        omnion_regex=omnion_data["omnion_regex"],
         data=json.dumps(result_content), # 注意, 如果丟 dict 去前端, json 的 key 會跑掉
     )
 

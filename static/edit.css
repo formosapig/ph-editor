@@ -435,6 +435,92 @@ body {
 /* 代 - 暗藍 */
 .info-code { border-left-color: #60a5fa; color: #abc2e0; }
 
+/* 外層容器：確保整體靠左，並與上下區塊保持間距 */
+.info-omnion-container {
+    display: flex;
+    flex-direction: column; /* 讓每一條紀錄由上往下排 */
+    align-items: flex-start; /* 嚴格靠左對齊 */
+    /*margin: 10px 0;*/
+    width: 100%;
+    border-left: 4px solid #aaa;
+    background-color: #333;
+    color: #999;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+/* 每一行的橫向排列設定 */
+.info-omnion-row {
+    display: flex;
+    flex-direction: row;     /* 橫向排列 */
+    flex-direction: column; /* 強制上下排列 */
+    justify-content: flex-start; /* 靠左緊貼 */
+    align-items: flex-start;
+    width: 100%;
+    white-space: nowrap;     /* 強制不換行，<<XXX>> : content 一定會接在一起 */
+    line-height: 1.6;        /* 調整行高，讓字看起來更舒適 */
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 關鍵：極淡的白線，在黑底上很優雅 */
+}
+
+/* 特別針對 <<XXX>> 的樣式 */
+.omnion-tag {
+    font-weight: bold;       /* 加粗 */
+    /*color: #ff9f43;          /* 亮眼特別色（可自由更換） */
+    flex-shrink: 0;          /* 防止標籤被壓縮變形 */
+    /*margin-right: 4px;*/
+    font-size: 15px;
+
+    &.person {
+        color: #a29bfe;
+        color: #c3b1e1;
+        color: #b3a1d1;
+        color: #ef7592;
+        color: #aaa;
+        color: #ff9f43;
+        color: #99cfdf;
+    }
+
+    &.object {
+        color: #ff4d7a;
+        color: #ff85a2;
+        color: #ef7592;
+        color: #aaa;
+        color: #ff9f43;
+        color: #77dfef;
+        color: #99cfdf;
+    }
+
+    &.special {
+        color: #eccc68;
+        color: #d2b48c;
+        color: #c2a47c;
+        color: #ef7592;
+        color: #aaa;
+        color: #77dfef;
+        color: #99cfdf;
+    }
+}
+
+/* 剩下文字的樣式 */
+.omnion-text {
+    /* color: #ffffff; */    /* 保留你原本文字的顏色 */
+    /*overflow: hidden;*/
+
+    /*text-overflow: ellipsis; /* 如果內容真的太長超出視窗，會自動變 ... 保持美觀 */
+    margin-top: 4px;
+    /*padding-left: 12px; /* 讓說明往內縮排，產生層次感 */
+    flex-grow: 1;
+    white-space: normal;
+    word-break: break-all;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+
 /* 按鈕原生狀態與容器間距 */
 .info-panel button {
   width: 100%;

@@ -28,8 +28,8 @@ def general():
     tag_styles_data = general_data["tag_styles"]
     tag_list_data = general_data["tag_list"]
     profile_group_data = general_data["profile_group"]
-    keyword_masking = general_data.get("keyword_masking", [])
-    dictionary_terms = general_data.get("dictionary_terms", [])
+    mistor_data = general_data.get("mistor", [])
+    omnion_data = general_data.get("omnion", [])
 
     return render_template(
         "general.html",
@@ -37,8 +37,8 @@ def general():
         tag_styles=tag_styles_data,
         tag_list=tag_list_data,
         profile_group=profile_group_data,
-        keyword_masking=keyword_masking,
-        dictionary_terms=dictionary_terms
+        mistor=mistor_data,
+        omnion=omnion_data
     )
 
 
@@ -90,6 +90,7 @@ def update_general_settings():
 
         # 注意,有設定快取的緣故,要刪除 mistor 
         cache.delete('mistor')
+        cache.delete('omnion')
 
         update_general_data(data)
 

@@ -7,7 +7,7 @@ function setupApp() {
     tag_array: [],
     profile_group_array: [],
     mistor_array: [],
-    dictionary_terms: [],
+    omnion_array: [],
 
     init() {
       // 初始化 color_traits
@@ -33,16 +33,16 @@ function setupApp() {
         ? [...initData.profileGroup].sort((a, b) => a.order - b.order)
         : [{ id: 1, name: { zh: '' }, desc: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
 
-      // --- 2. 初始化 keyword_masking ---
-      this.mistor_array = initData.keywordMasking?.length > 0
-        ? initData.keywordMasking
-        : [{ keyword: '', masked: '' }];
+      // --- 2. 初始化 mistor ---
+      this.mistor_array = initData.mistor?.length > 0
+        ? initData.mistor
+        : [{ key: '', mist: '' }];
 
-      // --- 3. 初始化 dictionary_terms (並自動排序) ---
-      const categoryWeight = { 'person': 1, 'object': 2, 'special': 3 };
-      this.dictionary_terms = initData.dictionaryTerms?.length > 0
-        ? [...initData.dictionaryTerms].sort((a, b) => (categoryWeight[a.category] || 99) - (categoryWeight[b.category] || 99))
-        : [{ category: '', keyword: '', description: '' }];
+      // --- 3. 初始化 omnion (並自動排序) ---
+      const typeWeight = { 'person': 1, 'object': 2, 'special': 3 };
+      this.omnion_array = initData.omnion?.length > 0
+        ? [...initData.omnion].sort((a, b) => (typeWeight[a.type] || 99) - (typeWeight[b.type] || 99))
+        : [{ type: '', key: '', desc: '' }];
 
     },
 
@@ -88,54 +88,54 @@ function setupApp() {
       this.profile_group_array.splice(index, 1);
     },
 
-    // --- 關鍵字脫敏操作 ---
-    addKeywordMasking() {
-      this.mistor_array.push({ keyword: '', masked: '' });
+    // --- 迷幻之霧操作 ---
+    addMistor() {
+      this.mistor_array.push({ key: '', mist: '' });
     },
-    removeKeywordMasking(index) {
+    removeMistor(index) {
       this.mistor_array.splice(index, 1);
     },
     // 檢查脫敏關鍵字是否重複
-    checkMaskingDuplicate(index) {
-      const currentKeyword = this.mistor_array[index].keyword.trim();
-      if (!currentKeyword) return;
+    checkMistorDuplicate(index) {
+      const currentKey = this.mistor_array[index].key.trim();
+      if (!currentKey) return;
 
       // 尋找是否有其他行使用了相同的 keyword
-      const isDuplicate = this.mistor_array.some((item, idx) => idx !== index && item.keyword.trim() === currentKeyword);
+      const isDuplicate = this.mistor_array.some((item, idx) => idx !== index && item.key.trim() === currentKey);
       
       if (isDuplicate) {
-        this.showMessage(`關鍵字「${currentKeyword}」已存在，請勿重複輸入！`, 'error');
-        this.mistor_array[index].keyword = ''; // 清空輸入
+        this.showMessage(`迷幻之霧關鍵字「${currentKey}」已存在，請勿重複輸入！`, 'error');
+        this.mistor_array[index].key = ''; // 清空輸入
       }
     },
 
-    // --- 大辭典操作 ---
-    addDictionaryTerm() {
-      this.dictionary_terms.push({ category: '', keyword: '', description: '' });
-      this.sortDictionaryTerms();
+    // --- 萬有之書操作 ---
+    addOmnion() {
+      this.omnion_array.push({ type: '', key: '', desc: '' });
+      this.sortOmnion();
     },
-    removeDictionaryTerm(index) {
-      this.dictionary_terms.splice(index, 1);
+    removeOmnion(index) {
+      this.omnion_array.splice(index, 1);
     },
-    sortDictionaryTerms() {
-      const categoryWeight = { 'person': 1, 'object': 2, 'special': 3 };
-      this.dictionary_terms.sort((a, b) => {
-        const weightA = categoryWeight[a.category] || 99;
-        const weightB = categoryWeight[b.category] || 99;
+    sortOmnion() {
+      const typeWeight = { 'person': 1, 'object': 2, 'special': 3 };
+      this.omnion_array.sort((a, b) => {
+        const weightA = typeWeight[a.category] || 99;
+        const weightB = typeWeight[b.category] || 99;
         return weightA - weightB;
       });
     },
     // 檢查大辭典關鍵字是否重複
-    checkDictionaryDuplicate(index) {
-      const currentKeyword = this.dictionary_terms[index].keyword.trim();
-      if (!currentKeyword) return;
+    checkOmnionDuplicate(index) {
+      const currentKey = this.omnion_array[index].key.trim();
+      if (!currentKey) return;
 
       // 尋找是否有其他行使用了相同的 keyword
-      const isDuplicate = this.dictionary_terms.some((item, idx) => idx !== index && item.keyword.trim() === currentKeyword);
+      const isDuplicate = this.omnion_array.some((item, idx) => idx !== index && item.key.trim() === currentKey);
       
       if (isDuplicate) {
-        this.showMessage(`大辭典關鍵字「${currentKeyword}」已存在，請勿重複輸入！`, 'error');
-        this.dictionary_terms[index].keyword = ''; // 清空輸入
+        this.showMessage(`萬有之書關鍵字「${currentKey}」已存在，請勿重複輸入！`, 'error');
+        this.omnion_array[index].key = ''; // 清空輸入
       }
     },
 
@@ -147,12 +147,10 @@ function setupApp() {
       const profileGroupInvalid = this.profile_group_array.some(item => !item.name.zh.trim() || !item.order);
       
       // 新增：Tab 5 & Tab 6 的驗證
-      const keywordMaskingInvalid = this.mistor_array.some(item => !item.keyword.trim() || !item.masked.trim());
-      const dictionaryTermsInvalid = this.dictionary_terms.some(item => !item.category.trim() || !item.keyword.trim());
+      const mistorInvalid = this.mistor_array.some(item => !item.key.trim() || !item.mist.trim());
+      const omnionInvalid = this.omnion_array.some(item => !item.type.trim() || !item.key.trim());
       
-      return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid || keywordMaskingInvalid || dictionaryTermsInvalid;
-
-      //return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid;
+      return colorTraitsInvalid || tagTypeSettingsInvalid || tagsInvalid || profileGroupInvalid || mistorInvalid || omnionInvalid;
     },
 
     async submit() {
@@ -184,16 +182,16 @@ function setupApp() {
         });
 
       // 新增：送出前確保大辭典再次過濾並精準排序
-      this.sortDictionaryTerms();
+      this.sortOmnion();
 
       // 最終送出前的防重把關
-      const maskingKeywords = this.mistor_array.map(i => i.keyword.trim()).filter(Boolean);
-      const hasMaskingDup = new Set(maskingKeywords).size !== maskingKeywords.length;
+      const mistorKeys = this.mistor_array.map(i => i.key.trim()).filter(Boolean);
+      const hasMistorDup = new Set(mistorKeys).size !== mistorKeys.length;
 
-      const dictKeywords = this.dictionary_terms.map(i => i.keyword.trim()).filter(Boolean);
-      const hasDictDup = new Set(dictKeywords).size !== dictKeywords.length;
+      const omnionKeys = this.omnion_array.map(i => i.key.trim()).filter(Boolean);
+      const hasOmnionDup = new Set(omnionKeys).size !== omnionKeys.length;
 
-      if (hasMaskingDup || hasDictDup) {
+      if (hasMistorDup || hasOmnionDup) {
         this.showMessage('資料中存有重複的關鍵字，請檢查後再送出！', 'error');
         return; // 攔截不送出
       }
@@ -205,8 +203,8 @@ function setupApp() {
         tag_list: this.tag_array, 
         profile_group: this.profile_group_array.filter(i => i.name.zh.trim()),
         // 新增打包欄位
-        keyword_masking: this.mistor_array.filter(i => i.keyword.trim()),
-        dictionary_terms: this.dictionary_terms.filter(i => i.keyword.trim())
+        mistor: this.mistor_array.filter(i => i.key.trim()),
+        omnion: this.omnion_array.filter(i => i.key.trim())
       };
 
       try {
