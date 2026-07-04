@@ -101,26 +101,28 @@
             </section>
         </main>
         <!-- 右邊訊息欄 -->
-        <div class="info-panel">
-            <span class="info-content info-soul" x-text="soul"></span>
-            <span class="info-content info-meat" x-text="meat"></span>
-            <span class="info-content info-form" x-text="form"></span>
-            <span class="info-content info-code" x-text="code"></span>
-            <!-- 控制區 -->
-            <div>
-                <button @click="run()" x-text="busy ? '...' : '按下後，請切換視窗'"></button>
-                <!--<div x-for="line in logs" x-text="line"></div>-->
-                <input 
-                    id="key-input"
-                    type="text" 
-                    x-model="simulate" 
-                    :disabled="busy"
-                    placeholder="預設會先按 r ，不用寫""
-                />
-                <pre class="log-dump" x-text="[...logs].join('\n')"></pre>
+        <div class="info-container">
+            <div class="info-panel">
+                <span class="info-content info-soul" x-text="soul"></span>
+                <span class="info-content info-meat" x-text="meat"></span>
+                <span class="info-content info-form" x-text="form"></span>
+                <span class="info-content info-code" x-text="code"></span>
+                <!-- 控制區 -->
+                <div>
+                    <button @click="run()" x-text="busy ? '...' : '按下後，請切換視窗'"></button>
+                    <!--<div x-for="line in logs" x-text="line"></div>-->
+                    <input 
+                        id="key-input"
+                        type="text" 
+                        x-model="simulate" 
+                        :disabled="busy"
+                        placeholder="預設會先按 r ，不用寫"
+                    />
+                    <!--<pre class="log-dump" x-text="[...logs].join('\n')"></pre>-->
+                </div>
             </div>
             <!-- 萬有之書 -->
-            <div class="info-omnion-container">
+            <!--<div class="info-omnion-container">
                 <template x-for="item in omnionList">
                     <div class="info-omnion-row">
                         <span class="omnion-tag"
@@ -129,8 +131,23 @@
                         <span class="omnion-text" x-text="item.desc"></span>
                     </div>
                 </template>
+            </div>-->
+            <div class="info-omnion-container">
+                <template x-for="item in omnionList">
+                    <div class="info-omnion-row" 
+                        @click="toggleOmnion(item.key)" 
+                        style="cursor: pointer;"> <span class="omnion-tag"
+                            :class="item.type"
+                            x-text="item.key"></span>
+                        
+                        <span class="omnion-text" 
+                            x-show="expandedKeys.includes(item.key)"
+                            x-transition
+                            x-text="item.desc"></span>
+                    </div>
+                </template>
             </div>
-        </div>
+        </div> <!--info-container-->
     </div> <!-- app-layout-wrapper -->
 
     <!-- Tooltip -->

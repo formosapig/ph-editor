@@ -377,14 +377,23 @@ body {
   /*width: 140px;*/
 }
 
+.info-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;          /* 或者你原本設定的固定高度，例如 100vh */
+    box-sizing: border-box;
+}
+
 .info-panel {
+    flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
   /*padding: 12px;*/
   background-color: transparent; /*(--bg-dark); /* 明顯區分主體背景 */
   overflow-y: auto;
-  padding-right: 8px; /* scroll bar */
+  /*padding-right: 8px; /* scroll bar */
   
 }
 
@@ -437,6 +446,10 @@ body {
 
 /* 外層容器：確保整體靠左，並與上下區塊保持間距 */
 .info-omnion-container {
+    height: 25%;           /* 預設佔比 25% */
+    min-height: 200px;     /* 最少要有 200px 高度 */
+    overflow-y: auto;      /* 清單通常會變長，加上滾動條 */
+
     display: flex;
     flex-direction: column; /* 讓每一條紀錄由上往下排 */
     align-items: flex-start; /* 嚴格靠左對齊 */
@@ -449,6 +462,7 @@ body {
     box-sizing: border-box;
     padding: 8px 12px;
     font-size: 14px;
+    margin-top: 8px;
 }
 
 /* 每一行的橫向排列設定 */
@@ -617,6 +631,19 @@ body {
     z-index: 9999;
     max-width: 300px;
     pointer-events: auto;
+}
+
+/* 1. 針對 Chromium 核心瀏覽器 (Chrome, Edge, Safari, Opera) */
+.info-panel::-webkit-scrollbar,
+.info-omnion-container::-webkit-scrollbar {
+  display: none; /* 直接讓捲動條不顯示 */
+}
+
+/* 2. 針對 Firefox 與舊版 IE */
+.info-panel,
+.info-omnion-container {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE 和舊版 Edge */
 }
 
 [x-cloak] { display: none; }

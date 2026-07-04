@@ -51,7 +51,8 @@ document.addEventListener('alpine:init', () => {
             story: [ { key: 'profile', label: '簡介' }, { key: 'scenario', label: '場景' }, { key: 'backstage', label: '幕後' } ]
         },
 
-        
+        omnionList: [],
+
         // 字典資料
         dictionary: {
             '帥氣': '帥到不行很生氣候!!',
@@ -108,10 +109,9 @@ document.addEventListener('alpine:init', () => {
                     if (!k.startsWith('!')) displayData[k] = data[k];
                 });
             }
-            //console.error("render", this.activeMainTab, this.activeSubTab, displayData);
-            //let jsonString = JSON.stringify(displayData, null, 2);
-            //this.$refs.mainContent.textContent = jsonString.replace(/^\{\s*/, '').replace(/\s*\}$/, '');
-            this.$refs.mainContent.textContent = JSON.stringify(displayData, null, 2);
+            const jsonString = JSON.stringify(displayData, null, 2);
+            this.$refs.mainContent.textContent = jsonString;
+            this.updateOmnionList(jsonString);
         },
 
         handleContentInput() {
@@ -231,82 +231,76 @@ document.addEventListener('alpine:init', () => {
             this.hideTooltip();
         },
         
-        // todo fix this!
-        get omnionList() {
-        //generateOmnionList(globalParsedData, omnionMap, omnionRegex) {
-            console.error('get omnion list');
+        updateOmnionList(content) {
             const omnionList = [];
-            
-            // 安全檢查：確保有對照表、正規表達式字串，且 story 節點存在
-            if (!this.omnionMap || !this.omnionRegex || !this.globalParsedData?.story) {
+
+            if (!this.omnionMap || !this.omnionRegex || !content) {
                 return omnionList;
             }
 
-            console.error('try find keyword.');
-
-            // 1. 直接使用後端給的 regex 字串建立正規表達式物件
-            //const regex = new RegExp(omnionRegex, 'g');
-            
-            // 2. 用來記錄已抓取的關鍵字，避免後續欄位重複塞入
             const visitedKeywords = new Set();
+            const matches = content.match(this.omnionRegex);
+            
+            if (matches) {
+                matches.forEach(key => {
+                    // 如果這個關鍵字「之前沒被抓過」，且確實存在於後端 map 中
+                    if (!visitedKeywords.has(key) && this.omnionMap[key]) {
+                        visitedKeywords.add(key); // 標記為已處理
+                        
+                        // 1. 先取得當前關鍵字的 type
+                        const type = this.omnionMap[key].type;
+                        
+                        // 2. 根據 type 決定前後要包什麼符號（預設為原本的 << >>）
+                        let openBracket = '<<';
+                        let closeBracket = '>>';
 
-            // 3. 嚴格定義要依序掃描的欄位順序
-            const targetFields = ['profile', 'scenario', 'backstage'];
+                        if (type === 'person') {
+                            openBracket = '『';
+                            closeBracket = '』';
+                        } else if (type === 'object') { // 修正拼字 boject -> object
+                            openBracket = '《';
+                            closeBracket = '》';
+                        } else if (type === 'special') {
+                            openBracket = '【';
+                            closeBracket = '】';
+                        }
 
-            // 4. 開始依序掃描各個欄位
-            targetFields.forEach(field => {
-                const text = this.globalParsedData.story[field];
-                console.error('find in text:', text);
-                
-                console.error('data is ', (typeof text));
-                // 確保該欄位有文字內容才處理
-                if (text && typeof text === 'object') {
-                    console.error('start regex find');
-                    
-                    const combinedText = Object.values(text).join(' ');
-                    const matches = combinedText.match(this.omnionRegex);
-                    //const matches = text.match(this.omnionRegex);
-                    
-                    if (matches) {
-                        matches.forEach(key => {
-                            // 如果這個關鍵字「之前沒被抓過」，且確實存在於後端 map 中
-                            if (!visitedKeywords.has(key) && this.omnionMap[key]) {
-                                visitedKeywords.add(key); // 標記為已處理
-                                
-                                // 1. 先取得當前關鍵字的 type
-                                const type = this.omnionMap[key].type;
-                                
-                                // 2. 根據 type 決定前後要包什麼符號（預設為原本的 << >>）
-                                let openBracket = '<<';
-                                let closeBracket = '>>';
-
-                                if (type === 'person') {
-                                    openBracket = '『';
-                                    closeBracket = '』';
-                                } else if (type === 'object') { // 修正拼字 boject -> object
-                                    openBracket = '《';
-                                    closeBracket = '》';
-                                } else if (type === 'special') {
-                                    openBracket = '【';
-                                    closeBracket = '】';
-                                }
-
-                                // 3. 把前後符號加上 key 組合起來
-                                const formattedKey = openBracket + key + closeBracket;
-                                
-                                // 5. 組合資料並塞入結果清單
-                                omnionList.push({
-                                    key: formattedKey, // 這裡直接存入包好符號的字串
-                                    type: type,
-                                    desc: this.omnionMap[key].desc
-                                });
-                            }
+                        // 3. 把前後符號加上 key 組合起來
+                        const formattedKey = openBracket + key + closeBracket;
+                        
+                        // 5. 組合資料並塞入結果清單
+                        omnionList.push({
+                            key: formattedKey, // 這裡直接存入包好符號的字串
+                            type: type,
+                            desc: this.omnionMap[key].desc
                         });
                     }
-                }
-            });
+                });
+            }
 
-            return omnionList;
+            this.omnionList = omnionList;
+        },
+
+        expandedKeys: [], 
+
+        // 2. 切換狀態的方法
+        toggleOmnion(key) {
+            // 複製
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(key).catch(err => {
+                    console.error('複製失敗：', err);
+                });
+            } else {
+                console.warn('目前環境（可能是明碼 HTTP）不支援自動複製');
+            }
+            // 開關
+            if (this.expandedKeys.includes(key)) {
+                // 如果已經展開了，就過濾掉它（隱藏）
+                this.expandedKeys = this.expandedKeys.filter(k => k !== key);
+            } else {
+                // 如果是隱藏的，就加進去（展開）
+                this.expandedKeys.push(key);
+            }
         },
 
         async saveContent() {
