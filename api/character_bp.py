@@ -256,7 +256,7 @@ def patch_rename(sn, entry, data, scan_path):
 @api_character_bp.post("/<sn>/clone")
 @require_scan_path
 @inject_character_file_entry
-def copy_clone(scan_path, entry):
+def post_clone(scan_path, entry):
     file_id = entry.file_id
     if not file_id:
         raise ValidationError("缺少 file_id 。")
@@ -273,6 +273,7 @@ def copy_clone(scan_path, entry):
     
     shutil.copy2(src, dest)
     new_entry = add_or_update_character_with_path(scan_path, new_id)
+    new_entry.clone_from(entry)
     new_entry.to_dict()
     return jsonify({"new_data": new_entry.to_dict()})
 

@@ -66,7 +66,7 @@ class CharacterFileEntry:
             # 存取巢狀字典時，也使用 .get() 來確保安全
             self.backstage_data = metadata.get('backstage', {})
             self.tag_id = self.backstage_data.get('!tag_id')
-        
+
     ''' 以下是一堆 getter '''
     def get_profile_name(self) -> str:
         """ Profile 資料中取得 name """
@@ -536,6 +536,61 @@ class CharacterFileEntry:
         # 用換行符連接，如果都不對則回傳空字串
         return correct_count, "\n".join(result_lines)
 
+    def clone_from(self, source_entry: "CharacterFileEntry") -> None:
+        """
+        從另一個 CharacterFileEntry 實體複製 metadata 相關資料（profile_id、scenario_id、backstage_data 等），
+        不影響已存在的二進制資料和 file_id。
+
+        Args:
+            source_entry: 要被複製的來源 CharacterFileEntry 實體
+
+        Raises:
+            TypeError: 如果 source_entry 不是 CharacterFileEntry 實例
+            RuntimeError: 如果複製或儲存過程中發生錯誤
+        """
+        if not isinstance(source_entry, CharacterFileEntry):
+            raise TypeError("source_entry 必須是 CharacterFileEntry 類型的實例。")
+        
+        try:
+            # 1. 複製 metadata 相關屬性
+            self.profile_id = source_entry.profile_id
+            self.scenario_id = source_entry.scenario_id
+            self.upstream_sn = source_entry.upstream_sn
+            self.remark = source_entry.remark
+            self.backstage_data = copy.deepcopy(source_entry.backstage_data)
+            self.tag_id = source_entry.tag_id
+            
+            # 2. 更新 data_source 中的 metadata
+            # 取得現有的 metadata（基於目前的 sn）
+            existing_metadata = self.data_source.get_metadata(self.sn)
+            
+            if existing_metadata is None:
+                # 如果沒有現有的 metadata，建立一個新的
+                new_metadata = {
+                    '!profile_id': self.profile_id,
+                    '!scenario_id': self.scenario_id,
+                    '!upstream_sn': self.upstream_sn,
+                    '!remark': self.remark,
+                    'backstage': self.backstage_data
+                }
+            else:
+                # 更新現有的 metadata
+                existing_metadata['!profile_id'] = self.profile_id
+                existing_metadata['!scenario_id'] = self.scenario_id
+                existing_metadata['!upstream_sn'] = self.upstream_sn
+                existing_metadata['!remark'] = self.remark
+                existing_metadata['backstage'] = self.backstage_data
+                new_metadata = existing_metadata
+            
+            # 3. 儲存 metadata 到 data_source, 先暫用...
+            self.data_source._commit_metadata(self.sn, new_metadata)
+            
+            logger.info(f"成功從 {source_entry.file_id} 複製 metadata 到 {self.file_id}")
+            
+        except Exception as e:
+            logger.error(f"複製 metadata 失敗：{e}")
+            raise RuntimeError(f"複製 metadata 失敗：{e}")
+    
     def __repr__(self):
         lines = [
             f"{'SN':>14}: {self.sn}",
