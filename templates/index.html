@@ -149,6 +149,8 @@
         window.MISTOR_MAP = [[ mistor_map | safe ]];
         window.MISTOR_REGEX = "[[ mistor_regex | safe ]]";
     </script>
-    <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% if not session.get('unlocked', False) %]
+        <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% endif %]
 </body>
 </html>

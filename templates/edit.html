@@ -165,6 +165,8 @@
         </template>
     </div>
 
-    <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% if not session.get('unlocked', False) %]
+        <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% endif %]
 </body>
 </html>

@@ -190,6 +190,8 @@ document.addEventListener('alpine:init', () => {
                     this.selectedSet = validSelected;
                 }
             });
+
+            console.error("Alpine", Alpine.plugins);
         },
 
         async scan(path) {

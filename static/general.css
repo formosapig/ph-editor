@@ -78,6 +78,11 @@ textarea {
   padding: 8px;
   max-width: 240px;
 }
+
+.textarea-wide {
+  max-width: 480px;
+}
+
 /*
 textarea {
   /* 關鍵屬性：自動隨內容調整尺寸 */
@@ -278,4 +283,8 @@ input[name="tabs"] {
     /*border-top: none;*/
     background: transparent;
     scroll-behavior: smooth;
+}
+
+[x-cloak] {
+  display: none;
 }

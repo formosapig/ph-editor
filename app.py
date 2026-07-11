@@ -215,8 +215,14 @@ def add_header(response):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        if request.form.get('password') == 'geobess':
+        password = request.form.get('password')
+        if password == 'geobess':
             session['is_admin'] = True
+            session['unlocked'] = False
+            return redirect('/')
+        elif password == 'gohome':
+            session['is_admin'] = True
+            session['unlocked'] = True
             return redirect('/')
         else:
             # 密碼錯誤，顯示隨機數字（符合你的需求）

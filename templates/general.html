@@ -6,12 +6,13 @@
     <title>CONFIGURATIO</title>
     <link rel="stylesheet" href="[[ url_for('static', filename='theme.css') ]]" />
     <link rel="stylesheet" href="[[ url_for('static', filename='general.css') ]]" />
-    <script src="[[ url_for('static', filename='general.js') ]]" defer></script>
-    <script src="[[ url_for('static', filename='alpine.min.js') ]]" defer></script>
+    <script defer src="[[ url_for('static', filename='general.js') ]]"></script>
+    <script src="[[ url_for('static', filename='alpine3.15.12/sort/cdn.min.js') ]]" defer></script>
+    <script src="[[ url_for('static', filename='alpine3.15.12/cdn.min.js') ]]" defer></script>
 </head>
-<body>
+<body x-data="generalApp" x-cloak>
 
-<div x-data="setupApp()" x-init="init()">
+<div>
   <div class="header-actions">
     <h2>全域設定</h2>
     <button @click="submit" :disabled="isSubmitDisabled()" class="submit-btn">送出資料</button>
@@ -233,15 +234,21 @@
     <table>
       <thead>
         <tr>
+            <th>拖拉</th>
           <th>類型</th>
           <th>關鍵字</th>
           <th>說明</th>
           <th>操作</th>
         </tr>
       </thead>
-      <tbody>
-        <template x-for="(item, index) in omnion_array" :key="index">
-          <tr>
+      <!--<tbody x-sort:array="omnion_array" x-sort:handle=".drag-handle">-->
+      <tbody x-sort="reorderOmnion($item, $position)">
+        <template x-for="(item, index) in omnion_array" :key="item.id">
+          <tr x-sort:item="item.id">
+            <td>
+              <!-- 加一個「拖曳把手」，點住這裡才能拖曳 -->
+              <span x-sort:handle class="drag-handle" style="cursor:grab; user-select:none;">⠿</span>
+            </td>
             <td>
               <select x-model="item.type">
                 <option disabled value="">請選擇類型</option>
@@ -251,7 +258,7 @@
               </select>
             </td>
             <td><input type="text" x-model="item.key" @blur="checkOmnionDuplicate(index)" placeholder="關鍵字" /></td>
-            <td><textarea x-model="item.desc" placeholder="說明"></textarea></td>
+            <td><textarea class="textarea-wide" x-model="item.desc" placeholder="說明"></textarea></td>
             <td>
               <button @click="removeOmnion(index)" :disabled="omnion_array.length === 1">刪除</button>
             </td>
@@ -278,6 +285,8 @@
     omnion: [[omnion | tojson ]]
   };
 </script>
-    <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% if not session.get('unlocked', False) %]
+        <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% endif %]
 </body>
 </html>

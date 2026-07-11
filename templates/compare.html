@@ -74,6 +74,8 @@
 </div>
     <!-- type="module" 會在 DOM 解析完成後才執行（等同自帶 defer） -->
     <script type="module" src="[[ url_for('static', filename='compare.js') ]]"></script>
-    <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% if not session.get('unlocked', False) %]
+        <script src="[[ url_for('static', filename='base.js') ]]"></script>
+    [% endif %]
 </body>
 </html>
