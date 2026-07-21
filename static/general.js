@@ -3,7 +3,14 @@ document.addEventListener('alpine:init', () => {
 
     //function setupApp() {
     const initData = window.INIT_DATA || {};
+
+    let _idCounter = 0;
         
+    function generateStableId() {
+        // 用时间戳 + 递增计数器，绝对不重复
+        return 'id-' + Date.now().toString(36) + '-' + (++_idCounter).toString(36);
+    }
+
     return {
         color_traits: [],
         tag_type_settings_array: [],
@@ -13,33 +20,33 @@ document.addEventListener('alpine:init', () => {
         omnion_array: [],
 
         init() {
-        // 初始化 color_traits
-        this.color_traits = initData.colorTraits?.length > 0 
-            ? initData.colorTraits 
-            : [{ code: '#000000', name: { en: '', zh: '' }, trait: { zh: '' } }];
+            // 初始化 color_traits
+            this.color_traits = initData.colorTraits?.length > 0 
+                ? initData.colorTraits 
+                : [{ code: '#000000', name: { en: '', zh: '' }, trait: { zh: '' } }];
 
-        // 初始化 tag_type_settings_array
-        this.tag_type_settings_array = Object.keys(initData.tagStyles || {}).length > 0
-            ? Object.entries(initData.tagStyles)
-                .map(([key, value]) => ({ key, ...value }))
-                .sort((a, b) => a.order - b.order)
-            : [{ key: '', name: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
-        console.log(this.tag_type_settings_array)
+            // 初始化 tag_type_settings_array
+            this.tag_type_settings_array = Object.keys(initData.tagStyles || {}).length > 0
+                ? Object.entries(initData.tagStyles)
+                    .map(([key, value]) => ({ key, ...value }))
+                    .sort((a, b) => a.order - b.order)
+                : [{ key: '', name: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
+            console.log(this.tag_type_settings_array)
 
-        // 初始化 tag_array
-        this.tag_array = initData.tagList?.length > 0 
-            ? initData.tagList 
-            : [{ id: Date.now(), type: '', name: { zh: '' }, desc: { zh: '' }, snapshot: { zh: '' }, appearance: { zh: '' }, clothing: { zh: '' } }];
+            // 初始化 tag_array
+            this.tag_array = initData.tagList?.length > 0 
+                ? initData.tagList 
+                : [{ id: Date.now(), type: '', name: { zh: '' }, desc: { zh: '' }, snapshot: { zh: '' }, appearance: { zh: '' }, clothing: { zh: '' } }];
 
-        // 初始化 profile_group_array
-        this.profile_group_array = initData.profileGroup?.length > 0 
-            ? [...initData.profileGroup].sort((a, b) => a.order - b.order)
-            : [{ id: 1, name: { zh: '' }, desc: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
+            // 初始化 profile_group_array
+            this.profile_group_array = initData.profileGroup?.length > 0 
+                ? [...initData.profileGroup].sort((a, b) => a.order - b.order)
+                : [{ id: 1, name: { zh: '' }, desc: { zh: '' }, order: 1, color: '#000000', background: '#FFFFFF' }];
 
-        // --- 2. 初始化 mistor ---
-        this.mistor_array = initData.mistor?.length > 0
-            ? initData.mistor
-            : [{ key: '', mist: '' }];
+            // --- 2. 初始化 mistor ---
+            this.mistor_array = initData.mistor?.length > 0
+                ? initData.mistor
+                : [{ key: '', mist: '' }];
 
             // --- 3. 初始化 omnion (並自動排序) ---
             //const typeWeight = { 'person': 1, 'object': 2, 'special': 3 };
@@ -48,11 +55,11 @@ document.addEventListener('alpine:init', () => {
             //    : [{ type: '', key: '', desc: '' }];
             this.omnion_array = initData.omnion?.length > 0
                 ? initData.omnion.map(item => ({
-                    id: crypto.randomUUID(),
+                    id: generateStableId(), //crypto.randomUUID(),
                     ...item
                 }))
                 : [{
-                    id: crypto.randomUUID(),
+                    id: generateStableId(), //crypto.randomUUID(),
                     type: '',
                     key: '',
                     desc: ''
@@ -63,53 +70,59 @@ document.addEventListener('alpine:init', () => {
 
         // 取得標籤樣式 (對應原有的 getter)
         getTagStyle(typeKey) {
-        const found = this.tag_type_settings_array.find(t => t.key === typeKey);
-        if (found) {
-            return { color: found.color, backgroundColor: found.background };
-        }
-        return {};
+            const found = this.tag_type_settings_array.find(t => t.key === typeKey);
+            if (found) {
+                return { color: found.color, backgroundColor: found.background };
+            }
+            return {};
         },
 
         // --- 各類別操作方法 ---
         addColorTrait() {
-        this.color_traits.push({ code: '#000000', name: { en: '', zh: '' }, trait: { zh: '' } });
+            this.color_traits.push({ code: '#000000', name: { en: '', zh: '' }, trait: { zh: '' } });
         },
+
         removeColorTrait(index) {
-        this.color_traits.splice(index, 1);
+            this.color_traits.splice(index, 1);
         },
 
         addTagTypeSetting() {
-        const maxOrder = this.tag_type_settings_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
-        this.tag_type_settings_array.push({ key: '', name: { zh: '' }, order: maxOrder + 1, color: '#000000', background: '#FFFFFF' });
+            const maxOrder = this.tag_type_settings_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
+            this.tag_type_settings_array.push({ key: '', name: { zh: '' }, order: maxOrder + 1, color: '#000000', background: '#FFFFFF' });
         },
+
         removeTagTypeSetting(index) {
-        this.tag_type_settings_array.splice(index, 1);
+            this.tag_type_settings_array.splice(index, 1);
         },
 
         addTag() {
-        const maxId = this.tag_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
-        this.tag_array.push({ id: maxId + 1, type: '', name: { zh: '' }, desc: { zh: '' }, snapshot: { zh: '' }, appearance: { zh: '' }, clothing: { zh: '' } });
+            const maxId = this.tag_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
+            this.tag_array.push({ id: maxId + 1, type: '', name: { zh: '' }, desc: { zh: '' }, snapshot: { zh: '' }, appearance: { zh: '' }, clothing: { zh: '' } });
         },
+
         removeTag(index) {
-        this.tag_array.splice(index, 1);
+            this.tag_array.splice(index, 1);
         },
 
         addProfileGroup() {
-        const maxId = this.profile_group_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
-        const maxOrder = this.profile_group_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
-        this.profile_group_array.push({ id: maxId + 1, name: { zh: '' }, desc: { zh: '' }, order: maxOrder + 1, color: '#000000', background: '#FFFFFF' });
+            const maxId = this.profile_group_array.reduce((max, item) => Math.max(max, item.id || 0), 0);
+            const maxOrder = this.profile_group_array.reduce((max, item) => Math.max(max, item.order || 0), 0);
+            this.profile_group_array.push({ id: maxId + 1, name: { zh: '' }, desc: { zh: '' }, order: maxOrder + 1, color: '#000000', background: '#FFFFFF' });
         },
+
         removeProfileGroup(index) {
-        this.profile_group_array.splice(index, 1);
+            this.profile_group_array.splice(index, 1);
         },
 
         // --- 迷幻之霧操作 ---
         addMistor() {
-        this.mistor_array.push({ key: '', mist: '' });
+            this.mistor_array.push({ key: '', mist: '' });
         },
+
         removeMistor(index) {
-        this.mistor_array.splice(index, 1);
+            this.mistor_array.splice(index, 1);
         },
+
         // 檢查脫敏關鍵字是否重複
         checkMistorDuplicate(index) {
             const currentKey = this.mistor_array[index].key.trim();
@@ -126,9 +139,10 @@ document.addEventListener('alpine:init', () => {
 
         // --- 萬有之書操作 ---
         addOmnion() {
-            this.omnion_array.push({ id:crypto.randomUUID(), type: '', key: '', desc: '' });
             this.sortOmnion();
+            this.omnion_array.push({ id:generateStableId() /*crypto.randomUUID()*/, type: '', key: '', desc: '' });
         },
+
         removeOmnion(index) {
             this.omnion_array.splice(index, 1);
         },
