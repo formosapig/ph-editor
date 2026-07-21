@@ -81,6 +81,7 @@
     --font-family-code: "SF Mono", ui-monospace, "JetBrains Mono", Consolas, "Courier New", monospace;
     
     /* 字體大小全局管理 */
+    --font-size-default: 16px;
     --font-size-profile: 12px;
 
 }

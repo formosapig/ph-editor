@@ -324,6 +324,8 @@ document.addEventListener('alpine:init', () => {
                 if (k.startsWith('!')) newData[k] = originalData[k];
             }
 
+            console.error('upload data', newData);
+
             await this.uploadData(newData, currentMainTab, currentSubTab);
             this.hasChanged = false;
         },
